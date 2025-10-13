@@ -1,3 +1,76 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "prod_img_1",
+      "description": "A modern minimalist chair",
+      "imageUrl": "https://picsum.photos/seed/chair1/600/600",
+      "imageHint": "modern chair"
+    },
+    {
+      "id": "prod_img_2",
+      "description": "A sleek metal desk lamp",
+      "imageUrl": "https://picsum.photos/seed/lamp1/600/600",
+      "imageHint": "sleek lamp"
+    },
+    {
+      "id": "prod_img_3",
+      "description": "A solid oak wood dining table",
+      "imageUrl": "https://picsum.photos/seed/table1/600/600",
+      "imageHint": "wooden table"
+    },
+    {
+      "id": "prod_img_4",
+      "description": "A comfortable three-seater sofa",
+      "imageUrl": "https://picsum.photos/seed/sofa1/600/600",
+      "imageHint": "comfortable sofa"
+    },
+    {
+      "id": "prod_img_5",
+      "description": "A minimalist floating bookshelf",
+      "imageUrl": "https://picsum.photos/seed/bookshelf1/600/600",
+      "imageHint": "minimalist bookshelf"
+    },
+    {
+      "id": "prod_img_6",
+      "description": "A geometric patterned area rug",
+      "imageUrl": "https://picsum.photos/seed/rug1/600/600",
+      "imageHint": "stylish rug"
+    },
+    {
+      "id": "prod_img_7",
+      "description": "An executive office desk with drawers",
+      "imageUrl": "https://picsum.photos/seed/desk1/600/600",
+      "imageHint": "office desk"
+    },
+    {
+      "id": "prod_img_8",
+      "description": "A plush, comfortable armchair",
+      "imageUrl": "https://picsum.photos/seed/armchair1/600/600",
+      "imageHint": "plush armchair"
+    },
+    {
+      "id": "prod_img_9",
+      "description": "A modern coffee table",
+      "imageUrl": "https://picsum.photos/seed/coffeetable/600/600",
+      "imageHint": "modern coffeetable"
+    },
+    {
+      "id": "prod_img_10",
+      "description": "A wooden stool",
+      "imageUrl": "https://picsum.photos/seed/stool/600/600",
+      "imageHint": "wooden stool"
+    },
+    {
+      "id": "prod_img_11",
+      "description": "A minimalist floor lamp",
+      "imageUrl": "https://picsum.photos/seed/floorlamp/600/600",
+      "imageHint": "minimalist lamp"
+    },
+    {
+      "id": "prod_img_12",
+      "description": "A large sectional sofa",
+      "imageUrl": "https://picsum.photos/seed/sectionalsofa/600/600",
+      "imageHint": "large sofa"
+    }
+  ]
 }
