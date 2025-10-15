@@ -1,0 +1,124 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is an existing owner.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource.data.id == request.auth.uid;
+    }
+
+    /**
+     * @description Checks if the authenticated user has admin rights
+     */
+    function isAdmin() {
+        return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * @description Rules for product categories.
+     * @path /categories/{categoryId}
+     * @allow (get, list) Any user can read category data.
+     * @deny (create, update, delete) No user can create, update, or delete category data without authorization.
+     * @principle Public read, restricted write
+     */
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for products.
+     * @path /products/{productId}
+     * @allow (get, list) Any user can read product data.
+     * @deny (create, update, delete) No user can create, update, or delete product data without authorization.
+     * @principle Public read, restricted write
+     */
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for product attributes.
+     * @path /attributes/{attributeId}
+     * @allow (get, list) Any user can read attribute data.
+     * @deny (create, update, delete) No user can create, update, or delete product data without authorization.
+     * @principle Public read, restricted write
+     */
+    match /attributes/{attributeId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for attribute values.
+     * @path /attributeValues/{attributeValueId}
+     * @allow (get, list) Any user can read attribute value data.
+     * @deny (create, update, delete) No user can create, update, or delete attribute value data without authorization.
+     * @principle Public read, restricted write
+     */
+    match /attributeValues/{attributeValueId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for user profiles.
+     * @path /users/{userId}
+     * @allow (create) User can create their own profile if the userId matches their auth.uid.
+     * @allow (get, update, delete) User can only access and modify their own profile.
+     * @deny (list) Listing user documents is not allowed.
+     * @deny (create, update, delete) if the user is not the owner, do not allow operations on the resource.
+     * @principle Owner-only access
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Rules for share links created by users.
+     * @path /users/{userId}/shareLinks/{shareLinkId}
+     * @allow (create) User can create share links under their own user ID.
+     * @allow (get, update, delete) User can only access and modify share links they own.
+     * @deny (create, update, delete) if the user is not the owner, do not allow operations on the resource.
+     * @principle Owner-only access, nested resource
+     */
+    match /users/{userId}/shareLinks/{shareLinkId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Rules for admin roles (existence-based).
+     * @path /roles_admin/{userId}
+     * @allow (get, create, update, delete, list) Only existing admins can manage admin roles.
+     * @principle Role-based access control via document existence.
+     */
+    match /roles_admin/{userId} {
+        allow get, create, update, delete, list: if isAdmin();
+    }
+  }
+}

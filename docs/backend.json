@@ -1,0 +1,342 @@
+{
+  "entities": {
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product in the catalog.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the product."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the product's main image.",
+          "format": "uri"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to Category. (Relationship: Category 1:N Product)"
+        },
+        "attributeValues": {
+          "type": "array",
+          "description": "References to AttributeValue. (Relationship: AttributeValue N:N Product)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl",
+        "categoryId",
+        "attributeValues"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category of products.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the category."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the category's image.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl"
+      ]
+    },
+    "Attribute": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Attribute",
+      "type": "object",
+      "description": "Represents a product attribute (e.g., color, size).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the attribute."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the attribute."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the attribute."
+        },
+        "type": {
+          "type": "string",
+          "description": "Data type of the attribute (e.g., string, number, boolean).",
+          "format": "enum",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "type"
+      ]
+    },
+    "AttributeValue": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AttributeValue",
+      "type": "object",
+      "description": "Represents a specific value for an attribute.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the attribute value."
+        },
+        "attributeId": {
+          "type": "string",
+          "description": "Reference to Attribute. (Relationship: Attribute 1:N AttributeValue)"
+        },
+        "value": {
+          "type": "string",
+          "description": "The actual value of the attribute."
+        }
+      },
+      "required": [
+        "id",
+        "attributeId",
+        "value"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the admin dashboard.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (e.g., admin, editor).",
+          "format": "enum",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "role"
+      ]
+    },
+    "ShareLink": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ShareLink",
+      "type": "object",
+      "description": "Represents a shareable link with a specific filter state.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the share link."
+        },
+        "link": {
+          "type": "string",
+          "description": "The generated shareable link.",
+          "format": "uri"
+        },
+        "filterState": {
+          "type": "string",
+          "description": "JSON payload representing the filter state."
+        },
+        "expirationDate": {
+          "type": "string",
+          "description": "Date and time when the link expires.",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Reference to User that created this link. (Relationship: User 1:N ShareLink)"
+        }
+      },
+      "required": [
+        "id",
+        "link",
+        "filterState",
+        "expirationDate",
+        "createdBy"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores product categories.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "Unique identifier for the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product information.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "attributes/{attributeId}",
+        "definition": {
+          "entityName": "Attribute",
+          "schema": {
+            "$ref": "#/backend/entities/Attribute"
+          },
+          "description": "Stores product attributes (e.g., color, size).",
+          "params": [
+            {
+              "name": "attributeId",
+              "description": "Unique identifier for the attribute."
+            }
+          ]
+        }
+      },
+      {
+        "path": "attributeValues/{attributeValueId}",
+        "definition": {
+          "entityName": "AttributeValue",
+          "schema": {
+            "$ref": "#/backend/entities/AttributeValue"
+          },
+          "description": "Stores specific values for product attributes.",
+          "params": [
+            {
+              "name": "attributeValueId",
+              "description": "Unique identifier for the attribute value."
+            }
+          ]
+        }
+      },
+      {
+        "path": "users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "users/{userId}/shareLinks/{shareLinkId}",
+        "definition": {
+          "entityName": "ShareLink",
+          "schema": {
+            "$ref": "#/backend/entities/ShareLink"
+          },
+          "description": "Stores shareable links created by users.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "shareLinkId",
+              "description": "Unique identifier for the share link."
+            }
+          ]
+        }
+      },
+      {
+        "path": "roles_admin/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Indicates admin role for the user, existence-based access control.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the CatalogLink application, focusing on products, categories, attributes, and users. The design prioritizes security, scalability, and ease of debugging, following the principles of Authorization Independence, Clarity of Intent, and DBAC (Database-Based Access Control).\n\n*   **Authorization Independence:** Denormalization is employed to avoid hierarchical authorization dependencies. For instance, if access to `Products` were to depend on `Category` attributes, those attributes would be copied into the `Product` documents. Since there is no specific rule defined in the App Requirement, that necessitates such a dependency, we don't need to denormalize.\n*   **Structural Segregation:** Each collection stores data with homogeneous security requirements. Publicly accessible data and private data (like user drafts or admin settings) are stored in separate collections.\n*   **Access Modeling:**\n    *   User data (`users/{userId}`) is path-based, ensuring easy management of user-specific information.\n    *   Share Links are stored under `users/{userId}/shareLinks/{shareLinkId}`, reflecting user ownership.\n    *   Global roles are managed through the existence of documents in dedicated collections like `/roles_admin/{uid}`. This is existence-based, simplifying security rules.\n*   **Data Clarity and Predictability:** Explicit state modeling (if applicable) would use a single `status` field. The schema is predictable, avoiding dynamic keys and enforcing consistent naming conventions.\n\n**QAPs (Rules are not Filters):**\n\n*   The segregation of data into different collections based on access control requirements ensures that list operations (`get` operations on collections) are secure and efficient. For example, listing products within a specific category doesn't require filtering out unauthorized products based on complex rules; all documents in the `products` collection are intended to be accessible under the defined rules.\n*   The membership map approach, where applicable (e.g., for collaborative documents), helps to quickly determine user roles and permissions without needing to fetch related documents, thus supporting QAPs.\n"
+  }
+}
