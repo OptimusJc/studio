@@ -22,6 +22,8 @@ import {
   LogOut,
   Building,
   Home,
+  Tags,
+  List,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -31,7 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { categories } from '@/lib/placeholder-data';
 import { useRouter } from 'next/navigation';
 
 
@@ -58,8 +59,9 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
 
   const handleDbChange = (value: string) => {
     setSelectedDb(value);
-    const newPath = `${pathname}?db=${value}${currentCategory ? `&category=${currentCategory}` : ''}`;
-    router.push(newPath);
+    const params = new URLSearchParams(searchParams);
+    params.set('db', value);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
@@ -144,6 +146,35 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
+
+        <SidebarSeparator />
+
+        <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === '/admin/categories'}
+                tooltip="Categories"
+              >
+                <Link href={`/admin/categories?db=${selectedDb}`}>
+                  <List />
+                  <span>Categories</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === '/admin/attributes'}
+                tooltip="Attributes"
+              >
+                <Link href={`/admin/attributes?db=${selectedDb}`}>
+                  <Tags />
+                  <span>Attributes</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
         
         <SidebarMenu className="mt-auto">
            <SidebarMenuItem>
@@ -152,7 +183,7 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
                 isActive={pathname === '/admin/users'}
                 tooltip="Users"
               >
-                <Link href="/admin/users">
+                <Link href={`/admin/users?db=${selectedDb}`}>
                   <Users />
                   <span>Users</span>
                 </Link>
@@ -164,7 +195,7 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
                 isActive={pathname === '/admin/settings'}
                 tooltip="Settings"
               >
-                <Link href="/admin/settings">
+                <Link href={`/admin/settings?db=${selectedDb}`}>
                   <Settings />
                   <span>Settings</span>
                 </Link>

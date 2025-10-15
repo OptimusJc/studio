@@ -3,13 +3,16 @@
 import { useState } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { useSearchParams } from 'next/navigation';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [selectedDb, setSelectedDb] = useState('retailers');
+  const searchParams = useSearchParams();
+  const dbFromUrl = searchParams.get('db') || 'retailers';
+  const [selectedDb, setSelectedDb] = useState(dbFromUrl as 'retailers' | 'buyers');
 
   return (
     <SidebarProvider>
