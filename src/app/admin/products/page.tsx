@@ -7,9 +7,10 @@ import { ProductTableClient } from './components/ProductTableClient';
 import Link from 'next/link';
 import { useFirestore } from '@/firebase';
 import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { Product } from '@/types';
 import { useSearchParams } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const productCategories = [
   'wallpapers',
@@ -20,15 +21,27 @@ const productCategories = [
   'fluted-panels',
 ];
 
+function ProductTableSkeleton() {
+    return (
+        <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+        </div>
+    )
+}
+
 export default function ProductsPage() {
   const firestore = useFirestore();
   const searchParams = useSearchParams();
+  
   const db = searchParams.get('db') || 'retailers';
   const category = searchParams.get('category');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentView, setCurrentView] = useState({ db, category });
 
   const pageTitle = category 
     ? `${category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')}`
@@ -40,16 +53,11 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
       if (!firestore) return;
 
+      setIsLoading(true);
+      const fetchedProducts: Product[] = [];
+      
       const newDb = searchParams.get('db') || 'retailers';
       const newCategory = searchParams.get('category');
-
-      if (currentView.db === newDb && currentView.category === newCategory && !isLoading) {
-        return;
-      }
-      
-      setIsLoading(true);
-      setCurrentView({ db: newDb, category: newCategory });
-      const fetchedProducts: Product[] = [];
       
       const categoriesToFetch = newCategory ? [newCategory] : productCategories;
 
@@ -61,11 +69,11 @@ export default function ProductsPage() {
           querySnapshot.forEach((doc) => {
             const data = doc.data() as DocumentData;
             const getCreatedAt = () => {
-              if (!data.createdAt) return new Date().toISOString();
-              if (typeof data.createdAt.toDate === 'function') {
-                return data.createdAt.toDate().toISOString();
-              }
-              return new Date(data.createdAt).toISOString();
+                if (!data.createdAt) return new Date().toISOString();
+                if (typeof data.createdAt.toDate === 'function') {
+                    return data.createdAt.toDate().toISOString();
+                }
+                return new Date(data.createdAt).toISOString();
             }
 
             fetchedProducts.push({
@@ -97,7 +105,7 @@ export default function ProductsPage() {
     };
 
     fetchProducts();
-  }, [firestore, searchParams, currentView, isLoading]);
+  }, [firestore, searchParams]);
 
   const newProductUrl = category 
     ? `/admin/products/new?db=${db}&category=${category}`
@@ -126,7 +134,7 @@ export default function ProductsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center">Loading products...</div>
+            <ProductTableSkeleton />
           ) : (
             <ProductTableClient products={products} />
           )}
