@@ -84,7 +84,7 @@ export function AddAttributeDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button><PlusCircle /> Add Attribute</Button>
+        <Button>Add Attribute</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

@@ -1,7 +1,7 @@
 'use client';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ProductTableClient } from './components/ProductTableClient';
 import Link from 'next/link';
@@ -121,7 +121,7 @@ export default function ProductsPage() {
           <Button variant="outline"><Upload /> Bulk Import</Button>
           <Button asChild>
             <Link href={newProductUrl}>
-              <PlusCircle /> Add Product
+              Add Product
             </Link>
           </Button>
         </div>

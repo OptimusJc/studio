@@ -94,10 +94,7 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
         <div className='px-2 py-1'>
             <Select value={selectedDb} onValueChange={handleDbChange}>
             <SelectTrigger className="w-full bg-sidebar-accent border-sidebar-border text-sidebar-foreground focus:ring-sidebar-ring">
-                <div className="flex items-center gap-2">
-                {selectedDb === 'retailers' ? <Building className="h-4 w-4" /> : <Home className="h-4 w-4" />}
                 <SelectValue placeholder="Select database" />
-                </div>
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="retailers">
