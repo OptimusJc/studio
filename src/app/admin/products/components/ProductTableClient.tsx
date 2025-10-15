@@ -7,14 +7,19 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Share2, Copy } from 'lucide-react';
+import { MoreHorizontal, Share2, Copy, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 function RowActions({ product }: { product: Product }) {
   const { toast } = useToast();
+  const firestore = useFirestore();
   const [isShareOpen, setShareOpen] = useState(false);
 
   const createShareLink = () => {
@@ -44,29 +49,64 @@ function RowActions({ product }: { product: Product }) {
     });
   };
 
+  const handleDelete = () => {
+    if (!firestore) return;
+    const categoryCollectionName = product.category.toLowerCase().replace(/\s+/g, '-');
+    const docRef = doc(firestore, categoryCollectionName, product.id);
+    deleteDocumentNonBlocking(docRef);
+    toast({
+      title: "Product Deleted",
+      description: `${product.name} has been deleted.`,
+    });
+  };
+  
+  const editUrl = `/admin/products/edit/${product.id}?category=${encodeURIComponent(product.category)}`;
+
   return (
     <Dialog open={isShareOpen} onOpenChange={setShareOpen}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem>Edit Product</DropdownMenuItem>
-          <DropdownMenuItem>View Details</DropdownMenuItem>
-          <DialogTrigger asChild>
-            <DropdownMenuItem>
-              <Share2 className="mr-2 h-4 w-4" />
-              Share View
+       <AlertDialog>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+                <Link href={editUrl}>Edit Product</Link>
             </DropdownMenuItem>
-          </DialogTrigger>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive">Delete Product</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DialogTrigger asChild>
+              <DropdownMenuItem>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share View
+              </DropdownMenuItem>
+            </DialogTrigger>
+            <DropdownMenuSeparator />
+             <AlertDialogTrigger asChild>
+                <DropdownMenuItem className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Product
+                </DropdownMenuItem>
+            </AlertDialogTrigger>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the product
+                &quot;{product.name}&quot;.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+       </AlertDialog>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Share Filtered View</DialogTitle>

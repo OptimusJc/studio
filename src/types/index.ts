@@ -10,6 +10,12 @@ export type Product = {
   imageUrl: string;
   imageHint: string;
   createdAt: string;
+  // Fields from the form that might not be on the simplified type
+  productTitle?: string;
+  productDescription?: string;
+  productImages?: string[];
+  additionalImages?: string[];
+  specifications?: string;
 };
 
 export type Category = {

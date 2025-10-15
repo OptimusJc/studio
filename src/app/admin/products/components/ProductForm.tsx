@@ -19,9 +19,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { Product } from '@/types';
+import { useEffect } from 'react';
 
 const productSchema = z.object({
   productTitle: z.string().min(1, 'Product title is required.'),
@@ -40,6 +42,7 @@ const productSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
+    initialData?: Product | null;
     attributes: Record<string, string[]>;
     categories: { id: string, name: string }[];
 }
@@ -60,10 +63,12 @@ function ImageUploadCard({ title, description }: { title: string; description: s
   );
 }
 
-export function ProductForm({ attributes, categories }: ProductFormProps) {
+export function ProductForm({ initialData, attributes, categories }: ProductFormProps) {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  
+  const isEditMode = !!initialData;
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -81,6 +86,24 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
         category: '',
     }
   });
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        productTitle: initialData.name,
+        productDescription: (initialData as any).productDescription || '',
+        price: initialData.price,
+        specifications: (initialData as any).specifications || '',
+        category: initialData.category,
+        color: initialData.attributes.color as string || '',
+        material: initialData.attributes.material as string || '',
+        size: initialData.attributes.size as string || '',
+        brand: initialData.attributes.brand as string || '',
+        pattern: initialData.attributes.pattern as string || '',
+        texture: initialData.attributes.texture as string || '',
+      });
+    }
+  }, [initialData, form]);
 
   const onSubmit = async (data: ProductFormValues) => {
     if (!firestore) {
@@ -103,14 +126,13 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
 
     try {
       const categoryCollectionName = data.category.toLowerCase().replace(/\s+/g, '-');
-      const productsCollection = collection(firestore, categoryCollectionName);
       
-      const newProduct = {
+      const productData = {
         productTitle: data.productTitle,
         productDescription: data.productDescription,
         price: data.price,
-        productImages: ['https://picsum.photos/seed/new-product/600/600'], // Placeholder
-        additionalImages: ['https://picsum.photos/seed/new-product-add/600/600'], // Placeholder
+        productImages: initialData?.productImages || ['https://picsum.photos/seed/new-product/600/600'], // Placeholder
+        additionalImages: (initialData as any)?.additionalImages || ['https://picsum.photos/seed/new-product-add/600/600'], // Placeholder
         specifications: data.specifications,
         attributes: {
             color: data.color,
@@ -120,21 +142,32 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
             pattern: data.pattern,
             texture: data.texture,
         },
-        createdAt: new Date(),
+        createdAt: initialData ? (initialData as any).createdAt : new Date(),
         updatedAt: new Date(),
       };
       
-      await addDocumentNonBlocking(productsCollection, newProduct);
+      if(isEditMode && initialData) {
+        const docRef = doc(firestore, categoryCollectionName, initialData.id);
+        await setDocumentNonBlocking(docRef, productData, { merge: true });
+        toast({
+            title: "Product Updated!",
+            description: `${data.productTitle} has been updated.`,
+        });
+      } else {
+        const productsCollection = collection(firestore, categoryCollectionName);
+        await addDocumentNonBlocking(productsCollection, productData);
+        toast({
+            title: "Product Saved!",
+            description: `${data.productTitle} has been added to the catalog.`,
+        });
+      }
 
-      toast({
-        title: "Product Saved!",
-        description: `${data.productTitle} has been added to the catalog.`,
-      });
 
       router.push('/admin/products');
+      router.refresh();
 
     } catch (error) {
-        console.error("Error adding document: ", error);
+        console.error("Error saving document: ", error);
         toast({
             variant: "destructive",
             title: "Uh oh! Something went wrong.",
@@ -248,7 +281,7 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isEditMode}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a category" />
@@ -277,7 +310,7 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Color</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select color" />
@@ -297,7 +330,7 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Material</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select material" />
@@ -317,7 +350,7 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Size</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select size" />
@@ -337,7 +370,7 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Brand</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select brand" />
@@ -360,7 +393,7 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Pattern</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select pattern" />
@@ -382,7 +415,7 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Texture</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select texture" />
@@ -402,7 +435,7 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
             </Card>
              <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
-                <Button type="submit">Save Product</Button>
+                <Button type="submit">{isEditMode ? 'Save Changes' : 'Save Product'}</Button>
             </div>
           </div>
         </div>
