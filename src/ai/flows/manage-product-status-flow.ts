@@ -3,23 +3,8 @@
  * @fileOverview Manages the publishing and unpublishing of products.
  */
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import { getDoc, setDoc, deleteDoc, doc, Firestore } from 'firebase/firestore';
-
-
-export const ManageProductStatusInputSchema = z.object({
-  action: z.enum(['publish', 'unpublish']),
-  productId: z.string().describe('The ID of the product in the drafts collection.'),
-  db: z.string().optional().describe('The target database (e.g., retailers). Required for unpublish.'),
-  category: z.string().optional().describe('The product category. Required for unpublish.'),
-});
-export type ManageProductStatusInput = z.infer<typeof ManageProductStatusInputSchema>;
-
-export const ManageProductStatusOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
-export type ManageProductStatusOutput = z.infer<typeof ManageProductStatusOutputSchema>;
+import { getDoc, setDoc, deleteDoc, doc, type Firestore } from 'firebase/firestore';
+import { ManageProductStatusInputSchema, ManageProductStatusOutputSchema, type ManageProductStatusInput } from '@/types';
 
 
 interface FlowContext {
@@ -30,7 +15,7 @@ interface FlowContext {
 export async function manageProductStatus(
   input: ManageProductStatusInput,
   firestore: Firestore
-): Promise<ManageProductStatusOutput> {
+) {
   // Define the flow inside the function to avoid exporting it
   const manageProductStatusFlow = ai.defineFlow(
     {

@@ -1,4 +1,5 @@
 'use client';
+import { z } from 'zod';
 
 export type Product = {
   id: string;
@@ -42,3 +43,18 @@ export type User = {
   role: 'Admin' | 'Editor' | 'Customer';
   lastLogin: string;
 };
+
+
+export const ManageProductStatusInputSchema = z.object({
+  action: z.enum(['publish', 'unpublish']),
+  productId: z.string().describe('The ID of the product in the drafts collection.'),
+  db: z.string().optional().describe('The target database (e.g., retailers). Required for unpublish.'),
+  category: z.string().optional().describe('The product category. Required for unpublish.'),
+});
+export type ManageProductStatusInput = z.infer<typeof ManageProductStatusInputSchema>;
+
+export const ManageProductStatusOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+export type ManageProductStatusOutput = z.infer<typeof ManageProductStatusOutputSchema>;
