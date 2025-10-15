@@ -56,7 +56,13 @@ export default function EditProductPage() {
     attributes: productData.attributes,
     imageUrl: productData.productImages?.[0] || '',
     imageHint: 'product image',
-    createdAt: productData.createdAt ? new Date(productData.createdAt).toISOString() : new Date().toISOString(),
+    createdAt: (() => {
+        if (!productData.createdAt) return new Date().toISOString();
+        if (typeof productData.createdAt.toDate === 'function') {
+            return productData.createdAt.toDate().toISOString();
+        }
+        return new Date(productData.createdAt).toISOString();
+    })(),
     productTitle: productData.productTitle,
     productDescription: productData.productDescription,
     productImages: productData.productImages,

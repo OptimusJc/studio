@@ -39,6 +39,14 @@ export default function ProductsPage() {
           const querySnapshot = await getDocs(q);
           querySnapshot.forEach((doc) => {
             const data = doc.data() as DocumentData;
+            const getCreatedAt = () => {
+              if (!data.createdAt) return new Date().toISOString();
+              if (typeof data.createdAt.toDate === 'function') {
+                return data.createdAt.toDate().toISOString();
+              }
+              return new Date(data.createdAt).toISOString();
+            }
+
             products.push({
               id: doc.id,
               name: data.productTitle,
@@ -51,7 +59,7 @@ export default function ProductsPage() {
               attributes: data.attributes,
               imageUrl: data.productImages[0] || 'https://placehold.co/600x600',
               imageHint: 'product image',
-              createdAt: data.createdAt ? new Date(data.createdAt).toISOString() : new Date().toISOString(),
+              createdAt: getCreatedAt(),
               productImages: data.productImages,
               productDescription: data.productDescription,
               specifications: data.specifications,
