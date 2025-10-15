@@ -24,14 +24,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import { ImageSelectionDialog } from '../../products/components/ImageSelectionDialog';
-import Image from 'next/image';
-import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 type Category = {
@@ -48,43 +44,12 @@ interface EditCategoryDialogProps {
 const categorySchema = z.object({
   name: z.string().min(1, 'Category name is required.'),
   description: z.string().optional(),
-  imageUrl: z.string().min(1, 'Category image is required.'),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
-
-function ImageUploadCard({ 
-  imageUrl,
-  onClick 
-}: { 
-  imageUrl?: string;
-  onClick: () => void;
-}) {
-  return (
-    <Card className="border-dashed cursor-pointer hover:border-primary transition-colors" onClick={onClick}>
-      <CardContent className="p-6">
-        {imageUrl ? (
-           <div className="relative aspect-video">
-            <Image src={imageUrl} alt="Selected category image" fill className="object-cover rounded-md" />
-           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center h-32">
-            <Upload className="h-10 w-10 text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">
-              <span className="font-semibold text-primary">Select an image</span>
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-
 export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -93,7 +58,6 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
     defaultValues: {
       name: category.name,
       description: category.description,
-      imageUrl: category.imageUrl,
     },
   });
 
@@ -117,21 +81,12 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
         form.reset({
             name: category.name,
             description: category.description,
-            imageUrl: category.imageUrl,
         });
     }
     setIsOpen(open);
   }
-  
-  const handleImageSelected = (imageUrl: string) => {
-    form.setValue('imageUrl', imageUrl, { shouldValidate: true });
-    setIsImageDialogOpen(false);
-  };
-
-  const imageUrl = form.watch('imageUrl');
 
   return (
-    <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -173,19 +128,6 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
                 </FormItem>
               )}
             />
-             <FormField
-              control={form.control}
-              name="imageUrl"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Image</FormLabel>
-                  <FormControl>
-                     <ImageUploadCard imageUrl={imageUrl} onClick={() => setIsImageDialogOpen(true)} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <DialogFooter>
               <Button type="submit">Save Changes</Button>
@@ -194,11 +136,5 @@ export function EditCategoryDialog({ category }: EditCategoryDialogProps) {
         </Form>
       </DialogContent>
     </Dialog>
-     <ImageSelectionDialog
-        isOpen={isImageDialogOpen}
-        onOpenChange={setIsImageDialogOpen}
-        onSelectImage={handleImageSelected}
-      />
-    </>
   );
 }

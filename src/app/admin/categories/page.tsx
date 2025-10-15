@@ -11,7 +11,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AddCategoryDialog } from './components/AddCategoryDialog';
 import { EditCategoryDialog } from './components/EditCategoryDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 
 type Category = {
@@ -60,7 +59,6 @@ export default function CategoriesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[80px]">Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="w-[40px]"></TableHead>
@@ -69,14 +67,11 @@ export default function CategoriesPage() {
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">Loading categories...</TableCell>
+                  <TableCell colSpan={3} className="text-center">Loading categories...</TableCell>
                 </TableRow>
               )}
               {!isLoading && categories?.map((category) => (
                 <TableRow key={category.id}>
-                    <TableCell>
-                        <Image src={category.imageUrl} alt={category.name} width={48} height={48} className="rounded-md object-cover" />
-                    </TableCell>
                   <TableCell className="font-medium">{category.name}</TableCell>
                   <TableCell>{category.description}</TableCell>
                   <TableCell>
