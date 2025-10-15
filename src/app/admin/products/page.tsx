@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ProductTableClient } from './components/ProductTableClient';
 import Link from 'next/link';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, getDocs, DocumentData, collectionGroup } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import type { Product, Category } from '@/types';
 import { useSearchParams } from 'next/navigation';
@@ -52,7 +52,7 @@ export default function ProductsPage() {
       if (!firestore || !categoriesData) return;
 
       setIsLoading(true);
-      const fetchedProducts: Product[] = [];
+      const productMap = new Map<string, Product>();
       
       const newDb = searchParams.get('db') || 'retailers';
       const newCategory = searchParams.get('category');
@@ -63,12 +63,13 @@ export default function ProductsPage() {
       draftsSnapshot.forEach(doc => {
           const data = doc.data() as DocumentData;
            if (newDb === data.db && (!newCategory || newCategory === data.category)) {
-              fetchedProducts.push({
+              const product = {
                 id: doc.id,
                 ...data,
                 name: data.productTitle,
                 imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-              } as Product);
+              } as Product;
+              productMap.set(product.id, product);
            }
       });
 
@@ -84,26 +85,20 @@ export default function ProductsPage() {
             const publishedSnapshot = await getDocs(publishedQuery);
             publishedSnapshot.forEach(doc => {
                 const data = doc.data() as DocumentData;
-                 fetchedProducts.push({
+                 const product = {
                   id: doc.id,
                   ...data,
                   name: data.productTitle,
                   imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                } as Product);
+                  category: cat,
+                } as Product;
+                // If a published product exists, it should overwrite the draft in the map
+                productMap.set(product.id, product);
             });
           } catch(e) {
             // It's ok if a collection doesn't exist.
           }
       }
-
-      // Simple deduplication based on productCode if needed, favoring published
-      const productMap = new Map<string, Product>();
-      fetchedProducts.forEach(p => {
-          const existing = productMap.get(p.productCode as string);
-          if (!existing || (existing.status === 'Draft' && p.status === 'Published')) {
-              productMap.set(p.productCode as string, p);
-          }
-      });
 
       setProducts(Array.from(productMap.values()));
       setIsLoading(false);

@@ -24,7 +24,7 @@ function RowActions({ product }: { product: Product }) {
   const [isShareOpen, setShareOpen] = useState(false);
 
   const createShareLink = () => {
-    if (typeof window === 'undefined') return '';
+    if (typeof window === 'undefined' || !product.category) return '';
     const filters = {
       category: [product.category],
     };
@@ -53,7 +53,9 @@ function RowActions({ product }: { product: Product }) {
   const handleDelete = () => {
     if (!firestore) return;
     const categorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
-    const collectionPath = `${product.db}/${categorySlug}/products`;
+    const collectionPath = product.status === 'Published' 
+        ? `${product.db}/${categorySlug}/products` 
+        : 'drafts';
     const docRef = doc(firestore, collectionPath, product.id);
     deleteDocumentNonBlocking(docRef);
     toast({
@@ -62,7 +64,9 @@ function RowActions({ product }: { product: Product }) {
     });
   };
   
-  const editUrl = `/admin/products/edit/${product.id}?db=${product.db}&category=${encodeURIComponent(product.category.toLowerCase().replace(/\s+/g, '-'))}`;
+  const categorySlug = product.category?.toLowerCase().replace(/\s+/g, '-') || '';
+  const editUrl = `/admin/products/edit/${product.id}?db=${product.db}&category=${encodeURIComponent(categorySlug)}`;
+
 
   return (
     <Dialog open={isShareOpen} onOpenChange={setShareOpen}>
