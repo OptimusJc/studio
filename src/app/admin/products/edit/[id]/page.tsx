@@ -56,7 +56,7 @@ export default function EditProductPage() {
     attributes: productData.attributes,
     imageUrl: productData.productImages?.[0] || '',
     imageHint: 'product image',
-    createdAt: productData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+    createdAt: productData.createdAt ? new Date(productData.createdAt).toISOString() : new Date().toISOString(),
     productTitle: productData.productTitle,
     productDescription: productData.productDescription,
     productImages: productData.productImages,

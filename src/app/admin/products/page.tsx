@@ -51,7 +51,7 @@ export default function ProductsPage() {
               attributes: data.attributes,
               imageUrl: data.productImages[0] || 'https://placehold.co/600x600',
               imageHint: 'product image',
-              createdAt: data.createdAt?.toDate()?.toISOString() || new Date().toISOString(),
+              createdAt: data.createdAt ? new Date(data.createdAt).toISOString() : new Date().toISOString(),
               productImages: data.productImages,
               productDescription: data.productDescription,
               specifications: data.specifications,
