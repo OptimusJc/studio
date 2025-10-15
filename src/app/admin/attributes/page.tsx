@@ -15,6 +15,7 @@ import { EditAttributeDialog } from './components/EditAttributeDialog';
 type Attribute = {
   id: string;
   name: string;
+  category: string;
   values: string[];
 };
 
@@ -53,6 +54,7 @@ export default function AttributesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Attribute Name</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Values</TableHead>
                 <TableHead className="w-[40px]"></TableHead>
               </TableRow>
@@ -60,12 +62,15 @@ export default function AttributesPage() {
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">Loading attributes...</TableCell>
+                  <TableCell colSpan={4} className="text-center">Loading attributes...</TableCell>
                 </TableRow>
               )}
               {!isLoading && attributes?.map((attribute) => (
                 <TableRow key={attribute.id}>
                   <TableCell className="font-medium">{attribute.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{attribute.category}</Badge>
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-2">
                       {attribute.values.map((value) => (

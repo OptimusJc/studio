@@ -25,14 +25,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useFirestore, useCollection } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Category } from '@/types';
 
 type Attribute = {
   id: string;
   name: string;
+  category: string;
   values: string[];
 };
 
@@ -42,6 +45,7 @@ interface EditAttributeDialogProps {
 
 const attributeSchema = z.object({
   name: z.string().min(1, 'Attribute name is required.'),
+  category: z.string().min(1, 'Category is required.'),
   values: z.array(z.object({ value: z.string().min(1, 'Value cannot be empty.') })).min(1, 'At least one value is required.'),
 });
 
@@ -52,10 +56,14 @@ export function EditAttributeDialog({ attribute }: EditAttributeDialogProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
 
+  const categoriesCollection = collection(firestore, 'categories');
+  const { data: categories } = useCollection<Category>(categoriesCollection);
+
   const form = useForm<AttributeFormValues>({
     resolver: zodResolver(attributeSchema),
     defaultValues: {
       name: attribute.name,
+      category: attribute.category,
       values: attribute.values.map(v => ({ value: v })),
     },
   });
@@ -71,6 +79,7 @@ export function EditAttributeDialog({ attribute }: EditAttributeDialogProps) {
     const docRef = doc(firestore, 'attributes', attribute.id);
     const updatedAttribute = {
       name: data.name,
+      category: data.category,
       values: data.values.map(v => v.value),
     };
     
@@ -88,6 +97,7 @@ export function EditAttributeDialog({ attribute }: EditAttributeDialogProps) {
     if (open) {
        form.reset({
         name: attribute.name,
+        category: attribute.category,
         values: attribute.values.map(v => ({ value: v })),
       });
     }
@@ -123,7 +133,28 @@ export function EditAttributeDialog({ attribute }: EditAttributeDialogProps) {
                 </FormItem>
               )}
             />
-
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories?.map(cat => (
+                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div>
               <FormLabel>Values</FormLabel>
               <div className="space-y-2 mt-2">

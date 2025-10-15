@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,13 +24,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useCollection } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Category } from '@/types';
 
 const attributeSchema = z.object({
   name: z.string().min(1, 'Attribute name is required.'),
+  category: z.string().min(1, 'Category is required.'),
   values: z.array(z.object({ value: z.string().min(1, 'Value cannot be empty.') })).min(1, 'At least one value is required.'),
 });
 
@@ -41,10 +44,14 @@ export function AddAttributeDialog() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
+  const categoriesCollection = collection(firestore, 'categories');
+  const { data: categories } = useCollection<Category>(categoriesCollection);
+
   const form = useForm<AttributeFormValues>({
     resolver: zodResolver(attributeSchema),
     defaultValues: {
       name: '',
+      category: '',
       values: [{ value: '' }],
     },
   });
@@ -60,6 +67,7 @@ export function AddAttributeDialog() {
     const attributesCollection = collection(firestore, 'attributes');
     const newAttribute = {
       name: data.name,
+      category: data.category,
       values: data.values.map(v => v.value),
     };
 
@@ -104,6 +112,28 @@ export function AddAttributeDialog() {
                   <FormControl>
                     <Input placeholder="e.g. Color" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories?.map(cat => (
+                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
