@@ -16,6 +16,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { ProductViewDialog } from './ProductViewDialog';
 
 function RowActions({ product }: { product: Product }) {
   const { toast } = useToast();
@@ -77,7 +78,7 @@ function RowActions({ product }: { product: Product }) {
             <DropdownMenuItem asChild>
                 <Link href={editUrl}>Edit Product</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <ProductViewDialog product={product} />
             <DialogTrigger asChild>
               <DropdownMenuItem>
                 <Share2 className="mr-2 h-4 w-4" />
