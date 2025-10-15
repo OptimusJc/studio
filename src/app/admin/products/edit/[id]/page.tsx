@@ -3,7 +3,7 @@ import { PageHeader } from '../../../components/PageHeader';
 import { ProductForm } from '../../components/ProductForm';
 import { useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import type { Product, Attribute, Category } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useMemo } from 'react';
@@ -27,15 +27,15 @@ export default function EditProductPage() {
   const firestore = useFirestore();
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
   
   const productId = params.id as string;
-  const db = searchParams.get('db') as 'retailers' | 'buyers' || 'retailers';
+  const db = (searchParams.get('db') as 'retailers' | 'buyers') || 'retailers';
   const categorySlug = searchParams.get('category');
   
   const productDocRef = useMemoFirebase(() => {
     if (!firestore || !productId) return null;
-    // Drafts are always in the 'drafts' collection
+    // Editing can happen on drafts or published products.
+    // We check drafts first.
     return doc(firestore, 'drafts', productId);
   }, [firestore, productId]);
   
@@ -55,13 +55,13 @@ export default function EditProductPage() {
 
   const isLoading = isLoadingProduct || isLoadingAttributes || isLoadingCategories;
   
-  const categoryNameFromSlug = categories?.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === categorySlug)?.name;
+  const categoryNameFromSlug = useMemo(() => {
+      return categories?.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === categorySlug)?.name;
+  }, [categories, categorySlug]);
 
   useEffect(() => {
     if (!isLoadingProduct && !productData) {
-        // To handle published products, we could add a fetch here from the live collection,
-        // but for now, we assume editing happens on drafts.
-        // A more robust solution might involve a server-side check.
+        // A more robust solution might involve a server-side check or fetching from the live collection.
         console.warn(`Product with ID ${productId} not found in drafts. It might be published or deleted.`);
     }
   }, [isLoadingProduct, productData, productId]);

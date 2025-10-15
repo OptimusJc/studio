@@ -112,11 +112,6 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       status: 'Draft' as const,
     }
   });
-
-  // const form = useForm<ProductFormValues>({
-  //   resolver: zodResolver(productSchema),
-  //   defaultValues: defaultFormValues
-  // });
   
   const selectedCategory = form.watch('category');
   
@@ -144,8 +139,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         status: initialData.status || 'Draft',
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData?.id]); // Only reset when the product ID changes
+  }, [initialData?.id, form]);
 
   const handleImageSelectClick = (field: 'productImages' | 'additionalImages') => {
     setActiveImageField(field);
