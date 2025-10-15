@@ -134,18 +134,20 @@ export const products: Product[] = [
 ];
 
 export const categories: Category[] = [
-  { id: 'cat_01', name: 'Chairs', productCount: 3 },
-  { id: 'cat_02', name: 'Sofas', productCount: 1 },
-  { id: 'cat_03', name: 'Tables', productCount: 2 },
-  { id: 'cat_04', name: 'Storage', productCount: 2 },
-  { id: 'cat_05', name: 'Lighting', productCount: 1 },
-  { id: 'cat_06', name: 'Rugs', productCount: 1 },
+  { id: 'cat_01', name: 'Wallpapers', productCount: 0 },
+  { id: 'cat_02', name: 'Window Blinds', productCount: 0 },
+  { id: 'cat_03', name: 'Wall Murals', productCount: 0 },
+  { id: 'cat_04', name: 'Carpets', productCount: 0 },
+  { id: 'cat_05', name: 'Window Films', productCount: 0 },
+  { id: 'cat_06', name: 'Fluted Panels', productCount: 0 },
 ];
 
 export const attributes: Attribute[] = [
-  { id: 'attr_01', name: 'Color', values: ['Black', 'Grey', 'Natural Oak', 'White', 'Brass', 'Cream', 'Blue', 'Walnut', 'Gunmetal'] },
-  { id: 'attr_02', name: 'Material', values: ['Mesh', 'Velvet', 'Wood', 'MDF', 'Metal', 'Fabric', 'Marble'] },
-  { id: 'attr_03', name: 'Size', values: ['3-Seater', 'Large', 'Medium'] },
+  { id: 'attr_01', name: 'Color', values: ['Beige', 'Black', 'Grey', 'Natural Oak', 'White', 'Brass', 'Cream', 'Blue', 'Walnut', 'Gunmetal'] },
+  { id: 'attr_02', name: 'Material', values: ['Vinyl', 'Mesh', 'Velvet', 'Wood', 'MDF', 'Metal', 'Fabric', 'Marble'] },
+  { id: 'attr_03', name: 'Size', values: ['0.53m x 10m', '3-Seater', 'Large', 'Medium'] },
+  { id: 'attr_04', name: 'Pattern', values: ['Floral', 'Geometric', 'Striped', 'Solid'] },
+  { id: 'attr_05', name: 'Texture', values: ['Matte', 'Glossy', 'Textured', 'Smooth'] },
 ];
 
 export const users: User[] = [

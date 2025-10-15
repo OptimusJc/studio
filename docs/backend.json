@@ -6,42 +6,66 @@
       "type": "object",
       "description": "Represents a product in the catalog.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the product."
-        },
-        "name": {
+        "productTitle": {
           "type": "string",
           "description": "Name of the product."
         },
-        "description": {
+        "productDescription": {
           "type": "string",
           "description": "Detailed description of the product."
         },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the product's main image.",
-          "format": "uri"
+        "price": {
+          "type": "number",
+          "description": "Price of the product."
         },
-        "categoryId": {
-          "type": "string",
-          "description": "Reference to Category. (Relationship: Category 1:N Product)"
-        },
-        "attributeValues": {
+        "productImages": {
           "type": "array",
-          "description": "References to AttributeValue. (Relationship: AttributeValue N:N Product)",
+          "description": "URLs of the product's main images.",
           "items": {
-            "type": "string"
+            "type": "string",
+            "format": "uri"
           }
+        },
+        "additionalImages": {
+          "type": "array",
+          "description": "URLs of additional product images.",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "specifications": {
+          "type": "string",
+          "description": "Technical specifications of the product."
+        },
+        "attributes": {
+          "type": "object",
+          "description": "Product attributes like color, material, etc.",
+          "properties": {
+            "color": { "type": "string" },
+            "material": { "type": "string" },
+            "size": { "type": "string" },
+            "brand": { "type": "string" },
+            "pattern": { "type": "string" },
+            "texture": { "type": "string" }
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       },
       "required": [
-        "id",
-        "name",
-        "description",
-        "imageUrl",
-        "categoryId",
-        "attributeValues"
+        "productTitle",
+        "price",
+        "productImages",
+        "attributes",
+        "createdAt",
+        "updatedAt"
       ]
     },
     "Category": {
@@ -221,122 +245,113 @@
   "firestore": {
     "structure": [
       {
-        "path": "categories/{categoryId}",
+        "path": "wallpapers/{productId}",
         "definition": {
-          "entityName": "Category",
           "schema": {
-            "$ref": "#/backend/entities/Category"
+            "$ref": "#/entities/Product"
           },
-          "description": "Stores product categories.",
-          "params": [
-            {
-              "name": "categoryId",
-              "description": "Unique identifier for the category."
-            }
-          ]
+          "description": "Stores wallpaper products."
         }
       },
       {
-        "path": "products/{productId}",
+        "path": "window-blinds/{productId}",
         "definition": {
-          "entityName": "Product",
           "schema": {
-            "$ref": "#/backend/entities/Product"
+            "$ref": "#/entities/Product"
           },
-          "description": "Stores product information.",
-          "params": [
-            {
-              "name": "productId",
-              "description": "Unique identifier for the product."
-            }
-          ]
+          "description": "Stores window blind products."
+        }
+      },
+      {
+        "path": "wall-murals/{productId}",
+        "definition": {
+          "schema": {
+            "$ref": "#/entities/Product"
+          },
+          "description": "Stores wall mural products."
+        }
+      },
+      {
+        "path": "carpets/{productId}",
+        "definition": {
+          "schema": {
+            "$ref": "#/entities/Product"
+          },
+          "description": "Stores carpet products."
+        }
+      },
+      {
+        "path": "window-films/{productId}",
+        "definition": {
+          "schema": {
+            "$ref": "#/entities/Product"
+          },
+          "description": "Stores window film products."
+        }
+      },
+      {
+        "path": "fluted-panels/{productId}",
+        "definition": {
+          "schema": {
+            "$ref": "#/entities/Product"
+          },
+          "description": "Stores fluted panel products."
+        }
+      },
+      {
+        "path": "categories/{categoryId}",
+        "definition": {
+          "schema": {
+            "$ref": "#/entities/Category"
+          },
+          "description": "Stores product categories."
         }
       },
       {
         "path": "attributes/{attributeId}",
         "definition": {
-          "entityName": "Attribute",
           "schema": {
-            "$ref": "#/backend/entities/Attribute"
+            "$ref": "#/entities/Attribute"
           },
-          "description": "Stores product attributes (e.g., color, size).",
-          "params": [
-            {
-              "name": "attributeId",
-              "description": "Unique identifier for the attribute."
-            }
-          ]
+          "description": "Stores product attributes (e.g., color, size)."
         }
       },
       {
         "path": "attributeValues/{attributeValueId}",
         "definition": {
-          "entityName": "AttributeValue",
           "schema": {
-            "$ref": "#/backend/entities/AttributeValue"
+            "$ref": "#/entities/AttributeValue"
           },
-          "description": "Stores specific values for product attributes.",
-          "params": [
-            {
-              "name": "attributeValueId",
-              "description": "Unique identifier for the attribute value."
-            }
-          ]
+          "description": "Stores specific values for product attributes."
         }
       },
       {
         "path": "users/{userId}",
         "definition": {
-          "entityName": "User",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "$ref": "#/entities/User"
           },
-          "description": "Stores user profiles.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Unique identifier for the user."
-            }
-          ]
+          "description": "Stores user profiles."
         }
       },
       {
         "path": "users/{userId}/shareLinks/{shareLinkId}",
         "definition": {
-          "entityName": "ShareLink",
           "schema": {
-            "$ref": "#/backend/entities/ShareLink"
+            "$ref": "#/entities/ShareLink"
           },
-          "description": "Stores shareable links created by users.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Unique identifier for the user."
-            },
-            {
-              "name": "shareLinkId",
-              "description": "Unique identifier for the share link."
-            }
-          ]
+          "description": "Stores shareable links created by users."
         }
       },
       {
         "path": "roles_admin/{userId}",
         "definition": {
-          "entityName": "User",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "$ref": "#/entities/User"
           },
-          "description": "Indicates admin role for the user, existence-based access control.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Unique identifier for the user."
-            }
-          ]
+          "description": "Indicates admin role for the user, existence-based access control."
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to support the CatalogLink application, focusing on products, categories, attributes, and users. The design prioritizes security, scalability, and ease of debugging, following the principles of Authorization Independence, Clarity of Intent, and DBAC (Database-Based Access Control).\n\n*   **Authorization Independence:** Denormalization is employed to avoid hierarchical authorization dependencies. For instance, if access to `Products` were to depend on `Category` attributes, those attributes would be copied into the `Product` documents. Since there is no specific rule defined in the App Requirement, that necessitates such a dependency, we don't need to denormalize.\n*   **Structural Segregation:** Each collection stores data with homogeneous security requirements. Publicly accessible data and private data (like user drafts or admin settings) are stored in separate collections.\n*   **Access Modeling:**\n    *   User data (`users/{userId}`) is path-based, ensuring easy management of user-specific information.\n    *   Share Links are stored under `users/{userId}/shareLinks/{shareLinkId}`, reflecting user ownership.\n    *   Global roles are managed through the existence of documents in dedicated collections like `/roles_admin/{uid}`. This is existence-based, simplifying security rules.\n*   **Data Clarity and Predictability:** Explicit state modeling (if applicable) would use a single `status` field. The schema is predictable, avoiding dynamic keys and enforcing consistent naming conventions.\n\n**QAPs (Rules are not Filters):**\n\n*   The segregation of data into different collections based on access control requirements ensures that list operations (`get` operations on collections) are secure and efficient. For example, listing products within a specific category doesn't require filtering out unauthorized products based on complex rules; all documents in the `products` collection are intended to be accessible under the defined rules.\n*   The membership map approach, where applicable (e.g., for collaborative documents), helps to quickly determine user roles and permissions without needing to fetch related documents, thus supporting QAPs.\n"
+    ]
   }
 }

@@ -25,14 +25,12 @@ export default function CategoriesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead className="text-right">Product Count</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {categories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell className="text-right">{category.productCount}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
