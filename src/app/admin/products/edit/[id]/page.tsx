@@ -31,14 +31,12 @@ export default function EditProductPage() {
   
   const productId = params.id as string;
   const db = searchParams.get('db') as 'retailers' | 'buyers' || 'retailers';
-  const categoryName = searchParams.get('category');
-  
-  const categoryCollectionName = categoryName ? categoryName.toLowerCase().replace(/\s+/g, '-') : null;
+  const categorySlug = searchParams.get('category');
 
   const productDocRef = useMemoFirebase(() => {
-    if (!firestore || !db || !categoryCollectionName || !productId) return null;
-    return doc(firestore, `${db}/${categoryCollectionName}/products`, productId);
-  }, [firestore, db, categoryCollectionName, productId]);
+    if (!firestore || !db || !categorySlug || !productId) return null;
+    return doc(firestore, `${db}/${categorySlug}/products`, productId);
+  }, [firestore, db, categorySlug, productId]);
   
   const { data: productData, isLoading: isLoadingProduct } = useDoc<any>(productDocRef);
 
@@ -55,19 +53,22 @@ export default function EditProductPage() {
   const { data: categories, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
 
   const isLoading = isLoadingProduct || isLoadingAttributes || isLoadingCategories;
+  
+  const categoryNameFromSlug = categories?.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === categorySlug)?.name;
+
 
   useEffect(() => {
       // If we are editing, but somehow the category name doesn't match a real category slug,
-      // or the product doesn't exist, redirect to the main products page.
-      if (!isLoading && (!categoryCollectionName || !productData)) {
+      // or the product doesn't exist after loading, redirect to the main products page.
+      if (!isLoading && (!categorySlug || !productData)) {
           router.replace(`/admin/products?db=${db}`);
       }
-  }, [isLoading, productData, categoryCollectionName, router, db]);
+  }, [isLoading, productData, categorySlug, router, db]);
   
-  const transformedProductData: Product | null = productData ? {
+  const transformedProductData: Product | null = (productData && categoryNameFromSlug) ? {
     id: productData.id,
     name: productData.productTitle,
-    category: categoryName || '',
+    category: categoryNameFromSlug,
     price: productData.price,
     stock: 100, // Placeholder
     sku: `SKU-${productData.id.substring(0, 6)}`, // Placeholder
@@ -105,7 +106,7 @@ export default function EditProductPage() {
           allAttributes={attributes || []} 
           categories={categories || []}
           initialDb={db}
-          initialCategory={categoryName || ''}
+          initialCategory={categorySlug || ''}
         />
       )}
     </div>
