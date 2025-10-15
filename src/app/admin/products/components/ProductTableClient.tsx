@@ -140,6 +140,7 @@ export function ProductTableClient({ products }: { products: Product[] }) {
           </TableHead>
           <TableHead className="w-[80px]">Image</TableHead>
           <TableHead>Name</TableHead>
+          <TableHead>Status</TableHead>
           <TableHead>Category</TableHead>
           <TableHead>Brand</TableHead>
           <TableHead className="text-right">Price</TableHead>
@@ -163,6 +164,11 @@ export function ProductTableClient({ products }: { products: Product[] }) {
               />
             </TableCell>
             <TableCell className="font-medium">{product.name}</TableCell>
+             <TableCell>
+              <Badge variant={product.status === 'Published' ? 'secondary' : 'outline'}>
+                {product.status}
+              </Badge>
+            </TableCell>
             <TableCell>{product.category}</TableCell>
             <TableCell>{product.attributes.brand as string}</TableCell>
             <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>

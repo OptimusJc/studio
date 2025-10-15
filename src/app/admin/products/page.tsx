@@ -82,7 +82,7 @@ export default function ProductsPage() {
               price: data.price,
               stock: 100, // Placeholder
               sku: `SKU-${doc.id.substring(0, 6)}`, // Placeholder
-              status: 'Published', // Placeholder
+              status: data.status || 'Draft',
               attributes: data.attributes,
               imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
               imageHint: 'product image',

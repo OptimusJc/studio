@@ -37,6 +37,7 @@ const productSchema = z.object({
   productImages: z.array(z.string()).min(1, "At least one primary image is required."),
   additionalImages: z.array(z.string()).optional(),
   db: z.enum(['retailers', 'buyers']),
+  status: z.enum(['Published', 'Draft']),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -89,7 +90,8 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeImageField, setActiveImageField] = useState<'productImages' | 'additionalImages' | null>(null);
   
-  const isEditMode = !!initialData;
+  const [isEditMode, setIsEditMode] = useState(!!initialData);
+  const [currentProductId, setCurrentProductId] = useState<string | null>(initialData?.id || null);
   
   const defaultFormValues = useMemo(() => ({
     productTitle: '',
@@ -102,6 +104,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     productImages: [],
     additionalImages: [],
     db: initialDb,
+    status: 'Draft' as const,
   }), [initialCategory, initialDb]);
 
   const form = useForm<ProductFormValues>({
@@ -132,9 +135,14 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         productImages: initialData.productImages || [],
         additionalImages: initialData.additionalImages || [],
         db: initialData.db,
+        status: initialData.status || 'Draft',
       });
+       setIsEditMode(true);
+      setCurrentProductId(initialData.id);
     } else {
         form.reset(defaultFormValues);
+        setIsEditMode(false);
+        setCurrentProductId(null);
     }
   }, [initialData, form, defaultFormValues]);
 
@@ -187,12 +195,13 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         additionalImages: data.additionalImages,
         specifications: data.specifications,
         attributes: data.attributes,
-        createdAt: initialData ? (initialData as any).createdAt : new Date(),
+        status: data.status,
+        createdAt: (isEditMode && initialData) ? (initialData as any).createdAt : new Date(),
         updatedAt: new Date(),
       };
       
-      if(isEditMode && initialData) {
-        const docRef = doc(firestore, collectionPath, initialData.id);
+      if(isEditMode && currentProductId) {
+        const docRef = doc(firestore, collectionPath, currentProductId);
         await setDocumentNonBlocking(docRef, productData, { merge: true });
         toast({
             title: "Product Updated!",
@@ -200,15 +209,16 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         });
       } else {
         const productsCollection = collection(firestore, collectionPath);
-        await addDocumentNonBlocking(productsCollection, productData);
+        const newDocRef = await addDocumentNonBlocking(productsCollection, productData);
         toast({
             title: "Product Saved!",
-            description: `${data.productTitle} has been added to the catalog.`,
+            description: `${data.productTitle} has been saved as a draft.`,
         });
+        if (newDocRef) {
+             const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
+            router.replace(newPath, { scroll: false });
+        }
       }
-
-      router.push(`/admin/products?db=${data.db}&category=${data.category}`);
-      router.refresh();
 
     } catch (error) {
         console.error("Error saving document: ", error);
@@ -380,6 +390,27 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                   <CardTitle>Organization</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-6">
+                   <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!isEditMode}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Draft">Draft</SelectItem>
+                            <SelectItem value="Published">Published</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="category"

@@ -3,9 +3,10 @@ import { PageHeader } from '../../../components/PageHeader';
 import { ProductForm } from '../../components/ProductForm';
 import { useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import type { Product, Attribute, Category } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect } from 'react';
 
 function EditProductFormSkeleton() {
     return (
@@ -26,6 +27,7 @@ export default function EditProductPage() {
   const firestore = useFirestore();
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   const productId = params.id as string;
   const db = searchParams.get('db') as 'retailers' | 'buyers' || 'retailers';
@@ -53,6 +55,14 @@ export default function EditProductPage() {
   const { data: categories, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
 
   const isLoading = isLoadingProduct || isLoadingAttributes || isLoadingCategories;
+
+  useEffect(() => {
+      // If we are editing, but somehow the category name doesn't match a real category slug,
+      // or the product doesn't exist, redirect to the main products page.
+      if (!isLoading && (!categoryCollectionName || !productData)) {
+          router.replace(`/admin/products?db=${db}`);
+      }
+  }, [isLoading, productData, categoryCollectionName, router, db]);
   
   const transformedProductData: Product | null = productData ? {
     id: productData.id,
@@ -61,7 +71,7 @@ export default function EditProductPage() {
     price: productData.price,
     stock: 100, // Placeholder
     sku: `SKU-${productData.id.substring(0, 6)}`, // Placeholder
-    status: 'Published', // Placeholder
+    status: productData.status || 'Draft',
     attributes: productData.attributes,
     imageUrl: productData.productImages?.[0] || '',
     imageHint: 'product image',
@@ -84,10 +94,10 @@ export default function EditProductPage() {
   return (
     <div className="p-4 md:p-8">
       <PageHeader
-        title="Edit Product"
-        description="Update the details of the product."
+        title={isEditMode ? "Edit Product" : "Add New Product"}
+        description={isEditMode ? "Update the details of the product." : "Fill in the details below to add a new product."}
       />
-      {isLoading ? (
+      {isLoading || !transformedProductData ? (
         <EditProductFormSkeleton />
       ) : (
         <ProductForm 
