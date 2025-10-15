@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, Rocket, Save, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Attribute } from '@/types';
@@ -187,13 +187,13 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     
     if (currentProductId) {
       const docRef = doc(firestore, 'drafts', currentProductId);
-      await setDocumentNonBlocking(docRef, productData, { merge: true });
+      setDocumentNonBlocking(docRef, productData, { merge: true });
       toast({
           title: "Draft Updated!",
           description: `${data.productTitle} has been updated.`,
       });
     } else {
-      const draftsCollection = useMemoFirebase(() => collection(firestore, 'drafts'), [firestore]);
+      const draftsCollection = collection(firestore, 'drafts');
       const newDocRef = await addDocumentNonBlocking(draftsCollection, { ...productData, status: 'Draft'});
       toast({
           title: "Draft Saved!",
@@ -467,7 +467,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                                 <FormControl>
                                     <SelectTrigger>
                                     <SelectValue placeholder={`Select ${attr.name.toLowerCase()}`} />
-                                    </SelectTrigger>
+                                    </Trigger>
                                 </FormControl>
                                 <SelectContent>
                                     {attr.values.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
