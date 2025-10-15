@@ -4,13 +4,8 @@
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import * as admin from 'firebase-admin';
+import { getDoc, setDoc, deleteDoc, doc, Firestore } from 'firebase/firestore';
 
-// Initialize Firebase Admin SDK if not already done
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-const db = admin.firestore();
 
 export const ManageProductStatusInputSchema = z.object({
   action: z.enum(['publish', 'unpublish']),
@@ -26,10 +21,16 @@ export const ManageProductStatusOutputSchema = z.object({
 });
 export type ManageProductStatusOutput = z.infer<typeof ManageProductStatusOutputSchema>;
 
+
+interface FlowContext {
+  firestore: Firestore;
+}
+
 export async function manageProductStatus(
-  input: ManageProductStatusInput
+  input: ManageProductStatusInput,
+  firestore: Firestore
 ): Promise<ManageProductStatusOutput> {
-  return manageProductStatusFlow(input);
+  return manageProductStatusFlow(input, { firestore });
 }
 
 const manageProductStatusFlow = ai.defineFlow(
@@ -38,50 +39,46 @@ const manageProductStatusFlow = ai.defineFlow(
     inputSchema: ManageProductStatusInputSchema,
     outputSchema: ManageProductStatusOutputSchema,
   },
-  async (input) => {
+  async (input, context: FlowContext) => {
     const { action, productId } = input;
-    const draftRef = db.collection('drafts').doc(productId);
+    const { firestore } = context;
+
+    const draftRef = doc(firestore, 'drafts', productId);
 
     try {
       if (action === 'publish') {
-        const draftDoc = await draftRef.get();
-        if (!draftDoc.exists) {
+        const draftDoc = await getDoc(draftRef);
+        if (!draftDoc.exists()) {
           throw new Error(`Draft with ID ${productId} not found.`);
         }
         const productData = draftDoc.data()!;
         
-        const liveCollectionName = `${productData.db}-${productData.category}`;
-        const liveDocRef = db.collection(liveCollectionName).doc(productId);
+        const liveCollectionPath = `${productData.db}/${productData.category}/products`;
+        const liveDocRef = doc(firestore, liveCollectionPath, productId);
 
-        // Copy data to live collection and delete from drafts
-        await db.runTransaction(async (transaction) => {
-            transaction.set(liveDocRef, { ...productData, status: 'Published' });
-            transaction.delete(draftRef);
-        });
+        await setDoc(liveDocRef, { ...productData, status: 'Published' });
+        await deleteDoc(draftRef);
 
         return {
           success: true,
-          message: `Product ${productId} published successfully to ${liveCollectionName}.`,
+          message: `Product ${productId} published successfully to ${liveCollectionPath}.`,
         };
       } else if (action === 'unpublish') {
         if (!input.db || !input.category) {
             throw new Error("Database and category are required for unpublishing.");
         }
 
-        const liveCollectionName = `${input.db}-${input.category}`;
-        const liveDocRef = db.collection(liveCollectionName).doc(productId);
+        const liveCollectionPath = `${input.db}/${input.category}/products`;
+        const liveDocRef = doc(firestore, liveCollectionPath, productId);
 
-        const liveDoc = await liveDocRef.get();
-        if (!liveDoc.exists) {
-            throw new Error(`Published product with ID ${productId} not found in ${liveCollectionName}.`);
+        const liveDoc = await getDoc(liveDocRef);
+        if (!liveDoc.exists()) {
+            throw new Error(`Published product with ID ${productId} not found in ${liveCollectionPath}.`);
         }
         const productData = liveDoc.data()!;
 
-        // Copy data to drafts collection and delete from live
-         await db.runTransaction(async (transaction) => {
-            transaction.set(draftRef, { ...productData, status: 'Draft' });
-            transaction.delete(liveDocRef);
-        });
+         await setDoc(draftRef, { ...productData, status: 'Draft' });
+         await deleteDoc(liveDocRef);
 
         return {
           success: true,

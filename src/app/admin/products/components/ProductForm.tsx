@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, Rocket, Trash2, Save, XCircle } from 'lucide-react';
+import { Upload, Rocket, Save, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -207,7 +207,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   };
 
   const handlePublish = async (data: ProductFormValues) => {
-    if (!currentProductId) {
+    if (!currentProductId || !firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must save a draft before publishing.' });
       return;
     }
@@ -215,7 +215,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       await manageProductStatus({
         action: 'publish',
         productId: currentProductId,
-      });
+      }, firestore);
       toast({ title: 'Product Published!', description: `${data.productTitle} is now live.` });
       router.push(`/admin/products?db=${data.db}&category=${data.category}`);
       router.refresh();
@@ -226,14 +226,14 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   };
 
   const handleUnpublish = async (data: ProductFormValues) => {
-    if (!currentProductId) return;
+    if (!currentProductId || !firestore) return;
     try {
       await manageProductStatus({
         action: 'unpublish',
         productId: currentProductId,
         db: data.db,
         category: data.category,
-      });
+      }, firestore);
       toast({ title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
       router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${data.category}`);
       router.refresh();
