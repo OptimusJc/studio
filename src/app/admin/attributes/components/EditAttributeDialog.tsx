@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -56,7 +56,10 @@ export function EditAttributeDialog({ attribute }: EditAttributeDialogProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const categoriesCollection = collection(firestore, 'categories');
+  const categoriesCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
   const { data: categories } = useCollection<Category>(categoriesCollection);
 
   const form = useForm<AttributeFormValues>({
