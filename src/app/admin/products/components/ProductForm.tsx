@@ -16,15 +16,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload } from 'lucide-react';
+import { Upload, Rocket, Trash2, Save, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Attribute } from '@/types';
 import { useEffect, useState, useMemo } from 'react';
 import { ImageSelectionDialog } from './ImageSelectionDialog';
 import Image from 'next/image';
+import { manageProductStatus } from '@/ai/flows/manage-product-status-flow';
+import { Badge } from '@/components/ui/badge';
 
 const productSchema = z.object({
   productTitle: z.string().min(1, 'Product title is required.'),
@@ -90,8 +92,9 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeImageField, setActiveImageField] = useState<'productImages' | 'additionalImages' | null>(null);
   
-  const [isEditMode, setIsEditMode] = useState(!!initialData);
-  const [currentProductId, setCurrentProductId] = useState<string | null>(initialData?.id || null);
+  const isEditMode = !!initialData;
+  const currentProductId = initialData?.id || null;
+  const currentStatus = initialData?.status || 'Draft';
   
   const defaultFormValues = useMemo(() => ({
     productTitle: '',
@@ -137,12 +140,8 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         db: initialData.db,
         status: initialData.status || 'Draft',
       });
-       setIsEditMode(true);
-      setCurrentProductId(initialData.id);
     } else {
         form.reset(defaultFormValues);
-        setIsEditMode(false);
-        setCurrentProductId(null);
     }
   }, [initialData, form, defaultFormValues]);
 
@@ -164,69 +163,84 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     setActiveImageField(null);
   };
 
-  const onSubmit = async (data: ProductFormValues) => {
-    if (!firestore) {
-        toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: "Firestore is not available. Please try again later.",
-        });
-        return;
-    }
+  const getProductDataFromForm = (data: ProductFormValues) => {
+    return {
+      productTitle: data.productTitle,
+      productCode: data.productCode,
+      productDescription: data.productDescription,
+      price: data.price,
+      productImages: data.productImages,
+      additionalImages: data.additionalImages,
+      specifications: data.specifications,
+      attributes: data.attributes,
+      status: data.status,
+      category: data.category,
+      db: data.db,
+      createdAt: (isEditMode && initialData) ? (initialData as any).createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  const handleSaveDraft = async (data: ProductFormValues) => {
+    if (!firestore) return;
+    const productData = getProductDataFromForm(data);
     
-    if (!data.category) {
-        toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: "Please select a product category.",
-        });
-        return;
-    }
-
-    try {
-      const collectionPath = `${data.db}/${data.category}/products`;
-      
-      const productData = {
-        productTitle: data.productTitle,
-        productCode: data.productCode,
-        productDescription: data.productDescription,
-        price: data.price,
-        productImages: data.productImages,
-        additionalImages: data.additionalImages,
-        specifications: data.specifications,
-        attributes: data.attributes,
-        status: data.status,
-        createdAt: (isEditMode && initialData) ? (initialData as any).createdAt : new Date(),
-        updatedAt: new Date(),
-      };
-      
-      if(isEditMode && currentProductId) {
-        const docRef = doc(firestore, collectionPath, currentProductId);
-        await setDocumentNonBlocking(docRef, productData, { merge: true });
-        toast({
-            title: "Product Updated!",
-            description: `${data.productTitle} has been updated.`,
-        });
-      } else {
-        const productsCollection = collection(firestore, collectionPath);
-        const newDocRef = await addDocumentNonBlocking(productsCollection, productData);
-        toast({
-            title: "Product Saved!",
-            description: `${data.productTitle} has been saved as a draft.`,
-        });
-        if (newDocRef) {
-             const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
-            router.replace(newPath, { scroll: false });
-        }
+    if (currentProductId) {
+      const docRef = doc(firestore, 'drafts', currentProductId);
+      await setDocumentNonBlocking(docRef, productData, { merge: true });
+      toast({
+          title: "Draft Updated!",
+          description: `${data.productTitle} has been updated.`,
+      });
+    } else {
+      const draftsCollection = collection(firestore, 'drafts');
+      const newDocRef = await addDocumentNonBlocking(draftsCollection, { ...productData, status: 'Draft'});
+      toast({
+          title: "Draft Saved!",
+          description: `${data.productTitle} has been saved.`,
+      });
+      if (newDocRef) {
+          const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
+          router.replace(newPath, { scroll: false });
       }
+    }
+  };
 
-    } catch (error) {
-        console.error("Error saving document: ", error);
-        toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: "There was a problem saving the product.",
-        });
+  const handlePublish = async (data: ProductFormValues) => {
+    if (!currentProductId) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must save a draft before publishing.' });
+      return;
+    }
+    try {
+      await manageProductStatus({
+        action: 'publish',
+        productId: currentProductId,
+      });
+      toast({ title: 'Product Published!', description: `${data.productTitle} is now live.` });
+      router.push(`/admin/products?db=${data.db}&category=${data.category}`);
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Publishing Failed', description: (e as Error).message });
+    }
+  };
+
+  const handleUnpublish = async (data: ProductFormValues) => {
+    if (!currentProductId) return;
+    try {
+      await manageProductStatus({
+        action: 'unpublish',
+        productId: currentProductId,
+        db: data.db,
+        category: data.category,
+      });
+      toast({ title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
+      router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${data.category}`);
+      router.refresh();
+
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Unpublishing Failed', description: (e as Error).message });
     }
   };
   
@@ -246,7 +260,23 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         onSelectImage={handleImageSelected}
       />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form className="space-y-8">
+          <div className="flex justify-end gap-2 sticky top-20 z-10 py-4 bg-background/80 backdrop-blur-sm">
+              <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
+              <Button type="button" variant="secondary" onClick={form.handleSubmit(handleSaveDraft)}>
+                <Save className="mr-2 h-4 w-4" /> Save Draft
+              </Button>
+              {isEditMode && currentStatus === 'Published' && (
+                <Button type="button" variant="destructive" onClick={form.handleSubmit(handleUnpublish)}>
+                  <XCircle className="mr-2 h-4 w-4" /> Unpublish
+                </Button>
+              )}
+               {isEditMode && currentStatus === 'Draft' && (
+                <Button type="button" className="bg-green-600 hover:bg-green-700 text-white" onClick={form.handleSubmit(handlePublish)}>
+                  <Rocket className="mr-2 h-4 w-4" /> Publish
+                </Button>
+              )}
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
               <Card>
@@ -390,27 +420,12 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                   <CardTitle>Organization</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-6">
-                   <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
+                   <div className="space-y-2">
                         <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!isEditMode}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Draft">Draft</SelectItem>
-                            <SelectItem value="Published">Published</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                        <Badge variant={currentStatus === 'Published' ? 'secondary' : 'outline'}>
+                            {currentStatus}
+                        </Badge>
+                   </div>
                   <FormField
                     control={form.control}
                     name="category"
@@ -471,10 +486,6 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                     )}
                 </CardContent>
               </Card>
-              <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
-                  <Button type="submit">{isEditMode ? 'Save Changes' : 'Save Product'}</Button>
-              </div>
             </div>
           </div>
         </form>

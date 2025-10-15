@@ -5,8 +5,8 @@ import { Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ProductTableClient } from './components/ProductTableClient';
 import Link from 'next/link';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, query, getDocs, DocumentData, collectionGroup } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import type { Product, Category } from '@/types';
 import { useSearchParams } from 'next/navigation';
@@ -35,12 +35,6 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const categoriesCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'categories');
-  }, [firestore]);
-  const { data: categoriesData, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
-
   const pageTitle = category 
     ? `${category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')}`
     : 'All Products';
@@ -49,7 +43,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (!firestore || !categoriesData) return;
+      if (!firestore) return;
 
       setIsLoading(true);
       const fetchedProducts: Product[] = [];
@@ -57,57 +51,58 @@ export default function ProductsPage() {
       const newDb = searchParams.get('db') || 'retailers';
       const newCategory = searchParams.get('category');
       
-      const allCategorySlugs = categoriesData.map(c => c.name.toLowerCase().replace(/\s+/g, '-'));
-      const categoriesToFetch = newCategory ? [newCategory] : allCategorySlugs;
+      // 1. Fetch Drafts
+      const draftsQuery = query(collection(firestore, 'drafts'));
+      const draftsSnapshot = await getDocs(draftsQuery);
+      draftsSnapshot.forEach(doc => {
+          const data = doc.data() as DocumentData;
+           if (newDb === data.db && (!newCategory || newCategory === data.category)) {
+              fetchedProducts.push({
+                id: doc.id,
+                ...data,
+                name: data.productTitle,
+                imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+              } as Product);
+           }
+      });
 
-      for (const cat of categoriesToFetch) {
-        const collectionPath = `${newDb}/${cat}/products`;
-        try {
-          const q = query(collection(firestore, collectionPath));
-          const querySnapshot = await getDocs(q);
-          querySnapshot.forEach((doc) => {
-            const data = doc.data() as DocumentData;
-            const getCreatedAt = () => {
-                if (!data.createdAt) return new Date().toISOString();
-                if (typeof data.createdAt.toDate === 'function') {
-                    return data.createdAt.toDate().toISOString();
-                }
-                return new Date(data.createdAt).toISOString();
-            }
 
-            fetchedProducts.push({
-              id: doc.id,
-              name: data.productTitle,
-              category: cat.charAt(0).toUpperCase() + cat.slice(1).replace(/-/g, ' '),
-              price: data.price,
-              stock: 100, // Placeholder
-              sku: `SKU-${doc.id.substring(0, 6)}`, // Placeholder
-              status: data.status || 'Draft',
-              attributes: data.attributes,
-              imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-              imageHint: 'product image',
-              createdAt: getCreatedAt(),
-              productCode: data.productCode,
-              productTitle: data.productTitle,
-              productDescription: data.productDescription,
-              productImages: data.productImages,
-              additionalImages: data.additionalImages,
-              specifications: data.specifications,
-              db: newDb,
-            } as Product);
-          });
-        } catch (error) {
-          console.error(`Error fetching products from ${collectionPath}:`, error);
-        }
-      }
-      setProducts(fetchedProducts);
+      // 2. Fetch Published
+      const allPublishedCollections = collectionGroup(firestore, 'products');
+      const publishedSnapshot = await getDocs(allPublishedCollections);
+      
+      publishedSnapshot.forEach(doc => {
+          const data = doc.data() as DocumentData;
+          const collectionId = doc.ref.parent.parent?.id; // e.g., 'retailers-wallpapers'
+          if (collectionId) {
+             const [docDb, docCategory] = collectionId.split('-');
+              if (docDb === newDb && (!newCategory || newCategory === docCategory)) {
+                   fetchedProducts.push({
+                    id: doc.id,
+                    ...data,
+                    name: data.productTitle,
+                    status: 'Published', // Overwrite status
+                    imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                  } as Product);
+              }
+          }
+      });
+
+      // Simple deduplication based on productCode if needed, favoring published
+      const productMap = new Map<string, Product>();
+      fetchedProducts.forEach(p => {
+          const existing = productMap.get(p.productCode as string);
+          if (!existing || (existing.status === 'Draft' && p.status === 'Published')) {
+              productMap.set(p.productCode as string, p);
+          }
+      });
+
+      setProducts(Array.from(productMap.values()));
       setIsLoading(false);
     };
 
-    if (!isLoadingCategories) {
-        fetchProducts();
-    }
-  }, [firestore, searchParams, categoriesData, isLoadingCategories]);
+    fetchProducts();
+  }, [firestore, searchParams]);
 
   const newProductUrl = category 
     ? `/admin/products/new?db=${db}&category=${category}`

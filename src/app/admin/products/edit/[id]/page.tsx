@@ -32,11 +32,12 @@ export default function EditProductPage() {
   const productId = params.id as string;
   const db = searchParams.get('db') as 'retailers' | 'buyers' || 'retailers';
   const categorySlug = searchParams.get('category');
-
+  
   const productDocRef = useMemoFirebase(() => {
-    if (!firestore || !db || !categorySlug || !productId) return null;
-    return doc(firestore, `${db}/${categorySlug}/products`, productId);
-  }, [firestore, db, categorySlug, productId]);
+    if (!firestore || !productId) return null;
+    // Drafts are always in the 'drafts' collection
+    return doc(firestore, 'drafts', productId);
+  }, [firestore, productId]);
   
   const { data: productData, isLoading: isLoadingProduct } = useDoc<any>(productDocRef);
 
@@ -56,13 +57,14 @@ export default function EditProductPage() {
   
   const categoryNameFromSlug = categories?.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === categorySlug)?.name;
 
-
   useEffect(() => {
-    // Only perform the check after the initial loading is complete.
-    if (!isLoadingProduct && productDocRef && productData === undefined) {
-        router.replace(`/admin/products?db=${db}`);
+    if (!isLoadingProduct && !productData) {
+        // To handle published products, we could add a fetch here from the live collection,
+        // but for now, we assume editing happens on drafts.
+        // A more robust solution might involve a server-side check.
+        console.warn(`Product with ID ${productId} not found in drafts. It might be published or deleted.`);
     }
-  }, [isLoadingProduct, productData, router, db]);
+  }, [isLoadingProduct, productData, productId]);
   
   const transformedProductData: Product | null = (productData && categoryNameFromSlug) ? {
     id: productData.id,
@@ -77,6 +79,7 @@ export default function EditProductPage() {
     imageHint: 'product image',
     createdAt: (() => {
         if (!productData.createdAt) return new Date().toISOString();
+        if (typeof productData.createdAt === 'string') return productData.createdAt;
         if (typeof productData.createdAt.toDate === 'function') {
             return productData.createdAt.toDate().toISOString();
         }
@@ -97,7 +100,7 @@ export default function EditProductPage() {
         title="Edit Product"
         description="Update the details of the product."
       />
-      {isLoading || !transformedProductData ? (
+      {isLoading ? (
         <EditProductFormSkeleton />
       ) : (
         <ProductForm 
