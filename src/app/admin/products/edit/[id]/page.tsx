@@ -94,8 +94,8 @@ export default function EditProductPage() {
   return (
     <div className="p-4 md:p-8">
       <PageHeader
-        title={isEditMode ? "Edit Product" : "Add New Product"}
-        description={isEditMode ? "Update the details of the product." : "Fill in the details below to add a new product."}
+        title="Edit Product"
+        description="Update the details of the product."
       />
       {isLoading || !transformedProductData ? (
         <EditProductFormSkeleton />
