@@ -58,12 +58,11 @@ export default function EditProductPage() {
 
 
   useEffect(() => {
-      // If we are editing, but somehow the category name doesn't match a real category slug,
-      // or the product doesn't exist after loading, redirect to the main products page.
-      if (!isLoading && (!categorySlug || !productData)) {
+      // If loading is finished and we still don't have product data or a valid category, redirect.
+      if (!isLoadingProduct && !productData) {
           router.replace(`/admin/products?db=${db}`);
       }
-  }, [isLoading, productData, categorySlug, router, db]);
+  }, [isLoadingProduct, productData, router, db]);
   
   const transformedProductData: Product | null = (productData && categoryNameFromSlug) ? {
     id: productData.id,
