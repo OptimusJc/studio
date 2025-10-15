@@ -59,11 +59,8 @@ export default function EditProductPage() {
 
   useEffect(() => {
     // Only perform the check after the initial loading is complete.
-    if (!isLoadingProduct) {
-      // If loading is done and there's still no product data, then redirect.
-      if (!productData) {
+    if (!isLoadingProduct && productDocRef && productData === undefined) {
         router.replace(`/admin/products?db=${db}`);
-      }
     }
   }, [isLoadingProduct, productData, router, db]);
   
