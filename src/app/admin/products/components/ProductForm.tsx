@@ -94,7 +94,6 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   
   const isEditMode = !!initialData;
   const currentProductId = initialData?.id || null;
-  const currentStatus = initialData?.status || 'Draft';
   
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -109,20 +108,12 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       productImages: [],
       additionalImages: [],
       db: initialDb,
-      status: 'Draft' as const,
+      status: 'Draft',
     }
   });
-  
-  const selectedCategory = form.watch('category');
-  
-  const relevantAttributes = useMemo(() => {
-    if (!selectedCategory) return [];
-    const categoryDetails = categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === selectedCategory);
-    if (!categoryDetails) return [];
-    return allAttributes.filter(attr => attr.category === categoryDetails.name);
-  }, [selectedCategory, allAttributes, categories]);
 
-
+  const currentStatus = form.watch('status');
+  
   useEffect(() => {
     if (initialData) {
       form.reset({
@@ -140,6 +131,17 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       });
     }
   }, [initialData?.id, form]);
+
+  
+  const selectedCategory = form.watch('category');
+  
+  const relevantAttributes = useMemo(() => {
+    if (!selectedCategory) return [];
+    const categoryDetails = categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === selectedCategory);
+    if (!categoryDetails) return [];
+    return allAttributes.filter(attr => attr.category === categoryDetails.name);
+  }, [selectedCategory, allAttributes, categories]);
+
 
   const handleImageSelectClick = (field: 'productImages' | 'additionalImages') => {
     setActiveImageField(field);
@@ -189,7 +191,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
           description: `${data.productTitle} has been updated.`,
       });
     } else {
-        addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
+       addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
         .then(newDocRef => {
             toast({
                 title: "Draft Saved!",
@@ -214,6 +216,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         productId: currentProductId,
       }, firestore);
       toast({ title: 'Product Published!', description: `${data.productTitle} is now live.` });
+      form.setValue('status', 'Published');
       router.push(`/admin/products?db=${data.db}&category=${data.category}`);
       router.refresh();
     } catch (e) {
@@ -232,6 +235,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         category: data.category,
       }, firestore);
       toast({ title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
+      form.setValue('status', 'Draft');
       router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${data.category}`);
       router.refresh();
 
@@ -258,7 +262,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       />
       <Form {...form}>
         <form className="space-y-8">
-          <div className="flex justify-end gap-2 sticky top-20 z-10 py-4 bg-background/80 backdrop-blur-sm">
+           <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/95 py-4 backdrop-blur-sm">
               <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
               <Button type="button" variant="secondary" onClick={form.handleSubmit(handleSaveDraft)}>
                 <Save className="mr-2 h-4 w-4" /> Save Draft
