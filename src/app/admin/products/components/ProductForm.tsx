@@ -23,7 +23,9 @@ import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ImageSelectionDialog } from './ImageSelectionDialog';
+import Image from 'next/image';
 
 const productSchema = z.object({
   productTitle: z.string().min(1, 'Product title is required.'),
@@ -37,6 +39,8 @@ const productSchema = z.object({
   pattern: z.string().optional(),
   texture: z.string().optional(),
   category: z.string().min(1, 'Category is required.'),
+  productImages: z.array(z.string()).min(1, "At least one primary image is required."),
+  additionalImages: z.array(z.string()).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -47,17 +51,33 @@ interface ProductFormProps {
     categories: { id: string, name: string }[];
 }
 
-function ImageUploadCard({ title, description }: { title: string; description: string }) {
+function ImageUploadCard({ 
+  title,
+  description,
+  imageUrl,
+  onClick 
+}: { 
+  title: string; 
+  description: string;
+  imageUrl?: string;
+  onClick: () => void;
+}) {
   return (
-    <Card className="border-dashed">
+    <Card className="border-dashed cursor-pointer hover:border-primary transition-colors" onClick={onClick}>
       <CardContent className="p-6">
-        <div className="flex flex-col items-center justify-center text-center h-48">
-          <Upload className="h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            <span className="font-semibold text-primary">Upload a file</span> or drag and drop
-          </p>
-          <p className="text-xs text-muted-foreground">{description}</p>
-        </div>
+        {imageUrl ? (
+           <div className="relative aspect-square">
+            <Image src={imageUrl} alt={title} fill className="object-cover rounded-md" />
+           </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center h-48">
+            <Upload className="h-12 w-12 text-muted-foreground" />
+            <p className="mt-4 text-sm text-muted-foreground">
+              <span className="font-semibold text-primary">Upload a file</span> or drag and drop
+            </p>
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -68,6 +88,9 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
   const firestore = useFirestore();
   const { toast } = useToast();
   
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeImageField, setActiveImageField] = useState<'productImages' | 'additionalImages' | null>(null);
+
   const isEditMode = !!initialData;
 
   const form = useForm<ProductFormValues>({
@@ -84,6 +107,8 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
         pattern: '',
         texture: '',
         category: '',
+        productImages: [],
+        additionalImages: [],
     }
   });
 
@@ -101,9 +126,29 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
         brand: initialData.attributes.brand as string || '',
         pattern: initialData.attributes.pattern as string || '',
         texture: initialData.attributes.texture as string || '',
+        productImages: initialData.productImages || [],
+        additionalImages: initialData.additionalImages || [],
       });
     }
   }, [initialData, form]);
+
+  const handleImageSelectClick = (field: 'productImages' | 'additionalImages') => {
+    setActiveImageField(field);
+    setIsDialogOpen(true);
+  };
+
+  const handleImageSelected = (imageUrl: string) => {
+    if (activeImageField) {
+      const currentImages = form.getValues(activeImageField) || [];
+      if (activeImageField === 'productImages') {
+         form.setValue(activeImageField, [imageUrl], { shouldValidate: true });
+      } else {
+         form.setValue(activeImageField, [...currentImages, imageUrl], { shouldValidate: true });
+      }
+    }
+    setIsDialogOpen(false);
+    setActiveImageField(null);
+  };
 
   const onSubmit = async (data: ProductFormValues) => {
     if (!firestore) {
@@ -131,8 +176,8 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
         productTitle: data.productTitle,
         productDescription: data.productDescription,
         price: data.price,
-        productImages: initialData?.productImages || ['https://picsum.photos/seed/new-product/600/600'], // Placeholder
-        additionalImages: (initialData as any)?.additionalImages || ['https://picsum.photos/seed/new-product-add/600/600'], // Placeholder
+        productImages: data.productImages,
+        additionalImages: data.additionalImages,
         specifications: data.specifications,
         attributes: {
             color: data.color,
@@ -180,266 +225,294 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
     router.push('/admin/products');
   };
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <Card>
-              <CardContent className="p-6 space-y-6">
-                <FormField
-                  control={form.control}
-                  name="productTitle"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Product Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Elegant Floral Wallpaper" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="productDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Product Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describe the product's features, benefits, and specifications."
-                          {...field}
-                          rows={4}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                      <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                          <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                              <Input type="number" placeholder="0.00" className="pl-7" {...field} />
-                          </div>
-                      </FormControl>
-                      <FormMessage />
-                      </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="specifications"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Specifications</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="e.g., Roll: 0.53m x 10m"
-                          {...field}
-                           rows={4}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+  const primaryImage = form.watch('productImages')?.[0];
+  const additionalImages = form.watch('additionalImages') || [];
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Product Images</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 p-6">
-                    <div>
-                        <FormLabel>Primary Image</FormLabel>
-                        <ImageUploadCard title="Primary Image" description="PNG, JPG, GIF up to 10MB" />
-                    </div>
-                    <div>
-                        <FormLabel>Additional Images</FormLabel>
-                        <ImageUploadCard title="Additional Images" description="PNG, JPG, GIF up to 10MB" />
-                    </div>
+
+  return (
+    <>
+      <ImageSelectionDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSelectImage={handleImageSelected}
+      />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              <Card>
+                <CardContent className="p-6 space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="productTitle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Elegant Floral Wallpaper" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="productDescription"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Describe the product's features, benefits, and specifications."
+                            {...field}
+                            rows={4}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Price</FormLabel>
+                        <FormControl>
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
+                                <Input type="number" placeholder="0.00" className="pl-7" {...field} />
+                            </div>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="specifications"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Specifications</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="e.g., Roll: 0.53m x 10m"
+                            {...field}
+                            rows={4}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
-            </Card>
-          </div>
-          <div className="space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Organization</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 p-6">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={isEditMode}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map(category => (
-                            <SelectItem key={category.id} value={category.name}>{category.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Attributes</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 p-6">
-                 <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Color</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select color" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           {attributes.color?.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="material"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Material</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select material" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {attributes.material?.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="size"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Size</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select size" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           {attributes.size?.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="brand"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Brand</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select brand" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           <SelectItem value="acme">Acme</SelectItem>
-                           <SelectItem value="apex">Apex</SelectItem>
-                           <SelectItem value="aurora">Aurora</SelectItem>
-                           <SelectItem value="royal-walls">Royal Walls</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="pattern"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pattern</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select pattern" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           <SelectItem value="floral">Floral</SelectItem>
-                           <SelectItem value="geometric">Geometric</SelectItem>
-                           <SelectItem value="striped">Striped</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="texture"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Texture</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select texture" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           <SelectItem value="matte">Matte</SelectItem>
-                           <SelectItem value="glossy">Glossy</SelectItem>
-                           <SelectItem value="fabric">Fabric</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-             <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
-                <Button type="submit">{isEditMode ? 'Save Changes' : 'Save Product'}</Button>
+              </Card>
+
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Product Images</CardTitle>
+                      <FormMessage>{form.formState.errors.productImages?.message}</FormMessage>
+                  </CardHeader>
+                  <CardContent className="space-y-6 p-6">
+                      <div>
+                          <FormLabel>Primary Image</FormLabel>
+                           <ImageUploadCard 
+                              title="Primary Image" 
+                              description="PNG, JPG, GIF up to 10MB"
+                              imageUrl={primaryImage}
+                              onClick={() => handleImageSelectClick('productImages')}
+                           />
+                      </div>
+                      <div>
+                          <FormLabel>Additional Images</FormLabel>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {additionalImages.map((img, index) => (
+                                <div key={index} className="relative aspect-square">
+                                    <Image src={img} alt={`Additional image ${index + 1}`} fill className="object-cover rounded-md" />
+                                </div>
+                            ))}
+                             <ImageUploadCard 
+                                title="Additional Images" 
+                                description="Add more images"
+                                onClick={() => handleImageSelectClick('additionalImages')}
+                              />
+                          </div>
+                      </div>
+                  </CardContent>
+              </Card>
+            </div>
+            <div className="space-y-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Organization</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 p-6">
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isEditMode}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map(category => (
+                              <SelectItem key={category.id} value={category.name}>{category.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Attributes</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 p-6">
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Color</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select color" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {attributes.color?.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="material"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Material</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select material" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {attributes.material?.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="size"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Size</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select size" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {attributes.size?.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="brand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Brand</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select brand" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="acme">Acme</SelectItem>
+                            <SelectItem value="apex">Apex</SelectItem>
+                            <SelectItem value="aurora">Aurora</SelectItem>
+                            <SelectItem value="royal-walls">Royal Walls</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="pattern"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pattern</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select pattern" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="floral">Floral</SelectItem>
+                            <SelectItem value="geometric">Geometric</SelectItem>
+                            <SelectItem value="striped">Striped</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="texture"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Texture</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select texture" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="matte">Matte</SelectItem>
+                            <SelectItem value="glossy">Glossy</SelectItem>
+                            <SelectItem value="fabric">Fabric</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+              <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
+                  <Button type="submit">{isEditMode ? 'Save Changes' : 'Save Product'}</Button>
+              </div>
             </div>
           </div>
-        </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
+    </>
   );
 }
