@@ -1,9 +1,10 @@
 import { products } from '@/lib/placeholder-data';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Upload, Share2 } from 'lucide-react';
+import { PlusCircle, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ProductTableClient } from './components/ProductTableClient';
+import Link from 'next/link';
 
 export default function ProductsPage() {
   return (
@@ -14,7 +15,11 @@ export default function ProductsPage() {
       >
         <div className="flex items-center gap-2">
           <Button variant="outline"><Upload /> Bulk Import</Button>
-          <Button><PlusCircle /> Add Product</Button>
+          <Button asChild>
+            <Link href="/admin/products/new">
+              <PlusCircle /> Add Product
+            </Link>
+          </Button>
         </div>
       </PageHeader>
       
