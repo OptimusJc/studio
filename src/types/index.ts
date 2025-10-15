@@ -1,16 +1,19 @@
+'use client';
+
 export type Product = {
   id: string;
   name: string;
   category: string;
   price: number;
   stock: number;
-  sku: string;
+  sku: string; // This seems to be a generated placeholder, maybe I should use productCode here?
   status: 'Published' | 'Draft';
   attributes: { [key: string]: string | string[] };
   imageUrl: string;
   imageHint: string;
   createdAt: string;
   // Fields from the form that might not be on the simplified type
+  productCode?: string;
   productTitle?: string;
   productDescription?: string;
   productImages?: string[];

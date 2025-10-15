@@ -42,7 +42,7 @@ export function ProductViewDialog({ product }: ProductViewDialogProps) {
         <DialogHeader>
           <DialogTitle>{product.name}</DialogTitle>
           <DialogDescription>
-            SKU: <span className="font-code">{product.sku}</span>
+            Product Code: <span className="font-mono">{product.productCode}</span>
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh]">

@@ -72,6 +72,7 @@ export default function EditProductPage() {
         }
         return new Date(productData.createdAt).toISOString();
     })(),
+    productCode: productData.productCode,
     productTitle: productData.productTitle,
     productDescription: productData.productDescription,
     productImages: productData.productImages,

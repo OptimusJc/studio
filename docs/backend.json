@@ -6,6 +6,10 @@
       "type": "object",
       "description": "Represents a product in the catalog.",
       "properties": {
+        "productCode": {
+          "type": "string",
+          "description": "The unique code for the product (e.g., SKU)."
+        },
         "productTitle": {
           "type": "string",
           "description": "Name of the product."
@@ -60,6 +64,7 @@
         }
       },
       "required": [
+        "productCode",
         "productTitle",
         "price",
         "productImages",

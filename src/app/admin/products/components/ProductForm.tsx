@@ -28,6 +28,7 @@ import Image from 'next/image';
 
 const productSchema = z.object({
   productTitle: z.string().min(1, 'Product title is required.'),
+  productCode: z.string().min(1, 'Product code is required.'),
   productDescription: z.string().optional(),
   price: z.coerce.number().min(0, 'Price must be a positive number.'),
   specifications: z.string().optional(),
@@ -92,6 +93,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   
   const defaultFormValues = useMemo(() => ({
     productTitle: '',
+    productCode: '',
     productDescription: '',
     price: 0,
     specifications: '',
@@ -121,6 +123,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     if (initialData) {
       form.reset({
         productTitle: initialData.name,
+        productCode: initialData.productCode || '',
         productDescription: initialData.productDescription || '',
         price: initialData.price,
         specifications: initialData.specifications || '',
@@ -177,6 +180,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       
       const productData = {
         productTitle: data.productTitle,
+        productCode: data.productCode,
         productDescription: data.productDescription,
         price: data.price,
         productImages: data.productImages,
@@ -266,6 +270,19 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                         <FormLabel>Product Title</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. Elegant Floral Wallpaper" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="productCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Code</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. WLP-FLR-001" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

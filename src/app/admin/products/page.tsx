@@ -87,6 +87,7 @@ export default function ProductsPage() {
               imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
               imageHint: 'product image',
               createdAt: getCreatedAt(),
+              productCode: data.productCode,
               productTitle: data.productTitle,
               productDescription: data.productDescription,
               productImages: data.productImages,
@@ -119,7 +120,7 @@ export default function ProductsPage() {
         description={pageDescription}
       >
         <div className="flex items-center gap-2">
-          <Button variant="outline"><Upload /> Bulk Import</Button>
+          <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Bulk Import</Button>
           <Button asChild>
             <Link href={newProductUrl}>
               Add Product
