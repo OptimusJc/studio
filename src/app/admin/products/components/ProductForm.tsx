@@ -21,8 +21,8 @@ import { useRouter } from 'next/navigation';
 import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Product } from '@/types';
-import { useEffect, useState } from 'react';
+import { Product, Attribute } from '@/types';
+import { useEffect, useState, useMemo } from 'react';
 import { ImageSelectionDialog } from './ImageSelectionDialog';
 import Image from 'next/image';
 
@@ -31,12 +31,7 @@ const productSchema = z.object({
   productDescription: z.string().optional(),
   price: z.coerce.number().min(0, 'Price must be a positive number.'),
   specifications: z.string().optional(),
-  material: z.string().optional(),
-  color: z.string().optional(),
-  size: z.string().optional(),
-  brand: z.string().optional(),
-  pattern: z.string().optional(),
-  texture: z.string().optional(),
+  attributes: z.record(z.string()).optional(),
   category: z.string().min(1, 'Category is required.'),
   productImages: z.array(z.string()).min(1, "At least one primary image is required."),
   additionalImages: z.array(z.string()).optional(),
@@ -47,7 +42,7 @@ type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
     initialData?: Product | null;
-    attributes: Record<string, string[]>;
+    allAttributes: Attribute[];
     categories: { id: string, name: string }[];
     initialDb: 'retailers' | 'buyers';
     initialCategory: string;
@@ -85,35 +80,42 @@ function ImageUploadCard({
   );
 }
 
-export function ProductForm({ initialData, attributes, categories, initialDb, initialCategory }: ProductFormProps) {
+export function ProductForm({ initialData, allAttributes, categories, initialDb, initialCategory }: ProductFormProps) {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeImageField, setActiveImageField] = useState<'productImages' | 'additionalImages' | null>(null);
-
+  
   const isEditMode = !!initialData;
+  
+  const defaultFormValues = useMemo(() => ({
+    productTitle: '',
+    productDescription: '',
+    price: 0,
+    specifications: '',
+    attributes: {},
+    category: initialCategory || '',
+    productImages: [],
+    additionalImages: [],
+    db: initialDb,
+  }), [initialCategory, initialDb]);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: {
-        productTitle: '',
-        productDescription: '',
-        price: 0,
-        specifications: '',
-        material: '',
-        color: '',
-        size: '',
-        brand: '',
-        pattern: '',
-        texture: '',
-        category: initialCategory || '',
-        productImages: [],
-        additionalImages: [],
-        db: initialDb,
-    }
+    defaultValues: defaultFormValues
   });
+  
+  const selectedCategory = form.watch('category');
+  
+  const relevantAttributes = useMemo(() => {
+    if (!selectedCategory) return [];
+    const categoryDetails = categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === selectedCategory);
+    if (!categoryDetails) return [];
+    return allAttributes.filter(attr => attr.category === categoryDetails.name);
+  }, [selectedCategory, allAttributes, categories]);
+
 
   useEffect(() => {
     if (initialData) {
@@ -123,35 +125,15 @@ export function ProductForm({ initialData, attributes, categories, initialDb, in
         price: initialData.price,
         specifications: initialData.specifications || '',
         category: initialData.category.toLowerCase().replace(/\s+/g, '-'),
-        color: initialData.attributes.color as string || '',
-        material: initialData.attributes.material as string || '',
-        size: initialData.attributes.size as string || '',
-        brand: initialData.attributes.brand as string || '',
-        pattern: initialData.attributes.pattern as string || '',
-        texture: initialData.attributes.texture as string || '',
+        attributes: initialData.attributes || {},
         productImages: initialData.productImages || [],
         additionalImages: initialData.additionalImages || [],
         db: initialData.db,
       });
     } else {
-        form.reset({
-            productTitle: '',
-            productDescription: '',
-            price: 0,
-            specifications: '',
-            material: '',
-            color: '',
-            size: '',
-            brand: '',
-            pattern: '',
-            texture: '',
-            category: initialCategory || '',
-            productImages: [],
-            additionalImages: [],
-            db: initialDb,
-        })
+        form.reset(defaultFormValues);
     }
-  }, [initialData, initialCategory, initialDb, form]);
+  }, [initialData, form, defaultFormValues]);
 
   const handleImageSelectClick = (field: 'productImages' | 'additionalImages') => {
     setActiveImageField(field);
@@ -200,14 +182,7 @@ export function ProductForm({ initialData, attributes, categories, initialDb, in
         productImages: data.productImages,
         additionalImages: data.additionalImages,
         specifications: data.specifications,
-        attributes: {
-            color: data.color,
-            material: data.material,
-            size: data.size,
-            brand: data.brand,
-            pattern: data.pattern,
-            texture: data.texture,
-        },
+        attributes: data.attributes,
         createdAt: initialData ? (initialData as any).createdAt : new Date(),
         updatedAt: new Date(),
       };
@@ -417,133 +392,35 @@ export function ProductForm({ initialData, attributes, categories, initialDb, in
                   <CardTitle>Attributes</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-6">
-                  <FormField
-                    control={form.control}
-                    name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Color</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select color" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {attributes.color?.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                    {relevantAttributes.map(attr => (
+                         <FormField
+                            key={attr.id}
+                            control={form.control}
+                            name={`attributes.${attr.name.toLowerCase()}`}
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{attr.name}</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                    <SelectValue placeholder={`Select ${attr.name.toLowerCase()}`} />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {attr.values.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    ))}
+                    {relevantAttributes.length === 0 && selectedCategory && (
+                        <p className="text-sm text-muted-foreground">No attributes defined for this category.</p>
                     )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="material"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Material</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select material" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {attributes.material?.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                     {relevantAttributes.length === 0 && !selectedCategory && (
+                        <p className="text-sm text-muted-foreground">Select a category to see its attributes.</p>
                     )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="size"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Size</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select size" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {attributes.size?.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="brand"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Brand</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select brand" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="acme">Acme</SelectItem>
-                            <SelectItem value="apex">Apex</SelectItem>
-                            <SelectItem value="aurora">Aurora</SelectItem>
-                            <SelectItem value="royal-walls">Royal Walls</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="pattern"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Pattern</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select pattern" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="floral">Floral</SelectItem>
-                            <SelectItem value="geometric">Geometric</SelectItem>
-                            <SelectItem value="striped">Striped</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="texture"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Texture</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select texture" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="matte">Matte</SelectItem>
-                            <SelectItem value="glossy">Glossy</SelectItem>
-                            <SelectItem value="fabric">Fabric</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </CardContent>
               </Card>
               <div className="flex justify-end gap-2">

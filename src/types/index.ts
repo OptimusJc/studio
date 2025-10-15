@@ -22,12 +22,13 @@ export type Product = {
 export type Category = {
   id: string;
   name: string;
-  productCount: number;
+  description?: string;
 };
 
 export type Attribute = {
   id: string;
   name: string;
+  category: string;
   values: string[];
 };
 

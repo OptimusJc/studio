@@ -1,11 +1,10 @@
 'use client';
 import { PageHeader } from '../../../components/PageHeader';
 import { ProductForm } from '../../components/ProductForm';
-import { attributes, categories } from '@/lib/placeholder-data';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 import { useParams, useSearchParams } from 'next/navigation';
-import type { Product } from '@/types';
+import type { Product, Attribute, Category } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function EditProductFormSkeleton() {
@@ -32,19 +31,28 @@ export default function EditProductPage() {
   const db = searchParams.get('db') as 'retailers' | 'buyers' || 'retailers';
   const categoryName = searchParams.get('category');
   
-  const categoryCollectionName = categoryName ? categoryName.toLowerCase().replace(/\s+/g, ' ') : null;
+  const categoryCollectionName = categoryName ? categoryName.toLowerCase().replace(/\s+/g, '-') : null;
 
   const productDocRef = useMemoFirebase(() => {
     if (!firestore || !db || !categoryCollectionName || !productId) return null;
     return doc(firestore, `${db}/${categoryCollectionName}/products`, productId);
   }, [firestore, db, categoryCollectionName, productId]);
   
-  const { data: productData, isLoading } = useDoc<any>(productDocRef);
+  const { data: productData, isLoading: isLoadingProduct } = useDoc<any>(productDocRef);
 
-  const attributeData = attributes.reduce((acc, attr) => {
-    acc[attr.name.toLowerCase()] = attr.values;
-    return acc;
-  }, {} as Record<string, string[]>);
+  const attributesCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'attributes');
+  }, [firestore]);
+  const { data: attributes, isLoading: isLoadingAttributes } = useCollection<Attribute>(attributesCollection);
+
+  const categoriesCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
+  const { data: categories, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
+
+  const isLoading = isLoadingProduct || isLoadingAttributes || isLoadingCategories;
   
   const transformedProductData: Product | null = productData ? {
     id: productData.id,
@@ -83,8 +91,8 @@ export default function EditProductPage() {
       ) : (
         <ProductForm 
           initialData={transformedProductData} 
-          attributes={attributeData} 
-          categories={categories}
+          allAttributes={attributes || []} 
+          categories={categories || []}
           initialDb={db}
           initialCategory={categoryName || ''}
         />
