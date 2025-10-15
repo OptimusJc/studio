@@ -193,7 +193,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
           description: `${data.productTitle} has been updated.`,
       });
     } else {
-      addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
+        addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
         .then(newDocRef => {
             toast({
                 title: "Draft Saved!",
