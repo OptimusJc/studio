@@ -193,16 +193,17 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
           description: `${data.productTitle} has been updated.`,
       });
     } else {
-      const draftsCollection = collection(firestore, 'drafts');
-      const newDocRef = await addDocumentNonBlocking(draftsCollection, { ...productData, status: 'Draft'});
-      toast({
-          title: "Draft Saved!",
-          description: `${data.productTitle} has been saved.`,
-      });
-      if (newDocRef) {
-          const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
-          router.replace(newPath, { scroll: false });
-      }
+      addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
+        .then(newDocRef => {
+            toast({
+                title: "Draft Saved!",
+                description: `${data.productTitle} has been saved.`,
+            });
+            if (newDocRef) {
+                const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
+                router.replace(newPath, { scroll: false });
+            }
+        });
     }
   };
 
