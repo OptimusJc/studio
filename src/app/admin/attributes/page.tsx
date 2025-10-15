@@ -1,19 +1,49 @@
-import { attributes } from '@/lib/placeholder-data';
+'use client';
+
+import { useMemo } from 'react';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, deleteDoc, doc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AddAttributeDialog } from './components/AddAttributeDialog';
+import { EditAttributeDialog } from './components/EditAttributeDialog';
+import { deleteDocumentNonBlocking } from '@/firebase';
+
+type Attribute = {
+  id: string;
+  name: string;
+  values: string[];
+};
 
 export default function AttributesPage() {
+  const firestore = useFirestore();
+
+  const attributesCollection = useMemo(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'attributes');
+  }, [firestore]);
+
+  const { data: attributes, isLoading } = useCollection<Attribute>(attributesCollection);
+
+  const handleDelete = (attributeId: string) => {
+    if (!firestore) return;
+    const docRef = doc(firestore, 'attributes', attributeId);
+    deleteDocumentNonBlocking(docRef);
+  };
+
   return (
     <div className="p-4 md:p-8">
       <PageHeader
         title="Attributes"
         description="Manage product attributes like color, size, and material."
       >
-        <Button><PlusCircle /> Add Attribute</Button>
+        <AddAttributeDialog />
       </PageHeader>
 
       <Card>
@@ -27,10 +57,16 @@ export default function AttributesPage() {
               <TableRow>
                 <TableHead>Attribute Name</TableHead>
                 <TableHead>Values</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {attributes.map((attribute) => (
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">Loading attributes...</TableCell>
+                </TableRow>
+              )}
+              {!isLoading && attributes?.map((attribute) => (
                 <TableRow key={attribute.id}>
                   <TableCell className="font-medium">{attribute.name}</TableCell>
                   <TableCell>
@@ -39,6 +75,25 @@ export default function AttributesPage() {
                         <Badge key={value} variant="secondary">{value}</Badge>
                       ))}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <EditAttributeDialog attribute={attribute} />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleDelete(attribute.id)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

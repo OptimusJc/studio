@@ -103,59 +103,23 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Attribute",
       "type": "object",
-      "description": "Represents a product attribute (e.g., color, size).",
+      "description": "Represents a product attribute (e.g., color, size) and its possible values.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the attribute."
-        },
         "name": {
           "type": "string",
           "description": "Name of the attribute."
         },
-        "description": {
-          "type": "string",
-          "description": "Description of the attribute."
-        },
-        "type": {
-          "type": "string",
-          "description": "Data type of the attribute (e.g., string, number, boolean).",
-          "format": "enum",
+        "values": {
+          "type": "array",
+          "description": "A list of possible values for the attribute.",
           "items": {
             "type": "string"
           }
         }
       },
       "required": [
-        "id",
         "name",
-        "description",
-        "type"
-      ]
-    },
-    "AttributeValue": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "AttributeValue",
-      "type": "object",
-      "description": "Represents a specific value for an attribute.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the attribute value."
-        },
-        "attributeId": {
-          "type": "string",
-          "description": "Reference to Attribute. (Relationship: Attribute 1:N AttributeValue)"
-        },
-        "value": {
-          "type": "string",
-          "description": "The actual value of the attribute."
-        }
-      },
-      "required": [
-        "id",
-        "attributeId",
-        "value"
+        "values"
       ]
     },
     "User": {
@@ -314,15 +278,6 @@
             "$ref": "#/entities/Attribute"
           },
           "description": "Stores product attributes (e.g., color, size)."
-        }
-      },
-      {
-        "path": "attributeValues/{attributeValueId}",
-        "definition": {
-          "schema": {
-            "$ref": "#/entities/AttributeValue"
-          },
-          "description": "Stores specific values for product attributes."
         }
       },
       {
