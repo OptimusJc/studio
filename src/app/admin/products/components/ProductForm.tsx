@@ -27,7 +27,7 @@ const productSchema = z.object({
   specifications: z.string().optional(),
   material: z.string().optional(),
   color: z.string().optional(),
-  size: zstring().optional(),
+  size: z.string().optional(),
   brand: z.string().optional(),
 });
 
