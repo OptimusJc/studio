@@ -1,6 +1,6 @@
 import { PageHeader } from '../../components/PageHeader';
 import { ProductForm } from '../components/ProductForm';
-import { attributes } from '@/lib/placeholder-data';
+import { attributes, categories } from '@/lib/placeholder-data';
 
 export default function NewProductPage() {
   const attributeData = attributes.reduce((acc, attr) => {
@@ -14,7 +14,7 @@ export default function NewProductPage() {
         title="Add New Product"
         description="Fill in the details below to add a new product to your catalog."
       />
-      <ProductForm attributes={attributeData} />
+      <ProductForm attributes={attributeData} categories={categories} />
     </div>
   );
 }

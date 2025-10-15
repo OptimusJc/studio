@@ -18,6 +18,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const productSchema = z.object({
   productTitle: z.string().min(1, 'Product title is required.'),
@@ -29,12 +33,14 @@ const productSchema = z.object({
   color: z.string().optional(),
   size: z.string().optional(),
   brand: z.string().optional(),
+  category: z.string().min(1, 'Category is required.'),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
     attributes: Record<string, string[]>;
+    categories: { id: string, name: string }[];
 }
 
 function ImageUploadCard({ title, description }: { title: string; description: string }) {
@@ -53,7 +59,11 @@ function ImageUploadCard({ title, description }: { title: string; description: s
   );
 }
 
-export function ProductForm({ attributes }: ProductFormProps) {
+export function ProductForm({ attributes, categories }: ProductFormProps) {
+  const router = useRouter();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -61,9 +71,58 @@ export function ProductForm({ attributes }: ProductFormProps) {
     }
   });
 
-  const onSubmit = (data: ProductFormValues) => {
-    console.log(data);
-    // Handle form submission
+  const onSubmit = async (data: ProductFormValues) => {
+    if (!firestore) {
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Firestore is not available. Please try again later.",
+        });
+        return;
+    }
+
+    try {
+      const productsCollection = collection(firestore, 'products');
+      const newProduct = {
+        name: data.productTitle,
+        sku: data.productCode,
+        description: data.productDescription,
+        price: data.price,
+        specifications: data.specifications,
+        attributes: {
+            material: data.material,
+            color: data.color,
+            size: data.size,
+            brand: data.brand
+        },
+        categoryId: data.category,
+        imageUrl: 'https://picsum.photos/seed/new-product/600/600', // Placeholder
+        imageHint: 'new product',
+        status: 'Draft',
+        createdAt: new Date().toISOString(),
+      };
+      
+      await addDocumentNonBlocking(productsCollection, newProduct);
+
+      toast({
+        title: "Product Saved!",
+        description: `${data.productTitle} has been added to the catalog.`,
+      });
+
+      router.push('/admin/products');
+
+    } catch (error) {
+        console.error("Error adding document: ", error);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "There was a problem saving the product.",
+        });
+    }
+  };
+  
+  const handleDiscard = () => {
+    router.push('/admin/products');
   };
 
   return (
@@ -175,6 +234,35 @@ export function ProductForm({ attributes }: ProductFormProps) {
           <div className="space-y-8">
             <Card>
               <CardHeader>
+                <CardTitle>Organization</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 p-6">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map(category => (
+                            <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
                 <CardTitle>Attributes</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 p-6">
@@ -263,7 +351,7 @@ export function ProductForm({ attributes }: ProductFormProps) {
               </CardContent>
             </Card>
              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline">Discard</Button>
+                <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
                 <Button type="submit">Save Product</Button>
             </div>
           </div>
