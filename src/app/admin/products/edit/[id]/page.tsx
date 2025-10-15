@@ -58,15 +58,14 @@ export default function EditProductPage() {
 
 
   useEffect(() => {
-      // Wait until all data fetching is complete
-      if (!isLoadingProduct && !isLoadingCategories) {
-          // Now, check if the product data is missing.
-          // This prevents a race condition where the redirect happens before categories are loaded.
-          if (!productData) {
-              router.replace(`/admin/products?db=${db}`);
-          }
+    // Only perform the check after the initial loading is complete.
+    if (!isLoadingProduct) {
+      // If loading is done and there's still no product data, then redirect.
+      if (!productData) {
+        router.replace(`/admin/products?db=${db}`);
       }
-  }, [isLoadingProduct, isLoadingCategories, productData, router, db]);
+    }
+  }, [isLoadingProduct, productData, router, db]);
   
   const transformedProductData: Product | null = (productData && categoryNameFromSlug) ? {
     id: productData.id,
