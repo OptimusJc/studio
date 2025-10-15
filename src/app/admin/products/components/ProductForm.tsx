@@ -96,24 +96,27 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const currentProductId = initialData?.id || null;
   const currentStatus = initialData?.status || 'Draft';
   
-  const defaultFormValues = useMemo(() => ({
-    productTitle: '',
-    productCode: '',
-    productDescription: '',
-    price: 0,
-    specifications: '',
-    attributes: {},
-    category: initialCategory || '',
-    productImages: [],
-    additionalImages: [],
-    db: initialDb,
-    status: 'Draft' as const,
-  }), [initialCategory, initialDb]);
-
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: defaultFormValues
+    defaultValues: {
+      productTitle: '',
+      productCode: '',
+      productDescription: '',
+      price: 0,
+      specifications: '',
+      attributes: {},
+      category: initialCategory || '',
+      productImages: [],
+      additionalImages: [],
+      db: initialDb,
+      status: 'Draft' as const,
+    }
   });
+
+  // const form = useForm<ProductFormValues>({
+  //   resolver: zodResolver(productSchema),
+  //   defaultValues: defaultFormValues
+  // });
   
   const selectedCategory = form.watch('category');
   
@@ -140,10 +143,9 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         db: initialData.db,
         status: initialData.status || 'Draft',
       });
-    } else {
-        form.reset(defaultFormValues);
     }
-  }, [initialData, form, defaultFormValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.id]); // Only reset when the product ID changes
 
   const handleImageSelectClick = (field: 'productImages' | 'additionalImages') => {
     setActiveImageField(field);
