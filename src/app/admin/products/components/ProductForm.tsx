@@ -468,7 +468,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                                 <FormControl>
                                     <SelectTrigger>
                                     <SelectValue placeholder={`Select ${attr.name.toLowerCase()}`} />
-                                    </Trigger>
+                                    </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                     {attr.values.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}

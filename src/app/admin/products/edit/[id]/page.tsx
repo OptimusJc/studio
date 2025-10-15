@@ -6,7 +6,7 @@ import { doc, collection } from 'firebase/firestore';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import type { Product, Attribute, Category } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 function EditProductFormSkeleton() {
     return (
@@ -66,33 +66,39 @@ export default function EditProductPage() {
     }
   }, [isLoadingProduct, productData, productId]);
   
-  const transformedProductData: Product | null = (productData && categoryNameFromSlug) ? {
-    id: productData.id,
-    name: productData.productTitle,
-    category: categoryNameFromSlug,
-    price: productData.price,
-    stock: 100, // Placeholder
-    sku: `SKU-${productData.id.substring(0, 6)}`, // Placeholder
-    status: productData.status || 'Draft',
-    attributes: productData.attributes,
-    imageUrl: productData.productImages?.[0] || '',
-    imageHint: 'product image',
-    createdAt: (() => {
-        if (!productData.createdAt) return new Date().toISOString();
-        if (typeof productData.createdAt === 'string') return productData.createdAt;
-        if (typeof productData.createdAt.toDate === 'function') {
-            return productData.createdAt.toDate().toISOString();
-        }
-        return new Date(productData.createdAt).toISOString();
-    })(),
-    productCode: productData.productCode,
-    productTitle: productData.productTitle,
-    productDescription: productData.productDescription,
-    productImages: productData.productImages,
-    additionalImages: productData.additionalImages,
-    specifications: productData.specifications,
-    db,
-  } : null;
+  const transformedProductData: Product | null = useMemo(() => {
+    if (productData && categoryNameFromSlug) {
+      return {
+        id: productData.id,
+        name: productData.productTitle,
+        category: categoryNameFromSlug,
+        price: productData.price,
+        stock: 100, // Placeholder
+        sku: `SKU-${productData.id.substring(0, 6)}`, // Placeholder
+        status: productData.status || 'Draft',
+        attributes: productData.attributes,
+        imageUrl: productData.productImages?.[0] || '',
+        imageHint: 'product image',
+        createdAt: (() => {
+            if (!productData.createdAt) return new Date().toISOString();
+            if (typeof productData.createdAt === 'string') return productData.createdAt;
+            if (typeof productData.createdAt.toDate === 'function') {
+                return productData.createdAt.toDate().toISOString();
+            }
+            return new Date(productData.createdAt).toISOString();
+        })(),
+        productCode: productData.productCode,
+        productTitle: productData.productTitle,
+        productDescription: productData.productDescription,
+        productImages: productData.productImages,
+        additionalImages: productData.additionalImages,
+        specifications: productData.specifications,
+        db,
+      };
+    }
+    return null;
+  }, [productData, categoryNameFromSlug, db]);
+
 
   return (
     <div className="p-4 md:p-8">
