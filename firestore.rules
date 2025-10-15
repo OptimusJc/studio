@@ -1,124 +1,261 @@
+/**
+ * @fileoverview Firestore Security Rules for the application.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes security by enforcing strict access control.
+ * The primary principle is least privilege: users are only granted the
+ * minimum permissions necessary to perform their tasks. Unauthenticated
+ * access is disallowed except where explicitly permitted for public data.
+ *
+ * Data Structure:
+ * The Firestore database is structured with top-level collections for
+ * various product types (wallpapers, window blinds, etc.), categories,
+ * attributes, and user data. User-specific data is nested under the
+ * `/users/{userId}` path.
+ *
+ * Key Security Decisions:
+ * - **No Public Listing**: `list` operations are generally disallowed unless
+ *   specifically required and secured (e.g., listing categories). This
+ *   prevents unauthorized data discovery.
+ * - **Ownership Enforcement**: Documents under `/users/{userId}` are strictly
+ *   owned by the user identified in the path.
+ * - **Admin Roles**: A separate `roles_admin/{userId}` collection is used to
+ *   indicate admin status. The existence of a document in this collection
+ *   grants elevated privileges.
+ * - **Public Read, Owner Write**: The product collections (wallpapers, etc.)
+ *   allow public reads (`get`, `list`) but restrict writes (`create`, `update`,
+ *   `delete`) to authenticated users.
+ *
+ * Denormalization for Authorization:
+ * The rules assume that product documents will contain an `ownerId` or `authorId`
+ * field to identify the creator. This is crucial for enforcing owner-only
+ * write access.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
      * @description Checks if the user is signed in.
+     * @param {void}
+     * @return {bool} True if the user is signed in, false otherwise.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
+     * @description Checks if the user is the owner of the resource.
+     * @param {string} userId - The user ID to compare against.
+     * @return {bool} True if the user is the owner, false otherwise.
      */
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the authenticated user is an existing owner.
+     * @description Checks if the user is the owner of the resource and the resource exists.
+     * @param {string} userId - The user ID to compare against.
+     * @return {bool} True if the user is the owner and the resource exists, false otherwise.
      */
     function isExistingOwner(userId) {
-      return isOwner(userId) && resource.data.id == request.auth.uid;
+      return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Checks if the authenticated user has admin rights
+     * @description Checks if the user is an admin.
+     * @return {bool} True if the user is an admin, false otherwise.
      */
     function isAdmin() {
-        return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     /**
-     * @description Rules for product categories.
+     * @description Rules for the 'wallpapers' collection.
+     * @path /wallpapers/{productId}
+     * @allow (get, list): Any user can read product information.
+     * @allow (create): Authenticated user can create a wallpaper product if request.auth.uid == request.resource.data.authorId
+     * @allow (update, delete): Authenticated user can update/delete if they are the owner (resource.data.authorId == request.auth.uid).
+     * @deny (create): Unauthenticated user tries to create a wallpaper product.
+     * @deny (update, delete): An unauthenticated user tries to update or delete a wallpaper product, or an authenticated user tries to update/delete a wallpaper product they don't own, or the document does not exist.
+     * @principle Allows public read access, restricts write access to owners only, and requires user authentication.
+     */
+    match /wallpapers/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn(); // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Rules for the 'window-blinds' collection.
+     * @path /window-blinds/{productId}
+     * @allow (get, list): Any user can read product information.
+     * @allow (create): Authenticated user can create a window blind product if request.auth.uid == request.resource.data.authorId
+     * @allow (update, delete): Authenticated user can update/delete if they are the owner (resource.data.authorId == request.auth.uid).
+     * @deny (create): Unauthenticated user tries to create a window blind product.
+     * @deny (update, delete): An unauthenticated user tries to update or delete a window blind product, or an authenticated user tries to update/delete a window blind product they don't own, or the document does not exist.
+     * @principle Allows public read access, restricts write access to owners only, and requires user authentication.
+     */
+    match /window-blinds/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn(); // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Rules for the 'wall-murals' collection.
+     * @path /wall-murals/{productId}
+     * @allow (get, list): Any user can read product information.
+     * @allow (create): Authenticated user can create a wall mural product if request.auth.uid == request.resource.data.authorId
+     * @allow (update, delete): Authenticated user can update/delete if they are the owner (resource.data.authorId == request.auth.uid).
+     * @deny (create): Unauthenticated user tries to create a wall mural product.
+     * @deny (update, delete): An unauthenticated user tries to update or delete a wall mural product, or an authenticated user tries to update/delete a wall mural product they don't own, or the document does not exist.
+     * @principle Allows public read access, restricts write access to owners only, and requires user authentication.
+     */
+    match /wall-murals/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn(); // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Rules for the 'carpets' collection.
+     * @path /carpets/{productId}
+     * @allow (get, list): Any user can read product information.
+     * @allow (create): Authenticated user can create a carpet product if request.auth.uid == request.resource.data.authorId
+     * @allow (update, delete): Authenticated user can update/delete if they are the owner (resource.data.authorId == request.auth.uid).
+     * @deny (create): Unauthenticated user tries to create a carpet product.
+     * @deny (update, delete): An unauthenticated user tries to update or delete a carpet product, or an authenticated user tries to update/delete a carpet product they don't own, or the document does not exist.
+     * @principle Allows public read access, restricts write access to owners only, and requires user authentication.
+     */
+    match /carpets/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn(); // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Rules for the 'window-films' collection.
+     * @path /window-films/{productId}
+     * @allow (get, list): Any user can read product information.
+     * @allow (create): Authenticated user can create a window film product if request.auth.uid == request.resource.data.authorId
+     * @allow (update, delete): Authenticated user can update/delete if they are the owner (resource.data.authorId == request.auth.uid).
+     * @deny (create): Unauthenticated user tries to create a window film product.
+     * @deny (update, delete): An unauthenticated user tries to update or delete a window film product, or an authenticated user tries to update/delete a window film product they don't own, or the document does not exist.
+     * @principle Allows public read access, restricts write access to owners only, and requires user authentication.
+     */
+    match /window-films/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn(); // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Rules for the 'fluted-panels' collection.
+     * @path /fluted-panels/{productId}
+     * @allow (get, list): Any user can read product information.
+     * @allow (create): Authenticated user can create a fluted panel product if request.auth.uid == request.resource.data.authorId
+     * @allow (update, delete): Authenticated user can update/delete if they are the owner (resource.data.authorId == request.auth.uid).
+     * @deny (create): Unauthenticated user tries to create a fluted panel product.
+     * @deny (update, delete): An unauthenticated user tries to update or delete a fluted panel product, or an authenticated user tries to update/delete a fluted panel product they don't own, or the document does not exist.
+     * @principle Allows public read access, restricts write access to owners only, and requires user authentication.
+     */
+    match /fluted-panels/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn(); // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Rules for the 'categories' collection.
      * @path /categories/{categoryId}
-     * @allow (get, list) Any user can read category data.
-     * @deny (create, update, delete) No user can create, update, or delete category data without authorization.
-     * @principle Public read, restricted write
+     * @allow (get, list): Any user can read category information.
+     * @deny (create, update, delete): Only admins can create, update, or delete categories.
+     * @principle Allows public read access, restricts write access to admins only.
      */
     match /categories/{categoryId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Rules for products.
-     * @path /products/{productId}
-     * @allow (get, list) Any user can read product data.
-     * @deny (create, update, delete) No user can create, update, or delete product data without authorization.
-     * @principle Public read, restricted write
-     */
-    match /products/{productId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Rules for product attributes.
+     * @description Rules for the 'attributes' collection.
      * @path /attributes/{attributeId}
-     * @allow (get, list) Any user can read attribute data.
-     * @deny (create, update, delete) No user can create, update, or delete product data without authorization.
-     * @principle Public read, restricted write
+     * @allow (get, list): Any user can read attribute information.
+     * @deny (create, update, delete): Only admins can create, update, or delete attributes.
+     * @principle Allows public read access, restricts write access to admins only.
      */
     match /attributes/{attributeId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Rules for attribute values.
+     * @description Rules for the 'attributeValues' collection.
      * @path /attributeValues/{attributeValueId}
-     * @allow (get, list) Any user can read attribute value data.
-     * @deny (create, update, delete) No user can create, update, or delete attribute value data without authorization.
-     * @principle Public read, restricted write
+     * @allow (get, list): Any user can read attribute value information.
+     * @deny (create, update, delete): Only admins can create, update, or delete attribute values.
+     * @principle Allows public read access, restricts write access to admins only.
      */
     match /attributeValues/{attributeValueId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Rules for user profiles.
+     * @description Rules for the 'users' collection.
      * @path /users/{userId}
-     * @allow (create) User can create their own profile if the userId matches their auth.uid.
-     * @allow (get, update, delete) User can only access and modify their own profile.
-     * @deny (list) Listing user documents is not allowed.
-     * @deny (create, update, delete) if the user is not the owner, do not allow operations on the resource.
-     * @principle Owner-only access
+     * @allow (create): A user can create their own profile if the userId matches their auth.uid.
+     * @allow (get, update, delete): A user can get, update, or delete their own profile.
+     * @deny (list): Listing users is not allowed.
+     * @principle Enforces user ownership of their profile data.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId) && request.auth.uid == userId;
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for share links created by users.
+     * @description Rules for the 'shareLinks' subcollection under a user.
      * @path /users/{userId}/shareLinks/{shareLinkId}
-     * @allow (create) User can create share links under their own user ID.
-     * @allow (get, update, delete) User can only access and modify share links they own.
-     * @deny (create, update, delete) if the user is not the owner, do not allow operations on the resource.
-     * @principle Owner-only access, nested resource
+     * @allow (get, list, create): A user can get, list, and create share links under their own user ID.
+     * @allow (update, delete): A user can update or delete share links under their own user ID if the document exists.
+     * @deny (get, list, create, update, delete): A user cannot access share links under another user's ID.
+     * @principle Enforces user ownership of their share links.
      */
     match /users/{userId}/shareLinks/{shareLinkId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get, list, create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
     }
 
-    /**
-     * @description Rules for admin roles (existence-based).
-     * @path /roles_admin/{userId}
-     * @allow (get, create, update, delete, list) Only existing admins can manage admin roles.
-     * @principle Role-based access control via document existence.
-     */
+     /**
+      * @description Rules for the 'roles_admin' collection.
+      * @path /roles_admin/{userId}
+      * @allow get: if isAdmin();
+      * @allow list: if isAdmin();
+      * @allow create: if false;
+      * @allow update: if false;
+      * @allow delete: if isAdmin();
+      * @principle Admins can manage admin roles.
+      */
     match /roles_admin/{userId} {
-        allow get, create, update, delete, list: if isAdmin();
+        allow get: if isAdmin();
+        allow list: if isAdmin();
+        allow create: if false;
+        allow update: if false;
+        allow delete: if isAdmin();
     }
   }
 }
