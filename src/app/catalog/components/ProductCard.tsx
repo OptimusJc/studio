@@ -23,7 +23,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
-        <Badge variant="secondary" className="mb-2">{product.category}</Badge>
+        <div className='flex justify-between items-center mb-2'>
+            <Badge variant="secondary">{product.category}</Badge>
+            {product.attributes.brand && <Badge variant="outline">{product.attributes.brand as string}</Badge>}
+        </div>
         <CardTitle className="text-lg font-semibold leading-snug">{product.name}</CardTitle>
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">

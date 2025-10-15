@@ -100,8 +100,8 @@ export default function FacetedSearch({ categories, attributes, appliedFilters, 
                     <div key={value} className="flex items-center space-x-2">
                       <Checkbox
                         id={`attr-${attribute.id}-${value}`}
-                        checked={appliedFilters[attribute.name]?.includes(value)}
-                        onCheckedChange={(checked) => handleCheckedChange(attribute.name, value, !!checked)}
+                        checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value)}
+                        onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
                       />
                       <label
                         htmlFor={`attr-${attribute.id}-${value}`}

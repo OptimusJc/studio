@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 function CatalogContent() {
   const searchParams = useSearchParams();
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
-  const [filters, setFilters] = useState<Record<string, (string | number)[]>>({});
+  const [filters, setFilters] = useState<Record<string, any[]>>({});
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -34,7 +34,8 @@ function CatalogContent() {
     // Apply search term filter
     if (searchTerm) {
       newFilteredProducts = newFilteredProducts.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.attributes.brand as string)?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
@@ -48,7 +49,7 @@ function CatalogContent() {
             newFilteredProducts = newFilteredProducts.filter(p => values.includes(p.category));
         } else {
           newFilteredProducts = newFilteredProducts.filter(p => {
-             const productAttribute = p.attributes[key]
+             const productAttribute = p.attributes[key];
              if(Array.isArray(productAttribute)) {
                 return productAttribute.some(attr => values.includes(attr as string));
              }
