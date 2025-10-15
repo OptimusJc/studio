@@ -1,19 +1,16 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, deleteDoc, doc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { useMemoFirebase, useCollection, useFirestore, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AddAttributeDialog } from './components/AddAttributeDialog';
 import { EditAttributeDialog } from './components/EditAttributeDialog';
-import { deleteDocumentNonBlocking } from '@/firebase';
 
 type Attribute = {
   id: string;
@@ -24,7 +21,7 @@ type Attribute = {
 export default function AttributesPage() {
   const firestore = useFirestore();
 
-  const attributesCollection = useMemo(() => {
+  const attributesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, 'attributes');
   }, [firestore]);
