@@ -1,15 +1,15 @@
 'use client';
-import { products } from '@/lib/placeholder-data';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ProductTableClient } from './components/ProductTableClient';
 import Link from 'next/link';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import type { Product } from '@/types';
+import { useSearchParams } from 'next/navigation';
 
 const productCategories = [
   'wallpapers',
@@ -20,22 +20,43 @@ const productCategories = [
   'fluted-panels',
 ];
 
-
 export default function ProductsPage() {
   const firestore = useFirestore();
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const searchParams = useSearchParams();
+  const db = searchParams.get('db') || 'retailers';
+  const category = searchParams.get('category');
+  
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentView, setCurrentView] = useState({ db, category });
+
+  const pageTitle = category 
+    ? `${category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')}`
+    : 'All Products';
+  
+  const pageDescription = `Manage products in the ${db} database${category ? ` under the ${category} category` : ''}.`;
 
   useEffect(() => {
     const fetchProducts = async () => {
       if (!firestore) return;
 
-      setIsLoading(true);
-      const products: Product[] = [];
+      const newDb = searchParams.get('db') || 'retailers';
+      const newCategory = searchParams.get('category');
+
+      if (currentView.db === newDb && currentView.category === newCategory && !isLoading) {
+        return;
+      }
       
-      for (const category of productCategories) {
+      setIsLoading(true);
+      setCurrentView({ db: newDb, category: newCategory });
+      const fetchedProducts: Product[] = [];
+      
+      const categoriesToFetch = newCategory ? [newCategory] : productCategories;
+
+      for (const cat of categoriesToFetch) {
+        const collectionPath = `${newDb}/${cat}/products`;
         try {
-          const q = query(collection(firestore, category));
+          const q = query(collection(firestore, collectionPath));
           const querySnapshot = await getDocs(q);
           querySnapshot.forEach((doc) => {
             const data = doc.data() as DocumentData;
@@ -47,47 +68,51 @@ export default function ProductsPage() {
               return new Date(data.createdAt).toISOString();
             }
 
-            products.push({
+            fetchedProducts.push({
               id: doc.id,
               name: data.productTitle,
-              category: category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' '),
+              category: cat.charAt(0).toUpperCase() + cat.slice(1).replace(/-/g, ' '),
               price: data.price,
-              // These are placeholders, update as needed
-              stock: 100, 
-              sku: `SKU-${doc.id.substring(0, 6)}`,
-              status: 'Published',
+              stock: 100, // Placeholder
+              sku: `SKU-${doc.id.substring(0, 6)}`, // Placeholder
+              status: 'Published', // Placeholder
               attributes: data.attributes,
-              imageUrl: data.productImages[0] || 'https://placehold.co/600x600',
+              imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
               imageHint: 'product image',
               createdAt: getCreatedAt(),
-              productImages: data.productImages,
+              productTitle: data.productTitle,
               productDescription: data.productDescription,
-              specifications: data.specifications,
+              productImages: data.productImages,
               additionalImages: data.additionalImages,
+              specifications: data.specifications,
+              db: newDb,
             } as Product);
           });
         } catch (error) {
-          console.error(`Error fetching products from ${category}:`, error);
+          console.error(`Error fetching products from ${collectionPath}:`, error);
         }
       }
-      setAllProducts(products);
+      setProducts(fetchedProducts);
       setIsLoading(false);
     };
 
     fetchProducts();
-  }, [firestore]);
+  }, [firestore, searchParams, currentView, isLoading]);
 
+  const newProductUrl = category 
+    ? `/admin/products/new?db=${db}&category=${category}`
+    : `/admin/products/new?db=${db}`;
 
   return (
     <div className="p-4 md:p-8">
       <PageHeader
-        title="Products"
-        description="Manage all products in your catalog."
+        title={pageTitle}
+        description={pageDescription}
       >
         <div className="flex items-center gap-2">
           <Button variant="outline"><Upload /> Bulk Import</Button>
           <Button asChild>
-            <Link href="/admin/products/new">
+            <Link href={newProductUrl}>
               <PlusCircle /> Add Product
             </Link>
           </Button>
@@ -103,7 +128,7 @@ export default function ProductsPage() {
           {isLoading ? (
             <div className="text-center">Loading products...</div>
           ) : (
-            <ProductTableClient products={allProducts} />
+            <ProductTableClient products={products} />
           )}
         </CardContent>
       </Card>

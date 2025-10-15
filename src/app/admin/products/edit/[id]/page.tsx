@@ -29,14 +29,15 @@ export default function EditProductPage() {
   const searchParams = useSearchParams();
   
   const productId = params.id as string;
+  const db = searchParams.get('db') as 'retailers' | 'buyers' || 'retailers';
   const categoryName = searchParams.get('category');
   
-  const categoryCollectionName = categoryName ? categoryName.toLowerCase().replace(/\s+/g, '-') : null;
+  const categoryCollectionName = categoryName ? categoryName.toLowerCase().replace(/\s+/g, ' ') : null;
 
   const productDocRef = useMemoFirebase(() => {
-    if (!firestore || !categoryCollectionName || !productId) return null;
-    return doc(firestore, categoryCollectionName, productId);
-  }, [firestore, categoryCollectionName, productId]);
+    if (!firestore || !db || !categoryCollectionName || !productId) return null;
+    return doc(firestore, `${db}/${categoryCollectionName}/products`, productId);
+  }, [firestore, db, categoryCollectionName, productId]);
   
   const { data: productData, isLoading } = useDoc<any>(productDocRef);
 
@@ -68,6 +69,7 @@ export default function EditProductPage() {
     productImages: productData.productImages,
     additionalImages: productData.additionalImages,
     specifications: productData.specifications,
+    db,
   } : null;
 
   return (
@@ -82,7 +84,9 @@ export default function EditProductPage() {
         <ProductForm 
           initialData={transformedProductData} 
           attributes={attributeData} 
-          categories={categories} 
+          categories={categories}
+          initialDb={db}
+          initialCategory={categoryName || ''}
         />
       )}
     </div>

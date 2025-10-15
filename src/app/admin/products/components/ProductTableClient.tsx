@@ -52,8 +52,9 @@ function RowActions({ product }: { product: Product }) {
 
   const handleDelete = () => {
     if (!firestore) return;
-    const categoryCollectionName = product.category.toLowerCase().replace(/\s+/g, '-');
-    const docRef = doc(firestore, categoryCollectionName, product.id);
+    const categorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
+    const collectionPath = `${product.db}/${categorySlug}/products`;
+    const docRef = doc(firestore, collectionPath, product.id);
     deleteDocumentNonBlocking(docRef);
     toast({
       title: "Product Deleted",
@@ -61,7 +62,7 @@ function RowActions({ product }: { product: Product }) {
     });
   };
   
-  const editUrl = `/admin/products/edit/${product.id}?category=${encodeURIComponent(product.category)}`;
+  const editUrl = `/admin/products/edit/${product.id}?db=${product.db}&category=${encodeURIComponent(product.category.toLowerCase().replace(/\s+/g, '-'))}`;
 
   return (
     <Dialog open={isShareOpen} onOpenChange={setShareOpen}>
@@ -139,9 +140,8 @@ export function ProductTableClient({ products }: { products: Product[] }) {
           </TableHead>
           <TableHead className="w-[80px]">Image</TableHead>
           <TableHead>Name</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>SKU</TableHead>
-          <TableHead>Stock</TableHead>
+          <TableHead>Category</TableHead>
+          <TableHead>Brand</TableHead>
           <TableHead className="text-right">Price</TableHead>
           <TableHead className="w-[40px]"></TableHead>
         </TableRow>
@@ -163,13 +163,8 @@ export function ProductTableClient({ products }: { products: Product[] }) {
               />
             </TableCell>
             <TableCell className="font-medium">{product.name}</TableCell>
-            <TableCell>
-              <Badge variant={product.status === 'Published' ? 'default' : 'outline'} className={product.status === 'Published' ? 'bg-accent text-accent-foreground' : ''}>
-                {product.status}
-              </Badge>
-            </TableCell>
-            <TableCell className='font-code'>{product.sku}</TableCell>
-            <TableCell>{product.stock}</TableCell>
+            <TableCell>{product.category}</TableCell>
+            <TableCell>{product.attributes.brand as string}</TableCell>
             <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
             <TableCell>
               <RowActions product={product} />

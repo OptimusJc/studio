@@ -6,7 +6,6 @@ import * as z from 'zod';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -15,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -41,6 +40,7 @@ const productSchema = z.object({
   category: z.string().min(1, 'Category is required.'),
   productImages: z.array(z.string()).min(1, "At least one primary image is required."),
   additionalImages: z.array(z.string()).optional(),
+  db: z.enum(['retailers', 'buyers']),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -49,6 +49,8 @@ interface ProductFormProps {
     initialData?: Product | null;
     attributes: Record<string, string[]>;
     categories: { id: string, name: string }[];
+    initialDb: 'retailers' | 'buyers';
+    initialCategory: string;
 }
 
 function ImageUploadCard({ 
@@ -83,7 +85,7 @@ function ImageUploadCard({
   );
 }
 
-export function ProductForm({ initialData, attributes, categories }: ProductFormProps) {
+export function ProductForm({ initialData, attributes, categories, initialDb, initialCategory }: ProductFormProps) {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -106,9 +108,10 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
         brand: '',
         pattern: '',
         texture: '',
-        category: '',
+        category: initialCategory || '',
         productImages: [],
         additionalImages: [],
+        db: initialDb,
     }
   });
 
@@ -116,10 +119,10 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
     if (initialData) {
       form.reset({
         productTitle: initialData.name,
-        productDescription: (initialData as any).productDescription || '',
+        productDescription: initialData.productDescription || '',
         price: initialData.price,
-        specifications: (initialData as any).specifications || '',
-        category: initialData.category,
+        specifications: initialData.specifications || '',
+        category: initialData.category.toLowerCase().replace(/\s+/g, '-'),
         color: initialData.attributes.color as string || '',
         material: initialData.attributes.material as string || '',
         size: initialData.attributes.size as string || '',
@@ -128,9 +131,27 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
         texture: initialData.attributes.texture as string || '',
         productImages: initialData.productImages || [],
         additionalImages: initialData.additionalImages || [],
+        db: initialData.db,
       });
+    } else {
+        form.reset({
+            productTitle: '',
+            productDescription: '',
+            price: 0,
+            specifications: '',
+            material: '',
+            color: '',
+            size: '',
+            brand: '',
+            pattern: '',
+            texture: '',
+            category: initialCategory || '',
+            productImages: [],
+            additionalImages: [],
+            db: initialDb,
+        })
     }
-  }, [initialData, form]);
+  }, [initialData, initialCategory, initialDb, form]);
 
   const handleImageSelectClick = (field: 'productImages' | 'additionalImages') => {
     setActiveImageField(field);
@@ -170,7 +191,7 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
     }
 
     try {
-      const categoryCollectionName = data.category.toLowerCase().replace(/\s+/g, '-');
+      const collectionPath = `${data.db}/${data.category}/products`;
       
       const productData = {
         productTitle: data.productTitle,
@@ -192,14 +213,14 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
       };
       
       if(isEditMode && initialData) {
-        const docRef = doc(firestore, categoryCollectionName, initialData.id);
+        const docRef = doc(firestore, collectionPath, initialData.id);
         await setDocumentNonBlocking(docRef, productData, { merge: true });
         toast({
             title: "Product Updated!",
             description: `${data.productTitle} has been updated.`,
         });
       } else {
-        const productsCollection = collection(firestore, categoryCollectionName);
+        const productsCollection = collection(firestore, collectionPath);
         await addDocumentNonBlocking(productsCollection, productData);
         toast({
             title: "Product Saved!",
@@ -207,8 +228,7 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
         });
       }
 
-
-      router.push('/admin/products');
+      router.push(`/admin/products?db=${data.db}&category=${data.category}`);
       router.refresh();
 
     } catch (error) {
@@ -222,7 +242,7 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
   };
   
   const handleDiscard = () => {
-    router.push('/admin/products');
+    router.back();
   };
 
   const primaryImage = form.watch('productImages')?.[0];
@@ -242,6 +262,27 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
             <div className="lg:col-span-2 space-y-8">
               <Card>
                 <CardContent className="p-6 space-y-6">
+                   <FormField
+                    control={form.control}
+                    name="db"
+                    render={({ field }) => (
+                      <FormItem className="hidden">
+                        <FormLabel>Database</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a database" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="retailers">Retailers</SelectItem>
+                            <SelectItem value="buyers">Buyers</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="productTitle"
@@ -361,7 +402,7 @@ export function ProductForm({ initialData, attributes, categories }: ProductForm
                           </FormControl>
                           <SelectContent>
                             {categories.map(category => (
-                              <SelectItem key={category.id} value={category.name}>{category.name}</SelectItem>
+                              <SelectItem key={category.id} value={category.name.toLowerCase().replace(/\s+/g, '-')}>{category.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

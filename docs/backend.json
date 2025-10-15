@@ -67,137 +67,6 @@
         "createdAt",
         "updatedAt"
       ]
-    },
-    "Category": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Category",
-      "type": "object",
-      "description": "Represents a category of products.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the category."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the category."
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the category."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the category's image.",
-          "format": "uri"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "imageUrl"
-      ]
-    },
-    "Attribute": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Attribute",
-      "type": "object",
-      "description": "Represents a product attribute (e.g., color, size) and its possible values.",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the attribute."
-        },
-        "values": {
-          "type": "array",
-          "description": "A list of possible values for the attribute.",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "name",
-        "values"
-      ]
-    },
-    "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
-      "type": "object",
-      "description": "Represents a user of the admin dashboard.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user."
-        },
-        "email": {
-          "type": "string",
-          "description": "Email address of the user.",
-          "format": "email"
-        },
-        "firstName": {
-          "type": "string",
-          "description": "First name of the user."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "Last name of the user."
-        },
-        "role": {
-          "type": "string",
-          "description": "Role of the user (e.g., admin, editor).",
-          "format": "enum",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "id",
-        "email",
-        "firstName",
-        "lastName",
-        "role"
-      ]
-    },
-    "ShareLink": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ShareLink",
-      "type": "object",
-      "description": "Represents a shareable link with a specific filter state.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the share link."
-        },
-        "link": {
-          "type": "string",
-          "description": "The generated shareable link.",
-          "format": "uri"
-        },
-        "filterState": {
-          "type": "string",
-          "description": "JSON payload representing the filter state."
-        },
-        "expirationDate": {
-          "type": "string",
-          "description": "Date and time when the link expires.",
-          "format": "date-time"
-        },
-        "createdBy": {
-          "type": "string",
-          "description": "Reference to User that created this link. (Relationship: User 1:N ShareLink)"
-        }
-      },
-      "required": [
-        "id",
-        "link",
-        "filterState",
-        "expirationDate",
-        "createdBy"
-      ]
     }
   },
   "auth": {
@@ -209,102 +78,87 @@
   "firestore": {
     "structure": [
       {
-        "path": "wallpapers/{productId}",
+        "path": "retailers/wallpapers/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/Product"
-          },
-          "description": "Stores wallpaper products."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores wallpaper products for retailers."
         }
       },
       {
-        "path": "window-blinds/{productId}",
+        "path": "retailers/window-blinds/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/Product"
-          },
-          "description": "Stores window blind products."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores window blind products for retailers."
         }
       },
       {
-        "path": "wall-murals/{productId}",
+        "path": "retailers/wall-murals/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/Product"
-          },
-          "description": "Stores wall mural products."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores wall mural products for retailers."
         }
       },
       {
-        "path": "carpets/{productId}",
+        "path": "retailers/carpets/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/Product"
-          },
-          "description": "Stores carpet products."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores carpet products for retailers."
         }
       },
       {
-        "path": "window-films/{productId}",
+        "path": "retailers/window-films/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/Product"
-          },
-          "description": "Stores window film products."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores window film products for retailers."
         }
       },
       {
-        "path": "fluted-panels/{productId}",
+        "path": "retailers/fluted-panels/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/Product"
-          },
-          "description": "Stores fluted panel products."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores fluted panel products for retailers."
+        }
+      },
+       {
+        "path": "buyers/wallpapers/products/{productId}",
+        "definition": {
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores wallpaper products for buyers."
         }
       },
       {
-        "path": "categories/{categoryId}",
+        "path": "buyers/window-blinds/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/Category"
-          },
-          "description": "Stores product categories."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores window blind products for buyers."
         }
       },
       {
-        "path": "attributes/{attributeId}",
+        "path": "buyers/wall-murals/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/Attribute"
-          },
-          "description": "Stores product attributes (e.g., color, size)."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores wall mural products for buyers."
         }
       },
       {
-        "path": "users/{userId}",
+        "path": "buyers/carpets/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/User"
-          },
-          "description": "Stores user profiles."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores carpet products for buyers."
         }
       },
       {
-        "path": "users/{userId}/shareLinks/{shareLinkId}",
+        "path": "buyers/window-films/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/ShareLink"
-          },
-          "description": "Stores shareable links created by users."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores window film products for buyers."
         }
       },
       {
-        "path": "roles_admin/{userId}",
+        "path": "buyers/fluted-panels/products/{productId}",
         "definition": {
-          "schema": {
-            "$ref": "#/entities/User"
-          },
-          "description": "Indicates admin role for the user, existence-based access control."
+          "schema": { "$ref": "#/entities/Product" },
+          "description": "Stores fluted panel products for buyers."
         }
       }
     ]

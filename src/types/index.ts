@@ -16,6 +16,7 @@ export type Product = {
   productImages?: string[];
   additionalImages?: string[];
   specifications?: string;
+  db: 'retailers' | 'buyers';
 };
 
 export type Category = {

@@ -1,5 +1,5 @@
 'use client';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Sidebar,
@@ -10,50 +10,57 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarTrigger,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons/Logo';
 import {
   LayoutDashboard,
   ShoppingBasket,
-  LayoutGrid,
-  Tags,
+  BookCopy,
   Users,
-  ExternalLink,
   Settings,
   LogOut,
+  Building,
+  Home,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { categories } from '@/lib/placeholder-data';
+import { useRouter } from 'next/navigation';
 
-const menuItems = [
-  {
-    href: '/admin',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    href: '/admin/products',
-    label: 'Products',
-    icon: ShoppingBasket,
-  },
-  {
-    href: '/admin/categories',
-    label: 'Categories',
-    icon: LayoutGrid,
-  },
-  {
-    href: '/admin/attributes',
-    label: 'Attributes',
-    icon: Tags,
-  },
-  {
-    href: '/admin/users',
-    label: 'Users',
-    icon: Users,
-  },
+
+const productCategories = [
+  { href: 'wallpapers', label: 'Wallpapers', icon: BookCopy },
+  { href: 'window-blinds', label: 'Window Blinds', icon: BookCopy },
+  { href: 'wall-murals', label: 'Wall Murals', icon: BookCopy },
+  { href: 'carpets', label: 'Carpets', icon: BookCopy },
+  { href: 'window-films', label: 'Window Films', icon: BookCopy },
+  { href: 'fluted-panels', label: 'Fluted Panels', icon: BookCopy },
 ];
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+    selectedDb: string;
+    setSelectedDb: (db: string) => void;
+}
+
+export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const currentCategory = searchParams.get('category');
+
+  const handleDbChange = (value: string) => {
+    setSelectedDb(value);
+    const newPath = `${pathname}?db=${value}${currentCategory ? `&category=${currentCategory}` : ''}`;
+    router.push(newPath);
+  };
 
   return (
     <Sidebar>
@@ -66,14 +73,70 @@ export default function AdminSidebar() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {menuItems.map((item) => (
+          <SidebarMenuItem>
+             <SidebarMenuButton
+                asChild
+                isActive={pathname === '/admin' && !currentCategory}
+                tooltip="Dashboard"
+              >
+                <Link href={`/admin?db=${selectedDb}`}>
+                  <LayoutDashboard />
+                  <span>Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        
+        <SidebarSeparator />
+        
+        <div className='px-2 py-1'>
+            <Select value={selectedDb} onValueChange={handleDbChange}>
+            <SelectTrigger className="w-full">
+                <div className="flex items-center gap-2">
+                {selectedDb === 'retailers' ? <Building className="h-4 w-4" /> : <Home className="h-4 w-4" />}
+                <SelectValue placeholder="Select database" />
+                </div>
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="retailers">
+                    <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4" />
+                        <span>Retailers</span>
+                    </div>
+                </SelectItem>
+                <SelectItem value="buyers">
+                    <div className="flex items-center gap-2">
+                        <Home className="h-4 w-4" />
+                        <span>Buyers</span>
+                    </div>
+                </SelectItem>
+            </SelectContent>
+            </Select>
+        </div>
+
+        <SidebarSeparator />
+
+        <SidebarMenu>
+          <SidebarMenuItem>
+             <SidebarMenuButton
+                asChild
+                isActive={pathname === '/admin/products' && !currentCategory}
+                tooltip="All Products"
+              >
+                <Link href={`/admin/products?db=${selectedDb}`}>
+                  <ShoppingBasket />
+                  <span>All Products</span>
+                </Link>
+              </SidebarMenuButton>
+          </SidebarMenuItem>
+          {productCategories.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={currentCategory === item.href}
                 tooltip={item.label}
               >
-                <Link href={item.href}>
+                <Link href={`/admin/products?db=${selectedDb}&category=${item.href}`}>
                   <item.icon />
                   <span>{item.label}</span>
                 </Link>
@@ -86,12 +149,24 @@ export default function AdminSidebar() {
            <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === '/catalog'}
-                tooltip="View Catalog"
+                isActive={pathname === '/admin/users'}
+                tooltip="Users"
               >
-                <Link href="/catalog" target="_blank">
-                  <ExternalLink />
-                  <span>View Catalog</span>
+                <Link href="/admin/users">
+                  <Users />
+                  <span>Users</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === '/admin/settings'}
+                tooltip="Settings"
+              >
+                <Link href="/admin/settings">
+                  <Settings />
+                  <span>Settings</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
