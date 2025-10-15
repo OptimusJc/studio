@@ -68,7 +68,17 @@ export function ProductForm({ attributes, categories }: ProductFormProps) {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
+        productTitle: '',
+        productDescription: '',
         price: 0,
+        specifications: '',
+        material: '',
+        color: '',
+        size: '',
+        brand: '',
+        pattern: '',
+        texture: '',
+        category: '',
     }
   });
 
