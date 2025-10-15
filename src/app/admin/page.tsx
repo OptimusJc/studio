@@ -1,6 +1,6 @@
 'use client';
 
-import { useFirestore } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { PageHeader } from './components/PageHeader';
@@ -13,30 +13,42 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Product } from '@/types';
+import type { Product, Category } from '@/types';
 
-const productCategories = [
-  'wallpapers', 'window-blinds', 'wall-murals', 'carpets', 'window-films', 'fluted-panels'
-];
 const databases = ['retailers', 'buyers'];
 
 export default function AdminDashboardPage() {
   const firestore = useFirestore();
+
+  const categoriesCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
+  const { data: categoriesData } = useCollection<Category>(categoriesCollection);
+
   const [stats, setStats] = useState({
     totalProducts: 0,
-    totalCategories: productCategories.length,
-    totalUsers: 0 // Placeholder, user management not implemented
+    totalCategories: 0,
+    totalUsers: 0, // Placeholder, user management not implemented
   });
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    if (categoriesData) {
+      setStats(prev => ({ ...prev, totalCategories: categoriesData.length }));
+    }
+  }, [categoriesData]);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!firestore) return;
+      if (!firestore || !categoriesData) return;
       setIsLoading(true);
 
       let productCount = 0;
       const allProducts: Product[] = [];
+      
+      const productCategories = categoriesData.map(c => c.name.toLowerCase().replace(/\s+/g, '-'));
 
       for (const db of databases) {
         for (const cat of productCategories) {
@@ -77,8 +89,10 @@ export default function AdminDashboardPage() {
       setIsLoading(false);
     };
 
-    fetchData();
-  }, [firestore]);
+    if (categoriesData) {
+      fetchData();
+    }
+  }, [firestore, categoriesData]);
 
 
   return (

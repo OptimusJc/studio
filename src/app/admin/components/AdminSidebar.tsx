@@ -34,16 +34,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Category } from '@/types';
 
-
-const productCategories = [
-  { href: 'wallpapers', label: 'Wallpapers', icon: BookCopy },
-  { href: 'window-blinds', label: 'Window Blinds', icon: BookCopy },
-  { href: 'wall-murals', label: 'Wall Murals', icon: BookCopy },
-  { href: 'carpets', label: 'Carpets', icon: BookCopy },
-  { href: 'window-films', label: 'Window Films', icon: BookCopy },
-  { href: 'fluted-panels', label: 'Fluted Panels', icon: BookCopy },
-];
 
 interface AdminSidebarProps {
     selectedDb: string;
@@ -54,6 +48,14 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const firestore = useFirestore();
+
+  const categoriesCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
+
+  const { data: categories } = useCollection<Category>(categoriesCollection);
 
   const currentCategory = searchParams.get('category');
 
@@ -61,7 +63,15 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
     setSelectedDb(value);
     const params = new URLSearchParams(searchParams);
     params.set('db', value);
-    router.push(`${pathname}?${params.toString()}`);
+    // When DB changes, clear the category to avoid invalid state
+    params.delete('category'); 
+    
+    // if on a specific product page, navigate to the general products page
+    if (pathname.includes('/products/')) {
+       router.push(`/admin/products?${params.toString()}`);
+    } else {
+       router.push(`${pathname}?${params.toString()}`);
+    }
   };
 
   return (
@@ -128,20 +138,23 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
                 </Link>
               </SidebarMenuButton>
           </SidebarMenuItem>
-          {productCategories.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={currentCategory === item.href}
-                tooltip={item.label}
-              >
-                <Link href={`/admin/products?db=${selectedDb}&category=${item.href}`}>
-                  <item.icon />
-                  <span>{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {categories?.map((cat) => {
+            const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
+            return (
+              <SidebarMenuItem key={cat.id}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={currentCategory === categorySlug}
+                  tooltip={cat.name}
+                >
+                  <Link href={`/admin/products?db=${selectedDb}&category=${categorySlug}`}>
+                    <BookCopy />
+                    <span>{cat.name}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
 
         <SidebarSeparator />

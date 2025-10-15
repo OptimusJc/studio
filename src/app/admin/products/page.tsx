@@ -5,21 +5,13 @@ import { Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ProductTableClient } from './components/ProductTableClient';
 import Link from 'next/link';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
-import { useEffect, useState, useMemo } from 'react';
-import type { Product } from '@/types';
+import { useEffect, useState } from 'react';
+import type { Product, Category } from '@/types';
 import { useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const productCategories = [
-  'wallpapers',
-  'window-blinds',
-  'wall-murals',
-  'carpets',
-  'window-films',
-  'fluted-panels',
-];
 
 function ProductTableSkeleton() {
     return (
@@ -43,6 +35,12 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const categoriesCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
+  const { data: categoriesData, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
+
   const pageTitle = category 
     ? `${category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')}`
     : 'All Products';
@@ -51,7 +49,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (!firestore) return;
+      if (!firestore || !categoriesData) return;
 
       setIsLoading(true);
       const fetchedProducts: Product[] = [];
@@ -59,7 +57,8 @@ export default function ProductsPage() {
       const newDb = searchParams.get('db') || 'retailers';
       const newCategory = searchParams.get('category');
       
-      const categoriesToFetch = newCategory ? [newCategory] : productCategories;
+      const allCategorySlugs = categoriesData.map(c => c.name.toLowerCase().replace(/\s+/g, '-'));
+      const categoriesToFetch = newCategory ? [newCategory] : allCategorySlugs;
 
       for (const cat of categoriesToFetch) {
         const collectionPath = `${newDb}/${cat}/products`;
@@ -104,8 +103,10 @@ export default function ProductsPage() {
       setIsLoading(false);
     };
 
-    fetchProducts();
-  }, [firestore, searchParams]);
+    if (!isLoadingCategories) {
+        fetchProducts();
+    }
+  }, [firestore, searchParams, categoriesData, isLoadingCategories]);
 
   const newProductUrl = category 
     ? `/admin/products/new?db=${db}&category=${category}`
