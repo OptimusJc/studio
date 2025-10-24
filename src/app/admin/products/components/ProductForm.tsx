@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -16,17 +16,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, Rocket, Save, XCircle } from 'lucide-react';
+import { Rocket, Save, XCircle, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Attribute } from '@/types';
 import { useEffect, useState, useMemo } from 'react';
-import { ImageSelectionDialog } from './ImageSelectionDialog';
-import Image from 'next/image';
 import { manageProductStatus } from '@/ai/flows/manage-product-status-flow';
 import { Badge } from '@/components/ui/badge';
+import { ImageUploader } from './ImageUploader';
 
 const productSchema = z.object({
   productTitle: z.string().min(1, 'Product title is required.'),
@@ -52,45 +51,10 @@ interface ProductFormProps {
     initialCategory: string;
 }
 
-function ImageUploadCard({ 
-  title,
-  description,
-  imageUrl,
-  onClick 
-}: { 
-  title: string; 
-  description: string;
-  imageUrl?: string;
-  onClick: () => void;
-}) {
-  return (
-    <Card className="border-dashed cursor-pointer hover:border-primary transition-colors" onClick={onClick}>
-      <CardContent className="p-6">
-        {imageUrl ? (
-           <div className="relative aspect-square">
-            <Image src={imageUrl} alt={title} fill className="object-cover rounded-md" />
-           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center h-48">
-            <Upload className="h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              <span className="font-semibold text-primary">Upload a file</span> or drag and drop
-            </p>
-            <p className="text-xs text-muted-foreground">{description}</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 export function ProductForm({ initialData, allAttributes, categories, initialDb, initialCategory }: ProductFormProps) {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
-  
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeImageField, setActiveImageField] = useState<'productImages' | 'additionalImages' | null>(null);
   
   const isEditMode = !!initialData;
   const currentProductId = initialData?.id || null;
@@ -112,6 +76,11 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     }
   });
 
+  const { fields: additionalImageFields, append: appendAdditionalImage, remove: removeAdditionalImage } = useFieldArray({
+      control: form.control,
+      name: "additionalImages"
+  });
+
   const currentStatus = form.watch('status');
   
   useEffect(() => {
@@ -130,7 +99,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         status: initialData.status || 'Draft',
       });
     }
-  }, [initialData?.id, form]);
+  }, [initialData?.id]);
 
   
   const selectedCategory = form.watch('category');
@@ -142,24 +111,6 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     return allAttributes.filter(attr => attr.category === categoryDetails.name);
   }, [selectedCategory, allAttributes, categories]);
 
-
-  const handleImageSelectClick = (field: 'productImages' | 'additionalImages') => {
-    setActiveImageField(field);
-    setIsDialogOpen(true);
-  };
-
-  const handleImageSelected = (imageUrl: string) => {
-    if (activeImageField) {
-      const currentImages = form.getValues(activeImageField) || [];
-      if (activeImageField === 'productImages') {
-         form.setValue(activeImageField, [imageUrl], { shouldValidate: true });
-      } else {
-         form.setValue(activeImageField, [...currentImages, imageUrl], { shouldValidate: true });
-      }
-    }
-    setIsDialogOpen(false);
-    setActiveImageField(null);
-  };
 
   const getProductDataFromForm = (data: ProductFormValues) => {
     return {
@@ -191,7 +142,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
           description: `${data.productTitle} has been updated.`,
       });
     } else {
-       addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
+        addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
         .then(newDocRef => {
             toast({
                 title: "Draft Saved!",
@@ -248,21 +199,14 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const handleDiscard = () => {
     router.back();
   };
-
-  const primaryImage = form.watch('productImages')?.[0];
-  const additionalImages = form.watch('additionalImages') || [];
-
+  
+  const productImages = form.watch('productImages');
 
   return (
     <>
-      <ImageSelectionDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSelectImage={handleImageSelected}
-      />
       <Form {...form}>
         <form className="space-y-8">
-           <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/95 py-4 backdrop-blur-sm">
+           <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/95 py-4 backdrop-blur-sm px-4 md:px-8">
               <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
               <Button type="button" variant="secondary" onClick={form.handleSubmit(handleSaveDraft)}>
                 <Save className="mr-2 h-4 w-4" /> Save Draft
@@ -385,31 +329,29 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
               <Card>
                   <CardHeader>
                       <CardTitle>Product Images</CardTitle>
-                      <FormMessage>{form.formState.errors.productImages?.message}</FormMessage>
+                      {form.formState.errors.productImages && <p className="text-sm font-medium text-destructive">{form.formState.errors.productImages?.message}</p>}
                   </CardHeader>
                   <CardContent className="space-y-6 p-6">
                       <div>
                           <FormLabel>Primary Image</FormLabel>
-                           <ImageUploadCard 
-                              title="Primary Image" 
-                              description="PNG, JPG, GIF up to 10MB"
-                              imageUrl={primaryImage}
-                              onClick={() => handleImageSelectClick('productImages')}
-                           />
+                          <p className="text-sm text-muted-foreground pb-2">This is the main image that will be displayed in listings.</p>
+                           <ImageUploader field="productImages" />
                       </div>
                       <div>
-                          <FormLabel>Additional Images</FormLabel>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                            {additionalImages.map((img, index) => (
-                                <div key={index} className="relative aspect-square">
-                                    <Image src={img} alt={`Additional image ${index + 1}`} fill className="object-cover rounded-md" />
-                                </div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                                <FormLabel>Additional Images</FormLabel>
+                                <p className="text-sm text-muted-foreground">Add up to 4 more images.</p>
+                            </div>
+                            <Button type="button" variant="outline" size="sm" onClick={() => appendAdditionalImage({ value: ''} as any)} disabled={additionalImageFields.length >= 4}>
+                                <PlusCircle className="h-4 w-4 mr-2" />
+                                Add Image
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {additionalImageFields.map((item, index) => (
+                                <ImageUploader key={item.id} field="additionalImages" index={index} />
                             ))}
-                             <ImageUploadCard 
-                                title="Additional Images" 
-                                description="Add more images"
-                                onClick={() => handleImageSelectClick('additionalImages')}
-                              />
                           </div>
                       </div>
                   </CardContent>

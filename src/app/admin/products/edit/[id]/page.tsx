@@ -59,6 +59,9 @@ export default function EditProductPage() {
       return categories?.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === categorySlug)?.name;
   }, [categories, categorySlug]);
 
+  const memoizedAttributes = useMemo(() => attributes || [], [attributes?.length]);
+  const memoizedCategories = useMemo(() => categories || [], [categories?.length]);
+
   useEffect(() => {
     if (!isLoadingProduct && !productData) {
         // A more robust solution might involve a server-side check or fetching from the live collection.
@@ -111,8 +114,8 @@ export default function EditProductPage() {
       ) : (
         <ProductForm 
           initialData={transformedProductData} 
-          allAttributes={attributes || []} 
-          categories={categories || []}
+          allAttributes={memoizedAttributes || []} 
+          categories={memoizedCategories || []}
           initialDb={db}
           initialCategory={categorySlug || ''}
         />

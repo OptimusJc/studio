@@ -35,6 +35,7 @@ export function FirebaseClientProvider({ children }: { children: ReactNode }) {
       firebaseApp={firebaseServices.firebaseApp}
       auth={firebaseServices.auth}
       firestore={firebaseServices.firestore}
+      storage={firebaseServices.storage}
     >
       <AuthHandler>
         {children}
