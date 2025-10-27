@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -22,7 +23,7 @@ import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Attribute } from '@/types';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { manageProductStatus } from '@/ai/flows/manage-product-status-flow';
 import { Badge } from '@/components/ui/badge';
 import { ImageUploader } from './ImageUploader';
@@ -84,7 +85,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const currentStatus = form.watch('status');
   
   useEffect(() => {
-    if (initialData) {
+    if (initialData?.id) {
       form.reset({
         productTitle: initialData.name,
         productCode: initialData.productCode || '',
@@ -99,7 +100,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         status: initialData.status || 'Draft',
       });
     }
-  }, [initialData?.id]);
+  }, [initialData?.id, form.reset]);
 
   
   const selectedCategory = form.watch('category');
@@ -199,14 +200,12 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const handleDiscard = () => {
     router.back();
   };
-  
-  const productImages = form.watch('productImages');
 
   return (
     <>
       <Form {...form}>
         <form className="space-y-8">
-           <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/95 py-4 backdrop-blur-sm px-4 md:px-8">
+           <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/95 py-4 backdrop-blur-sm px-4 md:px-8 -mx-4 md:-mx-8">
               <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
               <Button type="button" variant="secondary" onClick={form.handleSubmit(handleSaveDraft)}>
                 <Save className="mr-2 h-4 w-4" /> Save Draft
@@ -343,7 +342,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                                 <FormLabel>Additional Images</FormLabel>
                                 <p className="text-sm text-muted-foreground">Add up to 4 more images.</p>
                             </div>
-                            <Button type="button" variant="outline" size="sm" onClick={() => appendAdditionalImage({ value: ''} as any)} disabled={additionalImageFields.length >= 4}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => appendAdditionalImage('')} disabled={additionalImageFields.length >= 4}>
                                 <PlusCircle className="h-4 w-4 mr-2" />
                                 Add Image
                             </Button>

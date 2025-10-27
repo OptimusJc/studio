@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/firebase';
@@ -21,14 +22,19 @@ interface ImageUploaderProps {
 }
 
 export function ImageUploader({ field, index }: ImageUploaderProps) {
-  const { setValue, getValues } = useFormContext();
+  const { setValue, getValues, watch } = useFormContext();
   const { firebaseApp } = useFirebase();
   const { toast } = useToast();
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    index !== undefined ? getValues(`${field}.${index}`) : getValues(field)?.[0] || null
-  );
+
+  const imageUrl = index !== undefined ? watch(`${field}.${index}`) : watch(field)?.[0];
+  const [previewUrl, setPreviewUrl] = useState<string | null>(imageUrl || null);
+  
+  useEffect(() => {
+    setPreviewUrl(imageUrl || null);
+  }, [imageUrl]);
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -90,7 +96,6 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           setIsUploading(false);
           setUploadProgress(null);
-          setPreviewUrl(downloadURL);
           
           if (field === 'productImages') {
              setValue(field, [downloadURL], { shouldValidate: true });
@@ -117,11 +122,10 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
     if (index !== undefined) {
         const currentImages: string[] = getValues(field) || [];
         const newImages = currentImages.filter((_, i) => i !== index);
-        setValue(field, newImages, { shouldValidate: true });
+        setValue(field, newImages, { shouldValidate: true, shouldDirty: true });
     } else {
-        setValue(field, [], { shouldValidate: true });
+        setValue(field, [], { shouldValidate: true, shouldDirty: true });
     }
-    setPreviewUrl(null);
   };
 
 
