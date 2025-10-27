@@ -64,6 +64,7 @@ export default function AdminDashboardPage() {
             id: doc.id,
             ...data,
             name: data.productTitle,
+            price: data.price ?? 0,
             imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
              createdAt: (() => {
                 if (!data.createdAt) return new Date().toISOString();
@@ -90,6 +91,7 @@ export default function AdminDashboardPage() {
                     id: doc.id,
                     ...data,
                     name: data.productTitle,
+                    price: data.price ?? 0,
                     imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
                     category: cat,
                     db: db,
