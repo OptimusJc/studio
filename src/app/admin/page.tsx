@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -67,8 +68,8 @@ export default function AdminDashboardPage() {
              createdAt: (() => {
                 if (!data.createdAt) return new Date().toISOString();
                 if (typeof data.createdAt === 'string') return data.createdAt;
-                if (typeof data.createdAt.toDate === 'function') {
-                    return data.createdAt.toDate().toISOString();
+                if (typeof (data.createdAt as any)?.toDate === 'function') {
+                    return (data.createdAt as any).toDate().toISOString();
                 }
                 return new Date(data.createdAt).toISOString();
             })(),
@@ -95,8 +96,8 @@ export default function AdminDashboardPage() {
                     createdAt: (() => {
                         if (!data.createdAt) return new Date().toISOString();
                         if (typeof data.createdAt === 'string') return data.createdAt;
-                        if (typeof data.createdAt.toDate === 'function') {
-                            return data.createdAt.toDate().toISOString();
+                        if (typeof (data.createdAt as any)?.toDate === 'function') {
+                            return (data.createdAt as any).toDate().toISOString();
                         }
                         return new Date(data.createdAt).toISOString();
                     })(),
@@ -207,7 +208,7 @@ export default function AdminDashboardPage() {
                         <TableCell>
                            <Badge variant="secondary">{product.category}</Badge>
                         </TableCell>
-                        <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">${(product.price || 0).toFixed(2)}</TableCell>
                     </TableRow>
                     ))
                 )}

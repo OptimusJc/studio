@@ -1,3 +1,4 @@
+
 'use client';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -91,6 +92,7 @@ export default function ProductsPage() {
                   name: data.productTitle,
                   imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
                   category: cat,
+                  db: newDb,
                 } as Product;
                 // If a published product exists, it should overwrite the draft in the map
                 productMap.set(product.id, product);
