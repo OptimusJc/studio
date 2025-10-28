@@ -44,7 +44,7 @@ function CatalogContent() {
       if (values.length > 0) {
         if (key === 'price') {
             const [min, max] = values;
-            newFilteredProducts = newFilteredProducts.filter(p => p.price >= min && p.price <= max);
+            newFilteredProducts = newFilteredProducts.filter(p => (p.price ?? 0) >= min && (p.price ?? 0) <= max);
         } else if (key === 'category') {
             newFilteredProducts = newFilteredProducts.filter(p => values.includes(p.category));
         } else {

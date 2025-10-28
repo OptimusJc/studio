@@ -20,7 +20,7 @@ interface ProductViewDialogProps {
 }
 
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
-    if (!value) return null;
+    if (!value && value !== 0) return null;
     return (
         <div>
             <p className="text-sm font-medium text-muted-foreground">{label}</p>
@@ -65,7 +65,7 @@ export function ProductViewDialog({ product }: ProductViewDialogProps) {
                     <DetailItem label="Description" value={product.productDescription} />
                     <Separator />
                     <div className="grid grid-cols-2 gap-4">
-                        <DetailItem label="Price" value={`$${product.price.toFixed(2)}`} />
+                        <DetailItem label="Price" value={product.price ? `$${(product.price).toFixed(2)}` : 'N/A'} />
                         <DetailItem label="Stock" value={product.stock} />
                         <DetailItem label="Category" value={<Badge variant="outline">{product.category}</Badge>} />
                         <DetailItem label="Status" value={<Badge variant={product.status === 'Published' ? 'secondary' : 'outline'}>{product.status}</Badge>} />

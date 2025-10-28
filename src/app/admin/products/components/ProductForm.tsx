@@ -32,7 +32,7 @@ const productSchema = z.object({
   productTitle: z.string().min(1, 'Product title is required.'),
   productCode: z.string().min(1, 'Product code is required.'),
   productDescription: z.string().optional(),
-  price: z.coerce.number().min(0, 'Price must be a positive number.'),
+  price: z.coerce.number().min(0, 'Price must be a positive number.').optional(),
   specifications: z.string().optional(),
   attributes: z.record(z.string()).optional(),
   category: z.string().min(1, 'Category is required.'),
@@ -66,7 +66,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       productTitle: '',
       productCode: '',
       productDescription: '',
-      price: 0,
+      price: undefined,
       specifications: '',
       attributes: {},
       category: initialCategory || '',
@@ -100,7 +100,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         status: initialData.status || 'Draft',
       });
     }
-  }, [initialData?.id, form.reset]);
+  }, [initialData, form.reset]);
 
   
   const selectedCategory = form.watch('category');
@@ -294,11 +294,18 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                     name="price"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Price</FormLabel>
+                        <FormLabel>Price (Optional)</FormLabel>
                         <FormControl>
                             <div className="relative">
                                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                                <Input type="number" placeholder="0.00" className="pl-7" {...field} />
+                                <Input
+                                    type="number"
+                                    placeholder="0.00"
+                                    className="pl-7"
+                                    {...field}
+                                    value={field.value ?? ''}
+                                    onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                />
                             </div>
                         </FormControl>
                         <FormMessage />

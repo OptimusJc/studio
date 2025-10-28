@@ -30,7 +30,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <CardTitle className="text-lg font-semibold leading-snug">{product.name}</CardTitle>
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center">
-        <p className="text-xl font-bold text-primary">${product.price.toFixed(2)}</p>
+        <p className="text-xl font-bold text-primary">${(product.price ?? 0).toFixed(2)}</p>
         <Button variant="outline">View</Button>
       </CardFooter>
     </Card>
