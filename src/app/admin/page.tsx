@@ -30,7 +30,7 @@ export default function AdminDashboardPage() {
     if (!firestore) return null;
     return collection(firestore, 'categories');
   }, [firestore]);
-  const { data: categoriesData } = useCollection<Category>(categoriesCollection);
+  const { data: categoriesData, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
 
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -120,10 +120,16 @@ export default function AdminDashboardPage() {
       setIsLoading(false);
     };
 
-    if (categoriesData) {
+    // Only fetch data if categories have been loaded.
+    if (!isLoadingCategories && categoriesData) {
       fetchData();
+    } else if (!isLoadingCategories && !categoriesData) {
+      // Handle case with no categories (e.g., empty DB)
+      setIsLoading(false);
+      setRecentProducts([]);
+      setStats(prev => ({ ...prev, totalProducts: 0 }));
     }
-  }, [firestore, categoriesData]);
+  }, [firestore, categoriesData, isLoadingCategories]);
 
 
   return (
