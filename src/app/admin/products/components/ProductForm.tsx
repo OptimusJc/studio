@@ -85,7 +85,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const currentStatus = form.watch('status');
   
   useEffect(() => {
-    if (initialData?.id) {
+    if (initialData) {
       form.reset({
         productTitle: initialData.name,
         productCode: initialData.productCode || '',

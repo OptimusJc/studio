@@ -1,3 +1,4 @@
+
 'use client';
 import { PageHeader } from '../../../components/PageHeader';
 import { ProductForm } from '../../components/ProductForm';
@@ -56,11 +57,12 @@ export default function EditProductPage() {
   const isLoading = isLoadingProduct || isLoadingAttributes || isLoadingCategories;
   
   const categoryNameFromSlug = useMemo(() => {
-      return categories?.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === categorySlug)?.name;
+      if (!categories || !categorySlug) return null;
+      return categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === categorySlug)?.name;
   }, [categories, categorySlug]);
 
-  const memoizedAttributes = useMemo(() => attributes || [], [attributes?.length]);
-  const memoizedCategories = useMemo(() => categories || [], [categories?.length]);
+  const memoizedAttributes = useMemo(() => attributes || [], [attributes]);
+  const memoizedCategories = useMemo(() => categories || [], [categories]);
 
   useEffect(() => {
     if (!isLoadingProduct && !productData) {
@@ -70,6 +72,7 @@ export default function EditProductPage() {
   }, [isLoadingProduct, productData, productId]);
   
   const transformedProductData: Product | null = useMemo(() => {
+    // Ensure we have product data and a valid category before transforming
     if (productData && categoryNameFromSlug) {
       return {
         id: productData.id,
@@ -85,8 +88,8 @@ export default function EditProductPage() {
         createdAt: (() => {
             if (!productData.createdAt) return new Date().toISOString();
             if (typeof productData.createdAt === 'string') return productData.createdAt;
-            if (typeof productData.createdAt.toDate === 'function') {
-                return productData.createdAt.toDate().toISOString();
+            if (typeof (productData.createdAt as any)?.toDate === 'function') {
+                return (productData.createdAt as any).toDate().toISOString();
             }
             return new Date(productData.createdAt).toISOString();
         })(),
@@ -99,6 +102,7 @@ export default function EditProductPage() {
         db,
       };
     }
+    // Return null if data is incomplete to prevent downstream errors
     return null;
   }, [productData, categoryNameFromSlug, db]);
 
@@ -114,8 +118,8 @@ export default function EditProductPage() {
       ) : (
         <ProductForm 
           initialData={transformedProductData} 
-          allAttributes={memoizedAttributes || []} 
-          categories={memoizedCategories || []}
+          allAttributes={memoizedAttributes} 
+          categories={memoizedCategories}
           initialDb={db}
           initialCategory={categorySlug || ''}
         />
