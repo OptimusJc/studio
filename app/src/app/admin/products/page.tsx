@@ -107,12 +107,12 @@ export default function ProductsPage() {
     };
     
     if (!isLoadingCategories) {
-        if (categoriesData) {
+        if (categoriesData && categoriesData.length > 0) {
             fetchProducts();
         } else {
             // Handle case where there are no categories
-            setIsLoading(false);
             setProducts([]);
+            setIsLoading(false);
         }
     }
   }, [firestore, searchParams, categoriesData, isLoadingCategories]);

@@ -125,16 +125,15 @@ export default function AdminDashboardPage() {
       }
     };
 
-    // This is the key change: We must handle the case where categories have loaded but are empty.
     if (!isLoadingCategories) {
-        if (categoriesData && categoriesData.length > 0) {
-            fetchData();
-        } else {
-             // Handle case with no categories (e.g., empty DB)
-            setIsLoading(false);
-            setRecentProducts([]);
-            setStats(prev => ({ ...prev, totalProducts: 0, totalCategories: categoriesData?.length || 0 }));
-        }
+      if (categoriesData && categoriesData.length > 0) {
+        fetchData();
+      } else {
+        // Handle the case where there are no categories
+        setRecentProducts([]);
+        setStats(prev => ({ ...prev, totalProducts: 0, totalCategories: categoriesData?.length || 0 }));
+        setIsLoading(false);
+      }
     }
   }, [firestore, categoriesData, isLoadingCategories]);
 

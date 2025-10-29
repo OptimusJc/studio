@@ -72,6 +72,7 @@ export default function EditProductPage() {
   }, [isLoadingProduct, productData, productId]);
   
   const transformedProductData: Product | null = useMemo(() => {
+    // Ensure we have product data and a valid category before transforming
     if (productData && categoryNameFromSlug) {
       return {
         id: productData.id,
@@ -87,8 +88,8 @@ export default function EditProductPage() {
         createdAt: (() => {
             if (!productData.createdAt) return new Date().toISOString();
             if (typeof productData.createdAt === 'string') return productData.createdAt;
-            if (typeof productData.createdAt.toDate === 'function') {
-                return productData.createdAt.toDate().toISOString();
+            if (typeof (productData.createdAt as any)?.toDate === 'function') {
+                return (productData.createdAt as any).toDate().toISOString();
             }
             return new Date(productData.createdAt).toISOString();
         })(),
@@ -101,6 +102,7 @@ export default function EditProductPage() {
         db,
       };
     }
+    // Return null if data is incomplete to prevent downstream errors
     return null;
   }, [productData, categoryNameFromSlug, db]);
 
@@ -116,8 +118,8 @@ export default function EditProductPage() {
       ) : (
         <ProductForm 
           initialData={transformedProductData} 
-          allAttributes={memoizedAttributes || []} 
-          categories={memoizedCategories || []}
+          allAttributes={memoizedAttributes} 
+          categories={memoizedCategories}
           initialDb={db}
           initialCategory={categorySlug || ''}
         />

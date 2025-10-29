@@ -85,14 +85,14 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const currentStatus = form.watch('status');
   
   useEffect(() => {
-    if (initialData?.id) {
+    if (initialData) {
       form.reset({
         productTitle: initialData.name,
         productCode: initialData.productCode || '',
         productDescription: initialData.productDescription || '',
         price: initialData.price,
         specifications: initialData.specifications || '',
-        category: initialData.category.toLowerCase().replace(/\s+/g, '-'),
+        category: initialData.category?.toLowerCase().replace(/\s+/g, '-') || '',
         attributes: initialData.attributes || {},
         productImages: initialData.productImages || [],
         additionalImages: initialData.additionalImages || [],
@@ -100,7 +100,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         status: initialData.status || 'Draft',
       });
     }
-  }, [initialData?.id, form.reset]);
+  }, [initialData, form.reset]);
 
   
   const selectedCategory = form.watch('category');
