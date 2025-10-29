@@ -40,7 +40,7 @@ export default function ProductsPage() {
     if (!firestore) return null;
     return collection(firestore, 'categories');
   }, [firestore]);
-  const { data: categoriesData } = useCollection<Category>(categoriesCollection);
+  const { data: categoriesData, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
 
   const pageTitle = category 
     ? `${category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ')}`
@@ -105,11 +105,17 @@ export default function ProductsPage() {
       setProducts(Array.from(productMap.values()));
       setIsLoading(false);
     };
-
-    if (categoriesData) {
-      fetchProducts();
+    
+    if (!isLoadingCategories) {
+        if (categoriesData && categoriesData.length > 0) {
+            fetchProducts();
+        } else {
+            // Handle case where there are no categories
+            setIsLoading(false);
+            setProducts([]);
+        }
     }
-  }, [firestore, searchParams, categoriesData]);
+  }, [firestore, searchParams, categoriesData, isLoadingCategories]);
 
   const newProductUrl = category 
     ? `/admin/products/new?db=${db}&category=${category}`
