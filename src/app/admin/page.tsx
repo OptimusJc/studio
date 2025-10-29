@@ -25,8 +25,6 @@ export default function AdminDashboardPage() {
   const searchParams = useSearchParams();
   const db = searchParams.get('db') || 'retailers';
 
-  console.log("Firestore: ", firestore)
-  console.log("This is the DB: ", db)
 
   const categoriesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -127,11 +125,12 @@ export default function AdminDashboardPage() {
       }
     };
 
+    // This is the key change: We must handle the case where categories have loaded but are empty.
     if (!isLoadingCategories) {
         if (categoriesData && categoriesData.length > 0) {
             fetchData();
         } else {
-            // Handle case with no categories (e.g., empty DB)
+             // Handle case with no categories (e.g., empty DB)
             setIsLoading(false);
             setRecentProducts([]);
             setStats(prev => ({ ...prev, totalProducts: 0, totalCategories: 0 }));
@@ -242,3 +241,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
