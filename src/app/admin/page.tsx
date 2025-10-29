@@ -51,83 +51,89 @@ export default function AdminDashboardPage() {
       if (!firestore || !categoriesData) return;
       setIsLoading(true);
 
-      const productMap = new Map<string, Product>();
-      
-      const productCategories = categoriesData.map(c => c.name.toLowerCase().replace(/\s+/g, '-'));
+      try {
+        const productMap = new Map<string, Product>();
+        
+        const productCategories = categoriesData.map(c => c.name.toLowerCase().replace(/\s+/g, '-'));
 
-      // 1. Fetch Drafts for all DBs
-      const draftsQuery = query(collection(firestore, 'drafts'));
-      const draftsSnapshot = await getDocs(draftsQuery);
-      draftsSnapshot.forEach(doc => {
-          const data = doc.data() as DocumentData;
-          const product = {
-            id: doc.id,
-            ...data,
-            name: data.productTitle,
-            price: data.price ?? 0,
-            imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-             createdAt: (() => {
-                if (!data.createdAt) return new Date().toISOString();
-                if (typeof data.createdAt === 'string') return data.createdAt;
-                if (typeof (data.createdAt as any)?.toDate === 'function') {
-                    return (data.createdAt as any).toDate().toISOString();
-                }
-                return new Date(data.createdAt).toISOString();
-            })(),
-          } as Product;
-          productMap.set(product.id, product);
-      });
+        // 1. Fetch Drafts for all DBs
+        const draftsQuery = query(collection(firestore, 'drafts'));
+        const draftsSnapshot = await getDocs(draftsQuery);
+        draftsSnapshot.forEach(doc => {
+            const data = doc.data() as DocumentData;
+            const product = {
+              id: doc.id,
+              ...data,
+              name: data.productTitle,
+              price: data.price ?? 0,
+              imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+               createdAt: (() => {
+                  if (!data.createdAt) return new Date().toISOString();
+                  if (typeof data.createdAt === 'string') return data.createdAt;
+                  if (typeof (data.createdAt as any)?.toDate === 'function') {
+                      return (data.createdAt as any).toDate().toISOString();
+                  }
+                  return new Date(data.createdAt).toISOString();
+              })(),
+            } as Product;
+            productMap.set(product.id, product);
+        });
 
-      // 2. Fetch Published for all DBs
-      for (const db of databases) {
-        for (const cat of productCategories) {
-            const collectionPath = `${db}/${cat}/products`;
-            try {
-              const publishedQuery = query(collection(firestore, collectionPath));
-              const publishedSnapshot = await getDocs(publishedQuery);
-              publishedSnapshot.forEach(doc => {
-                  const data = doc.data() as DocumentData;
-                  const product = {
-                    id: doc.id,
-                    ...data,
-                    name: data.productTitle,
-                    price: data.price ?? 0,
-                    imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                    category: cat,
-                    db: db,
-                    createdAt: (() => {
-                        if (!data.createdAt) return new Date().toISOString();
-                        if (typeof data.createdAt === 'string') return data.createdAt;
-                        if (typeof (data.createdAt as any)?.toDate === 'function') {
-                            return (data.createdAt as any).toDate().toISOString();
-                        }
-                        return new Date(data.createdAt).toISOString();
-                    })(),
-                  } as Product;
-                  productMap.set(product.id, product);
-              });
-            } catch(e) {
-              // It's ok if a collection doesn't exist.
-            }
+        // 2. Fetch Published for all DBs
+        for (const db of databases) {
+          for (const cat of productCategories) {
+              const collectionPath = `${db}/${cat}/products`;
+              try {
+                const publishedQuery = query(collection(firestore, collectionPath));
+                const publishedSnapshot = await getDocs(publishedQuery);
+                publishedSnapshot.forEach(doc => {
+                    const data = doc.data() as DocumentData;
+                    const product = {
+                      id: doc.id,
+                      ...data,
+                      name: data.productTitle,
+                      price: data.price ?? 0,
+                      imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                      category: cat,
+                      db: db,
+                      createdAt: (() => {
+                          if (!data.createdAt) return new Date().toISOString();
+                          if (typeof data.createdAt === 'string') return data.createdAt;
+                          if (typeof (data.createdAt as any)?.toDate === 'function') {
+                              return (data.createdAt as any).toDate().toISOString();
+                          }
+                          return new Date(data.createdAt).toISOString();
+                      })(),
+                    } as Product;
+                    productMap.set(product.id, product);
+                });
+              } catch(e) {
+                // It's ok if a collection doesn't exist.
+              }
+          }
         }
-      }
 
-      const allProducts = Array.from(productMap.values());
-      allProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
-      setRecentProducts(allProducts.slice(0, 5));
-      setStats(prev => ({ ...prev, totalProducts: allProducts.length }));
-      setIsLoading(false);
+        const allProducts = Array.from(productMap.values());
+        allProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+        setRecentProducts(allProducts.slice(0, 5));
+        setStats(prev => ({ ...prev, totalProducts: allProducts.length }));
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    // Only fetch data if categories have been loaded.
-    if (!isLoadingCategories && categoriesData) {
-      fetchData();
-    } else if (!isLoadingCategories && !categoriesData) {
-      // Handle case with no categories (e.g., empty DB)
-      setIsLoading(false);
-      setRecentProducts([]);
-      setStats(prev => ({ ...prev, totalProducts: 0 }));
+    if (!isLoadingCategories) {
+        if (categoriesData && categoriesData.length > 0) {
+            fetchData();
+        } else {
+            // Handle case with no categories (e.g., empty DB)
+            setIsLoading(false);
+            setRecentProducts([]);
+            setStats(prev => ({ ...prev, totalProducts: 0, totalCategories: 0 }));
+        }
     }
   }, [firestore, categoriesData, isLoadingCategories]);
 
@@ -206,7 +212,7 @@ export default function AdminDashboardPage() {
                             <TableCell colSpan={4}><Skeleton className="h-5 w-full" /></TableCell>
                         </TableRow>
                     ))
-                ) : (
+                ) : recentProducts.length > 0 ? (
                     recentProducts.map(product => (
                     <TableRow key={product.id}>
                         <TableCell className="font-medium">{product.name}</TableCell>
@@ -219,6 +225,12 @@ export default function AdminDashboardPage() {
                         <TableCell className="text-right">${(product.price || 0).toFixed(2)}</TableCell>
                     </TableRow>
                     ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      No recent products found.
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
