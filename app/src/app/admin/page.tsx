@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
               id: doc.id,
               ...data,
               name: data.productTitle,
-              price: data.price ?? 0,
+              price: data.price,
               imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
                createdAt: (() => {
                   if (!data.createdAt) return new Date().toISOString();
@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
                       id: doc.id,
                       ...data,
                       name: data.productTitle,
-                      price: data.price ?? 0,
+                      price: data.price,
                       imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
                       category: cat,
                       db: db,
@@ -127,13 +127,13 @@ export default function AdminDashboardPage() {
 
     // Only fetch data if categories have been loaded.
     if (!isLoadingCategories) {
-        if (categoriesData) {
+        if (categoriesData && categoriesData.length > 0) {
             fetchData();
         } else {
              // Handle case with no categories (e.g., empty DB)
             setIsLoading(false);
             setRecentProducts([]);
-            setStats(prev => ({ ...prev, totalProducts: 0, totalCategories: 0 }));
+            setStats(prev => ({ ...prev, totalProducts: 0, totalCategories: categoriesData?.length || 0 }));
         }
     }
   }, [firestore, categoriesData, isLoadingCategories]);
@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
                         <TableCell>
                            <Badge variant="secondary">{product.category}</Badge>
                         </TableCell>
-                        <TableCell className="text-right">${(product.price || 0).toFixed(2)}</TableCell>
+                        <TableCell className="text-right">${(product.price ?? 0).toFixed(2)}</TableCell>
                     </TableRow>
                     ))
                 ) : (
