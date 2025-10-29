@@ -125,7 +125,7 @@ export default function AdminDashboardPage() {
       }
     };
 
-    // Only fetch data if categories have been loaded.
+    // This is the key change: We must handle the case where categories have loaded but are empty.
     if (!isLoadingCategories) {
         if (categoriesData && categoriesData.length > 0) {
             fetchData();
