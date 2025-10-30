@@ -78,6 +78,20 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "User": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "User",
+        "type": "object",
+        "description": "Represents a user of the system.",
+        "properties": {
+            "name": { "type": "string", "description": "The user's full name." },
+            "email": { "type": "string", "format": "email", "description": "The user's email address." },
+            "role": { "type": "string", "description": "The user's role.", "enum": ["Admin", "Editor", "Customer"] },
+            "createdAt": { "type": "string", "format": "date-time" },
+            "lastLogin": { "type": "string", "format": "date-time" }
+        },
+        "required": ["name", "email", "role", "createdAt"]
     }
   },
   "auth": {
@@ -88,6 +102,13 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "users/{userId}",
+        "definition": {
+            "schema": { "$ref": "#/entities/User" },
+            "description": "Stores user profiles."
+        }
+      },
       {
         "path": "retailers/wallpapers/products/{productId}",
         "definition": {
