@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Manages the publishing and unpublishing of products.
@@ -23,12 +22,13 @@ const ManageProductStatusOutputSchema = z.object({
 });
 export type ManageProductStatusOutput = z.infer<typeof ManageProductStatusOutputSchema>;
 
+// Initialize Firebase at module level - get the firestore instance directly
+const firebaseApp = initializeFirebase();
+const { firestore } = getSdks(firebaseApp);
 
 // Private function containing the core logic for publishing/unpublishing
 async function _manageProductStatusLogic(input: ManageProductStatusInput): Promise<ManageProductStatusOutput> {
   const { action, productId } = input;
-  // Initialize Firestore within the server-side logic
-  const { firestore } = getSdks(initializeFirebase());
 
   const draftRef = doc(firestore, 'drafts', productId);
 
@@ -40,10 +40,20 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
       }
       const productData = draftDoc.data()!;
       
+      // Validate required fields exist
+      if (!productData.db || !productData.category) {
+        throw new Error('Product data is missing required fields: db or category');
+      }
+
       const liveCollectionPath = `${productData.db}/${productData.category}/products`;
       const liveDocRef = doc(firestore, liveCollectionPath, productId);
 
-      await setDoc(liveDocRef, { ...productData, status: 'Published' });
+      // Write first, then delete (prevents data loss if write fails)
+      await setDoc(liveDocRef, { 
+        ...productData, 
+        status: 'Published',
+        publishedAt: new Date().toISOString() 
+      });
       await deleteDoc(draftRef);
 
       return {
@@ -52,7 +62,7 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
       };
     } else if (action === 'unpublish') {
       if (!input.db || !input.category) {
-          throw new Error("Database and category are required for unpublishing.");
+        throw new Error("Database and category are required for unpublishing.");
       }
 
       const liveCollectionPath = `${input.db}/${input.category}/products`;
@@ -60,12 +70,17 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
 
       const liveDoc = await getDoc(liveDocRef);
       if (!liveDoc.exists()) {
-          throw new Error(`Published product with ID ${productId} not found in ${liveCollectionPath}.`);
+        throw new Error(`Published product with ID ${productId} not found in ${liveCollectionPath}.`);
       }
       const productData = liveDoc.data()!;
 
-       await setDoc(draftRef, { ...productData, status: 'Draft' });
-       await deleteDoc(liveDocRef);
+      // Write first, then delete (prevents data loss if write fails)
+      await setDoc(draftRef, { 
+        ...productData, 
+        status: 'Draft',
+        unpublishedAt: new Date().toISOString() 
+      });
+      await deleteDoc(liveDocRef);
 
       return {
         success: true,
@@ -76,7 +91,8 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
     return { success: false, message: 'Invalid action.' };
   } catch (error) {
     console.error(`Flow failed for product ${productId}:`, error);
-    throw new Error(`Failed to ${action} product: ${(error as Error).message}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to ${action} product: ${errorMessage}`);
   }
 }
 
@@ -88,7 +104,6 @@ const manageProductStatusFlow = ai.defineFlow(
     outputSchema: ManageProductStatusOutputSchema,
   },
   async (input) => {
-    // The flow now correctly calls the private logic function
     return _manageProductStatusLogic(input);
   }
 );
@@ -96,7 +111,7 @@ const manageProductStatusFlow = ai.defineFlow(
 // This is the exported function that will be called from the client
 export async function manageProductStatus(
   input: ManageProductStatusInput,
-) {
+): Promise<ManageProductStatusOutput> {
   // Execute the defined flow
   return manageProductStatusFlow(input);
 }

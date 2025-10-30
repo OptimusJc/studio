@@ -2,15 +2,17 @@
 'use client';
 
 import React, { useMemo, type ReactNode, useEffect } from 'react';
-import { FirebaseProvider, useAuth } from '@/firebase/provider';
+import { FirebaseProvider, useFirebase } from '@/firebase/provider';
 import { initializeFirebase } from '@/firebase/server-init';
 import { initiateAnonymousSignIn } from './non-blocking-login';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 function AuthHandler({ children }: { children: ReactNode }) {
-  const auth = useAuth();
+  // Use the more general useFirebase hook
+  const { auth } = useFirebase();
 
   useEffect(() => {
+    // This guard is now crucial. The effect will re-run when `auth` becomes available.
     if (!auth) return;
 
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
@@ -20,7 +22,7 @@ function AuthHandler({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth]); // The effect dependency on `auth` is key.
 
   return <>{children}</>;
 }

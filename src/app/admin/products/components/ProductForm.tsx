@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -34,10 +33,10 @@ const productSchema = z.object({
   productDescription: z.string().optional(),
   price: z.coerce.number().min(0, 'Price must be a positive number.').optional(),
   specifications: z.string().optional(),
-  attributes: z.record(z.string()).optional(),
+  attributes: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
   category: z.string().min(1, 'Category is required.'),
   productImages: z.array(z.string()).min(1, "At least one primary image is required."),
-  additionalImages: z.array(z.string()).optional(),
+  additionalImages: z.array(z.string()).default([]),
   db: z.enum(['retailers', 'buyers']),
   status: z.enum(['Published', 'Draft']),
 });
@@ -60,58 +59,40 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const isEditMode = !!initialData;
   const currentProductId = initialData?.id || null;
   
+  const memoizedCategories = useMemo(() => categories, [categories.length]);
+  const memoizedAttributes = useMemo(() => allAttributes, [allAttributes.length]);
+  
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      productTitle: '',
-      productCode: '',
-      productDescription: '',
-      price: undefined,
-      specifications: '',
-      attributes: {},
-      category: initialCategory || '',
-      productImages: [],
-      additionalImages: [],
-      db: initialDb,
-      status: 'Draft',
+      productTitle: initialData?.productTitle || '',
+      productCode: initialData?.productCode || '',
+      productDescription: initialData?.productDescription || '',
+      price: initialData?.price,
+      specifications: initialData?.specifications || '',
+      attributes: initialData?.attributes || {},
+      category: initialData ? initialData.category.toLowerCase().replace(/\s+/g, '-') : (initialCategory || ''),
+      productImages: initialData?.productImages || [],
+      additionalImages: initialData?.additionalImages || [],
+      db: initialData?.db || initialDb,
+      status: initialData?.status || 'Draft',
     }
   });
 
-  const { fields: additionalImageFields, append: appendAdditionalImage } = useFieldArray({
+  const { fields: additionalImageFields, append: appendAdditionalImage, remove: removeAdditionalImage } = useFieldArray({
       control: form.control,
-      name: "additionalImages"
+      name: "additionalImages",
   });
 
   const currentStatus = form.watch('status');
-  
-  useEffect(() => {
-    if (initialData) {
-      form.reset({
-        productTitle: initialData.productTitle,
-        productCode: initialData.productCode || '',
-        productDescription: initialData.productDescription || '',
-        price: initialData.price,
-        specifications: initialData.specifications || '',
-        category: initialData.category.toLowerCase().replace(/\s+/g, '-'),
-        attributes: initialData.attributes || {},
-        productImages: initialData.productImages || [],
-        additionalImages: initialData.additionalImages || [],
-        db: initialData.db,
-        status: initialData.status || 'Draft',
-      });
-    }
-  }, [initialData, form]);
-
-  
   const selectedCategory = form.watch('category');
   
   const relevantAttributes = useMemo(() => {
     if (!selectedCategory) return [];
-    const categoryDetails = categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === selectedCategory);
+    const categoryDetails = memoizedCategories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === selectedCategory);
     if (!categoryDetails) return [];
-    return allAttributes.filter(attr => attr.category === categoryDetails.name);
-  }, [selectedCategory, allAttributes, categories]);
-
+    return memoizedAttributes.filter(attr => attr.category === categoryDetails.name);
+  }, [selectedCategory, memoizedAttributes, memoizedCategories]);
 
   const getProductDataFromForm = (data: ProductFormValues) => {
     const productData = {
@@ -120,9 +101,9 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       productDescription: data.productDescription,
       price: isNaN(data.price as number) || data.price === undefined ? null : data.price,
       productImages: data.productImages,
-      additionalImages: data.additionalImages,
+      additionalImages: data.additionalImages || [],
       specifications: data.specifications,
-      attributes: data.attributes ?? {},
+      attributes: data.attributes || {},
       status: data.status,
       category: data.category,
       db: data.db,
@@ -159,7 +140,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   };
 
   const handlePublish = async (data: ProductFormValues) => {
-    if (!currentProductId || !firestore) {
+    if (!currentProductId) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must save a draft before publishing.' });
       return;
     }
@@ -169,7 +150,6 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         productId: currentProductId,
       });
       toast({ title: 'Product Published!', description: `${data.productTitle} is now live.` });
-      form.setValue('status', 'Published');
       router.push(`/admin/products?db=${data.db}&category=${data.category}`);
       router.refresh();
     } catch (e) {
@@ -350,7 +330,13 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                                 <FormLabel>Additional Images</FormLabel>
                                 <p className="text-sm text-muted-foreground">Add up to 4 more images.</p>
                             </div>
-                            <Button type="button" variant="outline" size="sm" onClick={() => appendAdditionalImage('')} disabled={additionalImageFields.length >= 4}>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => appendAdditionalImage('')} 
+                              disabled={additionalImageFields.length >= 4}
+                            >
                                 <PlusCircle className="h-4 w-4 mr-2" />
                                 Add Image
                             </Button>
@@ -389,7 +375,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {categories.map(category => (
+                            {memoizedCategories.map(category => (
                               <SelectItem key={category.id} value={category.name.toLowerCase().replace(/\s+/g, '-')}>{category.name}</SelectItem>
                             ))}
                           </SelectContent>
@@ -405,15 +391,17 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                   <CardTitle>Attributes</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-6">
-                    {relevantAttributes.map(attr => (
+                    {relevantAttributes.map(attr => {
+                      const attributeKey = attr.name.toLowerCase() as keyof ProductFormValues['attributes'];
+                      return (
                          <FormField
                             key={attr.id}
                             control={form.control}
-                            name={`attributes.${attr.name.toLowerCase()}`}
+                            name={`attributes.${attributeKey}`}
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{attr.name}</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || ''}>
                                 <FormControl>
                                     <SelectTrigger>
                                     <SelectValue placeholder={`Select ${attr.name.toLowerCase()}`} />
@@ -427,7 +415,8 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                             </FormItem>
                             )}
                         />
-                    ))}
+                      );
+                    })}
                     {relevantAttributes.length === 0 && selectedCategory && (
                         <p className="text-sm text-muted-foreground">No attributes defined for this category.</p>
                     )}

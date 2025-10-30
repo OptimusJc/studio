@@ -37,10 +37,10 @@ export interface FirebaseContextState {
 
 // Return type for useFirebase()
 export interface FirebaseServicesAndUser {
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
-  storage: FirebaseStorage;
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  auth: Auth | null;
+  storage: FirebaseStorage | null;
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
@@ -128,10 +128,8 @@ export const useFirebase = (): FirebaseServicesAndUser => {
     throw new Error('useFirebase must be used within a FirebaseProvider.');
   }
 
-  if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.auth || !context.storage) {
-    throw new Error('Firebase core services not available. Check FirebaseProvider props.');
-  }
-
+  // This hook now returns the context directly, allowing consumers to check for nulls
+  // if they are rendered in a part of the tree where context is not yet available.
   return {
     firebaseApp: context.firebaseApp,
     firestore: context.firestore,
@@ -143,27 +141,39 @@ export const useFirebase = (): FirebaseServicesAndUser => {
   };
 };
 
-/** Hook to access Firebase Auth instance. */
+/** Hook to access Firebase Auth instance. Throws an error if not available. */
 export const useAuth = (): Auth => {
   const { auth } = useFirebase();
+  if (!auth) {
+    throw new Error("useAuth must be used within an initialized FirebaseProvider context.");
+  }
   return auth;
 };
 
-/** Hook to access Firestore instance. */
+/** Hook to access Firestore instance. Throws an error if not available. */
 export const useFirestore = (): Firestore => {
   const { firestore } = useFirebase();
+  if (!firestore) {
+    throw new Error("useFirestore must be used within an initialized FirebaseProvider context.");
+  }
   return firestore;
 };
 
-/** Hook to access Firebase App instance. */
+/** Hook to access Firebase App instance. Throws an error if not available. */
 export const useFirebaseApp = (): FirebaseApp => {
   const { firebaseApp } = useFirebase();
+  if (!firebaseApp) {
+      throw new Error("useFirebaseApp must be used within an initialized FirebaseProvider context.");
+  }
   return firebaseApp;
 };
 
-/** Hook to access Firebase Storage instance. */
+/** Hook to access Firebase Storage instance. Throws an error if not available. */
 export const useStorage = (): FirebaseStorage => {
     const { storage } = useFirebase();
+    if (!storage) {
+        throw new Error("useStorage must be used within an initialized FirebaseProvider context.");
+    }
     return storage;
 }
 
