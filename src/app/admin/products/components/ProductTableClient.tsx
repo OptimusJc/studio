@@ -176,7 +176,7 @@ export function ProductTableClient({ products }: { products: Product[] }) {
             </TableCell>
             <TableCell>{product.category}</TableCell>
             <TableCell>{product.attributes.brand as string}</TableCell>
-            <TableCell className="text-right">${(product.price ?? 0).toFixed(2)}</TableCell>
+            <TableCell className="text-right">Ksh{(product.price ?? 0).toFixed(2)}</TableCell>
             <TableCell>
               <RowActions product={product} />
             </TableCell>
