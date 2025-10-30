@@ -1,3 +1,4 @@
+
 'use client';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -34,21 +35,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import type { Category } from '@/types';
+import type { Category, User as AppUser } from '@/types';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface AdminSidebarProps {
     selectedDb: string;
     setSelectedDb: (db: string) => void;
+    user: AppUser | null;
 }
 
-export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebarProps) {
+export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const firestore = useFirestore();
+  const auth = useAuth();
+  const { toast } = useToast();
 
   const categoriesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -73,6 +79,23 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
        router.push(`${pathname}?${params.toString()}`);
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out."
+      });
+      router.push('/login');
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: (error as Error).message
+      });
+    }
+  }
 
   return (
     <Sidebar>
@@ -217,14 +240,14 @@ export default function AdminSidebar({ selectedDb, setSelectedDb }: AdminSidebar
       <SidebarFooter>
          <div className="flex items-center gap-3 p-2">
           <Avatar>
-            <AvatarImage src="https://picsum.photos/seed/admin-avatar/40/40" alt="Admin" />
-            <AvatarFallback>A</AvatarFallback>
+            <AvatarImage src={`https://picsum.photos/seed/${user?.id || 'admin'}/40/40`} alt={user?.name} />
+            <AvatarFallback>{user?.name?.charAt(0) || 'A'}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-semibold text-sm">Admin User</span>
-            <span className="text-xs text-muted-foreground">admin@catalog.link</span>
+            <span className="font-semibold text-sm">{user?.name}</span>
+            <span className="text-xs text-muted-foreground">{user?.email}</span>
           </div>
-          <SidebarMenuButton variant="ghost" className="ml-auto" size="sm" tooltip="Log Out">
+          <SidebarMenuButton variant="ghost" className="ml-auto" size="sm" tooltip="Log Out" onClick={handleLogout}>
             <LogOut />
           </SidebarMenuButton>
         </div>
