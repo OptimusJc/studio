@@ -5,8 +5,24 @@
  */
 import { ai } from '@/ai/genkit';
 import { getDoc, setDoc, deleteDoc, doc, type Firestore } from 'firebase/firestore';
-import { ManageProductStatusInputSchema, ManageProductStatusOutputSchema, type ManageProductStatusInput, type ManageProductStatusOutput } from '@/types';
 import { getSdks, initializeFirebase } from '@/firebase';
+import { z } from 'zod';
+
+// Define schemas directly in the flow file to avoid import issues.
+const ManageProductStatusInputSchema = z.object({
+  action: z.enum(['publish', 'unpublish']),
+  productId: z.string().describe('The ID of the product in the drafts collection.'),
+  db: z.string().optional().describe('The target database (e.g., retailers). Required for unpublish.'),
+  category: z.string().optional().describe('The product category. Required for unpublish.'),
+});
+export type ManageProductStatusInput = z.infer<typeof ManageProductStatusInputSchema>;
+
+const ManageProductStatusOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+export type ManageProductStatusOutput = z.infer<typeof ManageProductStatusOutputSchema>;
+
 
 // Private function containing the core logic for publishing/unpublishing
 async function _manageProductStatusLogic(input: ManageProductStatusInput): Promise<ManageProductStatusOutput> {

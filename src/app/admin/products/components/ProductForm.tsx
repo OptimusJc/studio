@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Rocket, Save, XCircle, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, initializeFirebase, getSdks } from '@/firebase';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Attribute } from '@/types';
@@ -295,7 +295,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                     name="price"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Price (Optional)</FormLabel>
+                        <FormLabel>Price</FormLabel>
                         <FormControl>
                             <div className="relative">
                                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">Ksh</span>
