@@ -3,11 +3,11 @@
 import { PageHeader } from '../../../components/PageHeader';
 import { ProductForm } from '../../components/ProductForm';
 import { useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { doc, collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { useParams, useSearchParams } from 'next/navigation';
 import type { Product, Attribute, Category } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 function EditProductFormSkeleton() {
     return (
@@ -30,17 +30,11 @@ export default function EditProductPage() {
   const searchParams = useSearchParams();
   
   const productId = params.id as string;
-  const db = (searchParams.get('db') as 'retailers' | 'buyers') || 'retailers';
-  const categorySlug = searchParams.get('category');
+  const dbFromUrl = (searchParams.get('db') as 'retailers' | 'buyers') || 'retailers';
+  const categorySlugFromUrl = searchParams.get('category');
   
-  const productDocRef = useMemoFirebase(() => {
-    if (!firestore || !productId) return null;
-    // Editing can happen on drafts or published products.
-    // We check drafts first.
-    return doc(firestore, 'drafts', productId);
-  }, [firestore, productId]);
-  
-  const { data: productData, isLoading: isLoadingProduct } = useDoc<any>(productDocRef);
+  const [productData, setProductData] = useState<any | null>(null);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
 
   const attributesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -56,28 +50,61 @@ export default function EditProductPage() {
 
   const isLoading = isLoadingProduct || isLoadingAttributes || isLoadingCategories;
   
-  const categoryNameFromSlug = useMemo(() => {
-      if (!categories || !categorySlug) return null;
-      return categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === categorySlug)?.name;
-  }, [categories, categorySlug]);
+  useEffect(() => {
+    const findProduct = async () => {
+        if (!firestore || !productId || !categories) return;
+        setIsLoadingProduct(true);
+
+        // 1. Check drafts first
+        const draftRef = doc(firestore, 'drafts', productId);
+        const draftSnap = await getDoc(draftRef);
+        if (draftSnap.exists()) {
+            setProductData({ ...draftSnap.data(), id: draftSnap.id });
+            setIsLoadingProduct(false);
+            return;
+        }
+
+        // 2. If not in drafts, search all published collections
+        for (const db of ['retailers', 'buyers']) {
+            for (const cat of categories) {
+                const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
+                const liveCollectionPath = `${db}/${categorySlug}/products`;
+                const productRef = doc(firestore, liveCollectionPath, productId);
+                const productSnap = await getDoc(productRef);
+                if (productSnap.exists()) {
+                    setProductData({ ...productSnap.data(), id: productSnap.id });
+                    setIsLoadingProduct(false);
+                    return;
+                }
+            }
+        }
+
+        // 3. If not found anywhere
+        console.warn(`Product with ID ${productId} not found in drafts or any live collection.`);
+        setProductData(null);
+        setIsLoadingProduct(false);
+    };
+
+    if (!isLoadingCategories) {
+        findProduct();
+    }
+  }, [firestore, productId, categories, isLoadingCategories]);
+
+  const categoryNameFromProduct = useMemo(() => {
+      if (!categories || !productData?.category) return null;
+      return categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === productData.category)?.name;
+  }, [categories, productData]);
+
 
   const memoizedAttributes = useMemo(() => attributes || [], [attributes]);
   const memoizedCategories = useMemo(() => categories || [], [categories]);
 
-  useEffect(() => {
-    if (!isLoadingProduct && !productData) {
-        // A more robust solution might involve a server-side check or fetching from the live collection.
-        console.warn(`Product with ID ${productId} not found in drafts. It might be published or deleted.`);
-    }
-  }, [isLoadingProduct, productData, productId]);
-  
   const transformedProductData: Product | null = useMemo(() => {
-    // Ensure we have product data and a valid category before transforming
-    if (productData && categoryNameFromSlug) {
+    if (productData && categoryNameFromProduct) {
       return {
         id: productData.id,
         name: productData.productTitle,
-        category: categoryNameFromSlug,
+        category: categoryNameFromProduct,
         price: productData.price,
         stock: 100, // Placeholder
         sku: `SKU-${productData.id.substring(0, 6)}`, // Placeholder
@@ -99,12 +126,11 @@ export default function EditProductPage() {
         productImages: productData.productImages,
         additionalImages: productData.additionalImages,
         specifications: productData.specifications,
-        db,
+        db: productData.db || dbFromUrl,
       };
     }
-    // Return null if data is incomplete to prevent downstream errors
     return null;
-  }, [productData, categoryNameFromSlug, db]);
+  }, [productData, categoryNameFromProduct, dbFromUrl]);
 
 
   return (
@@ -120,8 +146,8 @@ export default function EditProductPage() {
           initialData={transformedProductData} 
           allAttributes={memoizedAttributes} 
           categories={memoizedCategories}
-          initialDb={db}
-          initialCategory={categorySlug || ''}
+          initialDb={dbFromUrl}
+          initialCategory={categorySlugFromUrl || ''}
         />
       )}
     </div>
