@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -29,6 +29,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -43,21 +44,38 @@ export default function AdminLayout({
 
   const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
 
+  useEffect(() => {
+    // Wait until the initial user loading is complete
+    if (!isUserLoading) {
+      // If there's no authenticated user, redirect to login
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
+      
+      // If user is authenticated, but we are still waiting for their app-specific data
+      if (!isAppUserLoading) {
+        // If app-specific user data doesn't exist, or their role is 'Customer', they are unauthorized
+        if (!appUser || appUser.role === 'Customer') {
+          router.replace('/login?error=unauthorized');
+        }
+      }
+    }
+  }, [user, appUser, isUserLoading, isAppUserLoading, router]);
+
+
+  // Show a loading skeleton while we verify the user's session and permissions.
+  // This prevents the redirect loop and avoids showing a flash of the admin page.
   if (isUserLoading || isAppUserLoading) {
     return <AdminLayoutSkeleton />;
   }
 
-  // Redirect if not logged in
-  if (!user) {
-    router.replace('/login');
-    return <AdminLayoutSkeleton />;
-  }
-  
-  // Redirect if user role is 'Customer' or appUser document doesn't exist yet
-  if (!appUser || appUser.role === 'Customer') {
-     router.replace('/login?error=unauthorized');
+  // If after loading, the user is still not valid, they will be redirected by the useEffect.
+  // Don't render the children until we're sure they are authorized.
+  if (!user || !appUser || appUser.role === 'Customer') {
      return <AdminLayoutSkeleton />;
   }
+
 
   return (
     <SidebarProvider>
