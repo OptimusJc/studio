@@ -118,7 +118,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       productTitle: data.productTitle,
       productCode: data.productCode,
       productDescription: data.productDescription,
-      price: data.price,
+      price: isNaN(data.price as number) || data.price === undefined ? null : data.price,
       productImages: data.productImages,
       additionalImages: data.additionalImages,
       specifications: data.specifications,
@@ -298,11 +298,11 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                         <FormLabel>Price (Optional)</FormLabel>
                         <FormControl>
                             <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">Ksh</span>
                                 <Input
                                     type="number"
                                     placeholder="0.00"
-                                    className="pl-7"
+                                    className="pl-11"
                                     {...field}
                                     value={field.value ?? ''}
                                     onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.value)}
