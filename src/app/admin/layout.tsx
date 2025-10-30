@@ -53,8 +53,8 @@ export default function AdminLayout({
     return <AdminLayoutSkeleton />;
   }
   
-  // Redirect if user is not Admin or Editor
-  if (appUser && appUser.role === 'Customer') {
+  // Redirect if user role is 'Customer' or appUser document doesn't exist yet
+  if (!appUser || appUser.role === 'Customer') {
      router.replace('/login?error=unauthorized');
      return <AdminLayoutSkeleton />;
   }

@@ -7,9 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth, useFirestore, useUser, setDocumentNonBlocking } from '@/firebase';
+import { useAuth, useFirestore, useUser } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -64,8 +64,8 @@ export default function SignupPage() {
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString(),
         };
-        // Use non-blocking write
-        setDocumentNonBlocking(userDocRef, newUserData, {});
+        // Use a blocking write to ensure the document exists before redirecting
+        await setDoc(userDocRef, newUserData);
       }
 
       toast({
