@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Rocket, Save, XCircle, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, initializeFirebase, getSdks } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Attribute } from '@/types';
@@ -167,7 +167,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       await manageProductStatus({
         action: 'publish',
         productId: currentProductId,
-      }, firestore);
+      });
       toast({ title: 'Product Published!', description: `${data.productTitle} is now live.` });
       form.setValue('status', 'Published');
       router.push(`/admin/products?db=${data.db}&category=${data.category}`);
@@ -186,7 +186,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         productId: currentProductId,
         db: data.db,
         category: data.category,
-      }, firestore);
+      });
       toast({ title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
       form.setValue('status', 'Draft');
       router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${data.category}`);

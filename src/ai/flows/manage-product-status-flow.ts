@@ -1,19 +1,18 @@
+
 'use server';
 /**
  * @fileOverview Manages the publishing and unpublishing of products.
  */
 import { ai } from '@/ai/genkit';
 import { getDoc, setDoc, deleteDoc, doc, type Firestore } from 'firebase/firestore';
-import { ManageProductStatusInputSchema, ManageProductStatusOutputSchema, type ManageProductStatusInput } from '@/types';
-
-interface FlowContext {
-  firestore: Firestore;
-}
+import { ManageProductStatusInputSchema, ManageProductStatusOutputSchema, type ManageProductStatusInput, type ManageProductStatusOutput } from '@/types';
+import { getSdks, initializeFirebase } from '@/firebase';
 
 // Private function containing the core logic for publishing/unpublishing
-async function _manageProductStatusLogic(input: ManageProductStatusInput, context: FlowContext): Promise<ManageProductStatusOutput> {
+async function _manageProductStatusLogic(input: ManageProductStatusInput): Promise<ManageProductStatusOutput> {
   const { action, productId } = input;
-  const { firestore } = context;
+  // Initialize Firestore within the server-side logic
+  const { firestore } = getSdks(initializeFirebase());
 
   const draftRef = doc(firestore, 'drafts', productId);
 
@@ -72,17 +71,16 @@ const manageProductStatusFlow = ai.defineFlow(
     inputSchema: ManageProductStatusInputSchema,
     outputSchema: ManageProductStatusOutputSchema,
   },
-  async (input, context: FlowContext) => {
+  async (input) => {
     // The flow now correctly calls the private logic function
-    return _manageProductStatusLogic(input, context);
+    return _manageProductStatusLogic(input);
   }
 );
 
 // This is the exported function that will be called from the client
 export async function manageProductStatus(
   input: ManageProductStatusInput,
-  firestore: Firestore
 ) {
   // Execute the defined flow
-  return manageProductStatusFlow(input, { firestore });
+  return manageProductStatusFlow(input);
 }
