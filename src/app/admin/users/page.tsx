@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemoFirebase, useCollection, useFirestore } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { useMemoFirebase, useCollection, useFirestore, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,9 +10,16 @@ import { formatDistanceToNow } from 'date-fns';
 import { AddUserDialog } from './components/AddUserDialog';
 import type { User } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { EditUserDialog } from './components/EditUserDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function UsersPage() {
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const usersCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -20,6 +27,16 @@ export default function UsersPage() {
   }, [firestore]);
 
   const { data: users, isLoading } = useCollection<User>(usersCollection);
+
+  const handleDelete = (user: User) => {
+    if (!firestore) return;
+    const docRef = doc(firestore, 'users', user.id);
+    deleteDocumentNonBlocking(docRef);
+    toast({
+        title: "User Deleted",
+        description: `The user "${user.name}" has been deleted.`,
+    });
+  };
 
   return (
     <div className="p-4 md:p-8">
@@ -44,13 +61,14 @@ export default function UsersPage() {
                 <TableHead>Role</TableHead>
                 <TableHead>Last Login</TableHead>
                 <TableHead>Date Added</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading &&
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={6}>
                       <Skeleton className="h-5 w-full" />
                     </TableCell>
                   </TableRow>
@@ -71,6 +89,41 @@ export default function UsersPage() {
                     {user.createdAt
                       ? new Date(user.createdAt).toLocaleDateString()
                       : 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    <AlertDialog>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <EditUserDialog user={user} />
+                            <DropdownMenuSeparator />
+                             <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive">
+                                    Delete
+                                </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the user
+                                &quot;{user.name}&quot; and revoke their access.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(user)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}
