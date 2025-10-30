@@ -4,8 +4,8 @@
  * @fileOverview Manages the publishing and unpublishing of products.
  */
 import { ai } from '@/ai/genkit';
-import { getDoc, setDoc, deleteDoc, doc, type Firestore } from 'firebase/firestore';
-import { getSdks, initializeFirebase } from '@/firebase';
+import { getDoc, setDoc, deleteDoc, doc } from 'firebase/firestore';
+import { getSdks, initializeFirebase } from '@/firebase/server-init';
 import { z } from 'zod';
 
 // Define schemas directly in the flow file to avoid import issues.

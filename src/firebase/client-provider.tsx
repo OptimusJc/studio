@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useMemo, type ReactNode, useEffect } from 'react';
 import { FirebaseProvider, useAuth } from '@/firebase/provider';
-import { initializeFirebase } from '@/firebase';
+import { initializeFirebase } from '@/firebase/server-init';
 import { initiateAnonymousSignIn } from './non-blocking-login';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
