@@ -60,7 +60,7 @@ export default function SignupPage() {
         const newUserData = {
           name: data.name,
           email: data.email,
-          role: 'Customer', // Default role
+          role: 'Admin', // Default role
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString(),
         };
