@@ -2,8 +2,8 @@
 'use client';
 import { PageHeader } from '../../../components/PageHeader';
 import { ProductForm } from '../../components/ProductForm';
-import { useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection, getDoc } from 'firebase/firestore';
 import { useParams, useSearchParams } from 'next/navigation';
 import type { Product, Attribute, Category } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -72,7 +72,13 @@ export default function EditProductPage() {
                 const productRef = doc(firestore, liveCollectionPath, productId);
                 const productSnap = await getDoc(productRef);
                 if (productSnap.exists()) {
-                    setProductData({ ...productSnap.data(), id: productSnap.id });
+                    // FIX: Manually add category and db to the data object
+                    setProductData({ 
+                        ...productSnap.data(), 
+                        id: productSnap.id, 
+                        category: categorySlug, // Add category slug from path
+                        db: db                  // Add db from path
+                    });
                     setIsLoadingProduct(false);
                     return;
                 }
@@ -92,6 +98,7 @@ export default function EditProductPage() {
 
   const categoryNameFromProduct = useMemo(() => {
       if (!categories || !productData?.category) return null;
+      // productData.category is a slug, so find matching category name
       return categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === productData.category)?.name;
   }, [categories, productData]);
 
@@ -100,6 +107,7 @@ export default function EditProductPage() {
   const memoizedCategories = useMemo(() => categories || [], [categories]);
 
   const transformedProductData: Product | null = useMemo(() => {
+    // This check is now robust for both draft and published products
     if (productData && categoryNameFromProduct) {
       return {
         id: productData.id,
