@@ -45,20 +45,18 @@ export default function AdminLayout({
   const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
 
   useEffect(() => {
-    // Wait until the initial user loading is complete
-    if (!isUserLoading) {
-      // If there's no authenticated user, redirect to login
+    // Wait until both auth and firestore user loading is complete
+    if (!isUserLoading && !isAppUserLoading) {
+      // If there's no Firebase Auth user, they are not logged in.
       if (!user) {
         router.replace('/login');
         return;
       }
       
-      // If user is authenticated, but we are still waiting for their app-specific data
-      if (!isAppUserLoading) {
-        // If app-specific user data doesn't exist, or their role is 'Customer', they are unauthorized
-        if (!appUser || appUser.role === 'Customer') {
-          router.replace('/login?error=unauthorized');
-        }
+      // If Auth user exists but Firestore user data doesn't, or role is 'Customer',
+      // they are not authorized for the admin panel.
+      if (!appUser || appUser.role === 'Customer') {
+        router.replace('/login?error=unauthorized');
       }
     }
   }, [user, appUser, isUserLoading, isAppUserLoading, router]);
