@@ -77,7 +77,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     }
   });
 
-  const { fields: additionalImageFields, append: appendAdditionalImage, remove: removeAdditionalImage } = useFieldArray({
+  const { fields: additionalImageFields, append: appendAdditionalImage } = useFieldArray({
       control: form.control,
       name: "additionalImages"
   });
@@ -87,7 +87,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   useEffect(() => {
     if (initialData) {
       form.reset({
-        productTitle: initialData.name,
+        productTitle: initialData.productTitle,
         productCode: initialData.productCode || '',
         productDescription: initialData.productDescription || '',
         price: initialData.price,
@@ -100,7 +100,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         status: initialData.status || 'Draft',
       });
     }
-  }, [initialData, form.reset]);
+  }, [initialData, form]);
 
   
   const selectedCategory = form.watch('category');
@@ -114,7 +114,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
 
 
   const getProductDataFromForm = (data: ProductFormValues) => {
-    return {
+    const productData = {
       productTitle: data.productTitle,
       productCode: data.productCode,
       productDescription: data.productDescription,
@@ -122,13 +122,14 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       productImages: data.productImages,
       additionalImages: data.additionalImages,
       specifications: data.specifications,
-      attributes: data.attributes,
+      attributes: data.attributes ?? {},
       status: data.status,
       category: data.category,
       db: data.db,
-      createdAt: (isEditMode && initialData) ? (initialData as any).createdAt : new Date().toISOString(),
+      createdAt: (isEditMode && initialData?.createdAt) ? initialData.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    return productData;
   }
 
   const handleSaveDraft = async (data: ProductFormValues) => {
@@ -442,5 +443,3 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     </>
   );
 }
-
-    
