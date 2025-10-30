@@ -24,8 +24,6 @@ export default function AdminDashboardPage() {
   const firestore = useFirestore();
   const searchParams = useSearchParams();
   const db = searchParams.get('db') || 'retailers';
-
-  console.log("DATABASE: ", db)
   
   const categoriesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
