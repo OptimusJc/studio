@@ -2,16 +2,18 @@
 'use client';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Upload } from 'lucide-react';
+import { Upload, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ProductTableClient } from './components/ProductTableClient';
 import Link from 'next/link';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { Product, Category } from '@/types';
 import { useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 function ProductTableSkeleton() {
@@ -33,8 +35,12 @@ export default function ProductsPage() {
   const db = searchParams.get('db') || 'retailers';
   const category = searchParams.get('category');
   
-  const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   const categoriesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -102,7 +108,7 @@ export default function ProductsPage() {
           }
       }
 
-      setProducts(Array.from(productMap.values()));
+      setAllProducts(Array.from(productMap.values()));
       setIsLoading(false);
     };
     
@@ -112,10 +118,29 @@ export default function ProductsPage() {
         } else {
             // Handle case where there are no categories
             setIsLoading(false);
-            setProducts([]);
+            setAllProducts([]);
         }
     }
   }, [firestore, searchParams, categoriesData, isLoadingCategories]);
+
+  useEffect(() => {
+    let products = [...allProducts];
+
+    // Apply search term filter
+    if (searchTerm) {
+      products = products.filter(p =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'All') {
+      products = products.filter(p => p.status === statusFilter);
+    }
+
+    setFilteredProducts(products);
+  }, [searchTerm, statusFilter, allProducts]);
+
 
   const newProductUrl = category 
     ? `/admin/products/new?db=${db}&category=${category}`
@@ -143,10 +168,38 @@ export default function ProductsPage() {
           <CardDescription>A list of all products including their status and stock levels.</CardDescription>
         </CardHeader>
         <CardContent>
+           <div className="flex items-center gap-4 mb-6 px-1">
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="w-48">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="Published">Published</SelectItem>
+                    <SelectItem value="Draft">Draft</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+           </div>
           {isLoading ? (
             <ProductTableSkeleton />
+          ) : filteredProducts.length === 0 && !isLoading ? (
+             <div className="col-span-full flex flex-col items-center justify-center h-96 text-center">
+                <h2 className="text-2xl font-semibold text-muted-foreground">No Products Found</h2>
+                <p className="text-muted-foreground mt-2">Try adjusting your filters or add a new product.</p>
+            </div>
           ) : (
-            <ProductTableClient products={products} />
+            <ProductTableClient products={filteredProducts} />
           )}
         </CardContent>
       </Card>
