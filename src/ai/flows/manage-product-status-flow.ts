@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Manages the publishing and unpublishing of products.
@@ -23,7 +24,7 @@ const ManageProductStatusOutputSchema = z.object({
 export type ManageProductStatusOutput = z.infer<typeof ManageProductStatusOutputSchema>;
 
 // Initialize Firebase at module level - get the firestore instance directly
-const firebaseApp = initializeFirebase();
+const { firebaseApp } = initializeFirebase();
 const { firestore } = getSdks(firebaseApp);
 
 // Private function containing the core logic for publishing/unpublishing
