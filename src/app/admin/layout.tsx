@@ -45,24 +45,26 @@ export default function AdminLayout({
 
   const isLoading = isUserLoading || isAppUserLoading;
 
-  // After loading, if the user is not authenticated or not authorized, redirect.
-  // This check now happens after the loading state is resolved.
+  // This effect handles the redirection logic once the loading state is resolved.
   useEffect(() => {
-    if (!isLoading) {
-      if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
-        router.replace('/login?error=unauthorized');
-      }
+    // Do not run the check until all user data has been loaded.
+    if (isLoading) {
+      return;
+    }
+
+    // After loading, if the user is not authenticated or not an Admin/Editor, redirect them.
+    if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
+      router.replace('/login?error=unauthorized');
     }
   }, [isLoading, user, appUser, router]);
 
 
-  // Show a loading skeleton while we verify the user's session and permissions.
+  // While loading, always show the skeleton.
   if (isLoading) {
     return <AdminLayoutSkeleton />;
   }
 
-  // If after loading, the user is still not valid, the useEffect will handle the redirect.
-  // We render the children only if the user is fully authenticated and authorized.
+  // After loading, if the user is valid and authorized, render the actual layout.
   if (user && appUser && (appUser.role === 'Admin' || appUser.role === 'Editor')) {
     return (
       <SidebarProvider>
@@ -76,7 +78,8 @@ export default function AdminLayout({
     );
   }
 
-  // In the brief moment before the redirect happens, show the skeleton.
-  // This prevents flashing a broken UI.
+  // If the user is not authorized, the useEffect above will have already triggered a redirect.
+  // We render the skeleton here to prevent showing a broken or empty page in the brief moment
+  // before the redirect completes.
   return <AdminLayoutSkeleton />;
 }

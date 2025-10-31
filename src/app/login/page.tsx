@@ -7,8 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useAuth, useUser, useFirestore } from '@/firebase';
+import { doc, updateDoc, getDoc } from '@firebase/firestore';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -29,10 +30,10 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [hasRedirected, setHasRedirected] = useState(false);
 
   const error = searchParams.get('error');
 
@@ -45,20 +46,44 @@ function LoginContent() {
   });
 
   useEffect(() => {
-    if (!isUserLoading && user && !hasRedirected) {
-      setHasRedirected(true);
+    if (!isUserLoading && user && !isLoading) {
       router.replace('/admin');
     }
-  }, [user, isUserLoading, router, hasRedirected]);
+  }, [user, isUserLoading, router, isLoading]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      const userDocRef = doc(firestore, 'users', userCredential.user.uid)
+      const userDoc = await getDoc(userDocRef);
+
+       // check if user exists
+       if (!userDoc.exists()) {
+        await signOut(auth);
+        throw new Error('User account not found. Please contact an administrator.');
+      }
+
+      const userData = userDoc.data();
+      if (userData.role !== 'Admin' && userData.role !== 'Editor') {
+        await signOut(auth);
+        throw new Error('You do not have permission to access this dashboard!');
+      }
+
+      // ✅ Update last login time
+      await updateDoc(userDocRef, {
+        updatedAt: new Date().toISOString(),
+      });
+
       toast({
         title: 'Login Successful',
         description: 'Welcome back!',
       });
+
+      // small delay to update doc
+      setTimeout(() => {
+        router.replace('/admin');
+      }, 100);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -70,7 +95,16 @@ function LoginContent() {
     }
   };
 
-  if (isUserLoading || hasRedirected) {
+  if (isUserLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+            <p>Loading...</p>
+        </div>
+    )
+  }
+
+   // If user is already logged in, show loading while redirecting
+   if (user && !isLoading) {
     return (
         <div className="flex items-center justify-center min-h-screen">
             <p>Loading...</p>
