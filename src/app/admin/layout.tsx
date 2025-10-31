@@ -29,7 +29,6 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -44,22 +43,21 @@ export default function AdminLayout({
 
   const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
 
+  const isLoading = isUserLoading || isAppUserLoading;
+
+  // After loading, if the user is not authenticated or not authorized, redirect.
+  // This check now happens after the loading state is resolved.
   useEffect(() => {
-    // CRITICAL FIX: Only run the authorization check *after* both hooks have finished loading.
-    if (isUserLoading || isAppUserLoading) {
-      return; // Do nothing while loading.
-    }
-
-    // After loading, if the user is not authenticated or not authorized, redirect.
-    if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
+    if (!isLoading) {
+      if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
         router.replace('/login?error=unauthorized');
+      }
     }
-
-  }, [user, appUser, isUserLoading, isAppUserLoading, router]);
+  }, [isLoading, user, appUser, router]);
 
 
   // Show a loading skeleton while we verify the user's session and permissions.
-  if (isUserLoading || isAppUserLoading) {
+  if (isLoading) {
     return <AdminLayoutSkeleton />;
   }
 
@@ -79,5 +77,6 @@ export default function AdminLayout({
   }
 
   // In the brief moment before the redirect happens, show the skeleton.
+  // This prevents flashing a broken UI.
   return <AdminLayoutSkeleton />;
 }

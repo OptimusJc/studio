@@ -32,6 +32,7 @@ function LoginContent() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   const error = searchParams.get('error');
 
@@ -44,10 +45,11 @@ function LoginContent() {
   });
 
   useEffect(() => {
-    if (!isUserLoading && user) {
+    if (!isUserLoading && user && !hasRedirected) {
+      setHasRedirected(true);
       router.replace('/admin');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, hasRedirected]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
@@ -57,7 +59,6 @@ function LoginContent() {
         title: 'Login Successful',
         description: 'Welcome back!',
       });
-      router.push('/admin');
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -69,7 +70,7 @@ function LoginContent() {
     }
   };
 
-  if (isUserLoading || (!isUserLoading && user)) {
+  if (isUserLoading || hasRedirected) {
     return (
         <div className="flex items-center justify-center min-h-screen">
             <p>Loading...</p>
