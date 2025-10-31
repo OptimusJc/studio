@@ -45,14 +45,12 @@ export default function AdminLayout({
   const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
 
   useEffect(() => {
+    // CRITICAL FIX: Only run the authorization check *after* both hooks have finished loading.
     if (isUserLoading || isAppUserLoading) {
-      // Still loading, so do nothing.
-      return;
+      return; // Do nothing while loading.
     }
 
-    // After loading is complete:
-    // If there's no auth user, or no corresponding firestore document,
-    // or the user's role is not Admin/Editor, then they are not authorized.
+    // After loading, if the user is not authenticated or not authorized, redirect.
     if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
         router.replace('/login?error=unauthorized');
     }
