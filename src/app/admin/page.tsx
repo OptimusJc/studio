@@ -3,7 +3,7 @@
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { PageHeader } from './components/PageHeader';
 import { StatCard } from './components/StatCard';
 import { ShoppingBasket, Users, LayoutGrid, Link as LinkIcon } from 'lucide-react';
@@ -139,6 +139,18 @@ export default function AdminDashboardPage() {
 
 
   return (
+    <Suspense fallback={
+      <div className="p-4 md:p-8">
+        <Skeleton className="h-12 w-64 mb-8" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+      </div>
+    }>
+
     <div className="p-4 md:p-8">
       <PageHeader
         title="Dashboard"
@@ -238,6 +250,7 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
     </div>
+    </Suspense>
   );
 }
 

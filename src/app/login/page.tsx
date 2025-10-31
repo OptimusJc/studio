@@ -1,14 +1,13 @@
-
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth, useUser, useFirestore } from '@/firebase';
-import { doc, updateDoc, getDoc } from '@firebase/firestore';
+import { doc, getDoc, updateDoc } from '@firebase/firestore';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,8 +44,13 @@ function LoginContent() {
     },
   });
 
+  // Only redirect if user is already logged in when page loads
+  // Use a ref to prevent multiple redirects
+  const hasCheckedAuth = useRef(false);
+  
   useEffect(() => {
-    if (!isUserLoading && user && !isLoading) {
+    if (!isUserLoading && user && !isLoading && !hasCheckedAuth.current) {
+      hasCheckedAuth.current = true;
       router.replace('/admin');
     }
   }, [user, isUserLoading, router, isLoading]);
@@ -55,19 +59,22 @@ function LoginContent() {
     setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      const userDocRef = doc(firestore, 'users', userCredential.user.uid)
+      const userDocRef = doc(firestore, 'users', userCredential.user.uid);
       const userDoc = await getDoc(userDocRef);
 
-       // check if user exists
-       if (!userDoc.exists()) {
+      // ✅ Check if user document exists in Firestore
+      if (!userDoc.exists()) {
+        // Sign out the user since they don't have a Firestore document
         await signOut(auth);
         throw new Error('User account not found. Please contact an administrator.');
       }
 
       const userData = userDoc.data();
+      
+      // ✅ Check if user has proper role
       if (userData.role !== 'Admin' && userData.role !== 'Editor') {
         await signOut(auth);
-        throw new Error('You do not have permission to access this dashboard!');
+        throw new Error('You do not have permission to access the admin dashboard.');
       }
 
       // ✅ Update last login time
@@ -80,17 +87,15 @@ function LoginContent() {
         description: 'Welcome back!',
       });
 
-      // small delay to update doc
-      setTimeout(() => {
-        router.replace('/admin');
-      }, 100);
+      // Redirect immediately - the auth state change will be handled by useEffect
+      router.replace('/admin');
+      
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
         description: (error as Error).message,
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -103,8 +108,8 @@ function LoginContent() {
     )
   }
 
-   // If user is already logged in, show loading while redirecting
-   if (user && !isLoading) {
+  // If user is already logged in, show loading while redirecting
+  if (user && !isLoading) {
     return (
         <div className="flex items-center justify-center min-h-screen">
             <p>Loading...</p>

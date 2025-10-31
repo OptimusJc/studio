@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
@@ -35,7 +35,8 @@ export default function AdminLayout({
   
   const dbFromUrl = searchParams.get('db') || 'retailers';
   const [selectedDb, setSelectedDb] = useState(dbFromUrl as 'retailers' | 'buyers');
-  
+  const hasRedirected = useRef(false);
+
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, 'users', user.uid);
@@ -54,7 +55,11 @@ export default function AdminLayout({
 
     // After loading, if the user is not authenticated or not an Admin/Editor, redirect them.
     if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
+      if (hasRedirected.current) return;
+      hasRedirected.current = true;
       router.replace('/login?error=unauthorized');
+    } else {
+      hasRedirected.current = false;
     }
   }, [isLoading, user, appUser, router]);
 
