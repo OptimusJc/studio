@@ -55,11 +55,13 @@ export default function AdminLayout({
 
     // After loading, if the user is not authenticated or not an Admin/Editor, redirect them.
     if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
+      // Use a ref to prevent multiple redirects, which can happen in strict mode
       if (hasRedirected.current) return;
       hasRedirected.current = true;
       router.replace('/login?error=unauthorized');
     } else {
-      hasRedirected.current = false;
+        // Reset the ref if the user is authorized, allowing for re-checking if state changes
+        hasRedirected.current = false;
     }
   }, [isLoading, user, appUser, router]);
 
