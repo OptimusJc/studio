@@ -219,7 +219,7 @@ function DashboardContent() {
                         <TableCell>
                            <Badge variant="secondary">{product.category}</Badge>
                         </TableCell>
-                        <TableCell className="text-right">${(product.price || 0).toFixed(2)}</TableCell>
+                        <TableCell className="text-right">Ksh{(product.price || 0).toFixed(2)}</TableCell>
                     </TableRow>
                     ))
                 ) : (
