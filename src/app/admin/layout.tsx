@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -31,7 +31,6 @@ function AdminLayoutContent({
   const searchParams = useSearchParams();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const hasRedirected = useRef(false);
   
   const dbFromUrl = searchParams.get('db') || 'retailers';
   const [selectedDb, setSelectedDb] = useState(dbFromUrl as 'retailers' | 'buyers');
@@ -45,46 +44,22 @@ function AdminLayoutContent({
 
   const isLoading = isUserLoading || isAppUserLoading;
 
-  // Debug logging
-  useEffect(() => {
-    console.log('AdminLayout Debug:', {
-      isUserLoading,
-      isAppUserLoading,
-      hasUser: !!user,
-      hasAppUser: !!appUser,
-      appUserRole: appUser?.role,
-      userDocRef: userDocRef ? 'exists' : 'null',
-      appUserError
-    });
-  }, [isUserLoading, isAppUserLoading, user, appUser, userDocRef, appUserError]);
-
   // This effect handles the redirection logic once the loading state is resolved.
   useEffect(() => {
-    // Do not run the check until all user data has been loaded.
-    if (isLoading) {
-      console.log('Still loading, waiting...');
+    if (isUserLoading || isAppUserLoading) return;
+
+    if (!user) {
+      router.replace('/login')
       return;
     }
 
-    console.log('Loading complete. Checking authorization...', {
-      hasUser: !!user,
-      hasAppUser: !!appUser,
-      role: appUser?.role
-    });
+    if (!appUser) return;
 
-    // After loading, if the user is not authenticated or not an Admin/Editor, redirect them.
-    if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
-      if (!hasRedirected.current) {
-        console.log('User not authorized, redirecting to login');
-        hasRedirected.current = true;
-        router.replace('/login?error=unauthorized');
-      }
-    } else {
-      console.log('User authorized:', appUser.role);
-      // Reset the ref if the user is authorized
-      hasRedirected.current = false;
+    if (appUser.role !== 'Admin' && appUser.role !== 'Editor') {
+      router.replace('/login?error=unauthorized');
     }
-  }, [isLoading, user, appUser, router]);
+
+  }, [isAppUserLoading, isUserLoading, user, appUser, router]);
 
   // While loading, always show the skeleton.
   if (isLoading) {

@@ -45,15 +45,6 @@ function LoginContent() {
     },
   });
 
-  useEffect(() => {
-    console.log("Login page auth check: ", {
-      isUserLoading,
-      hasUser: !!user,
-      isLoggedIn,
-      hasRedirected: hasRedirected.current
-    })
-  })
-
   // Only redirect if user is already logged in when page loads
   useEffect(() => {
     if (!isUserLoading && user && !isLoggingIn && !hasRedirected.current) {
