@@ -28,11 +28,14 @@ import { useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
+
 
 const userSchema = z.object({
   name: z.string().min(1, 'User name is required.'),
   email: z.string().email('Invalid email address.'),
-  role: z.enum(['Admin', 'Editor', 'Customer']),
+  role: z.enum(['Admin', 'Editor']),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -47,13 +50,15 @@ export function AddUserDialog() {
     defaultValues: {
       name: '',
       email: '',
-      role: 'Customer',
+      role: 'Editor',
     },
   });
 
   const onSubmit = async (data: UserFormValues) => {
     if (!firestore) return;
 
+    // This only creates the user profile in Firestore.
+    // The actual authentication user must be created in the Firebase Console.
     const usersCollection = collection(firestore, 'users');
     const newUser = {
       ...data,
@@ -64,8 +69,8 @@ export function AddUserDialog() {
     await addDocumentNonBlocking(usersCollection, newUser);
 
     toast({
-      title: 'User Added',
-      description: `The user "${data.name}" has been successfully added.`,
+      title: 'User Profile Created',
+      description: `The profile for "${data.name}" has been created. Remember to add their login credentials in the Firebase Console.`,
     });
     
     setIsOpen(false);
@@ -91,6 +96,13 @@ export function AddUserDialog() {
             Create a new user profile and assign a role.
           </DialogDescription>
         </DialogHeader>
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Important!</AlertTitle>
+          <AlertDescription>
+            This form only creates the user's profile. You must add their authentication credentials (email/password) in the Firebase Console afterwards.
+          </AlertDescription>
+        </Alert>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -125,7 +137,7 @@ export function AddUserDialog() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
@@ -134,7 +146,6 @@ export function AddUserDialog() {
                     <SelectContent>
                       <SelectItem value="Admin">Admin</SelectItem>
                       <SelectItem value="Editor">Editor</SelectItem>
-                      <SelectItem value="Customer">Customer</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -142,7 +153,7 @@ export function AddUserDialog() {
               )}
             />
             <DialogFooter>
-              <Button type="submit">Save User</Button>
+              <Button type="submit">Save User Profile</Button>
             </DialogFooter>
           </form>
         </Form>

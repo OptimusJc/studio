@@ -41,7 +41,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  role: 'Admin' | 'Editor' | 'Customer';
+  role: 'Admin' | 'Editor';
   createdAt: string;
   lastLogin: string | null;
 };

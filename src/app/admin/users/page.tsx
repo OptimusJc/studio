@@ -16,6 +16,9 @@ import { Button } from '@/components/ui/button';
 import { EditUserDialog } from './components/EditUserDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
+
 
 export default function UsersPage() {
   const firestore = useFirestore();
@@ -33,8 +36,8 @@ export default function UsersPage() {
     const docRef = doc(firestore, 'users', user.id);
     deleteDocumentNonBlocking(docRef);
     toast({
-        title: "User Deleted",
-        description: `The user "${user.name}" has been deleted.`,
+        title: "User Profile Deleted",
+        description: `The profile for "${user.name}" has been deleted. Remember to remove their auth credentials from the Firebase console.`,
     });
   };
 
@@ -42,7 +45,7 @@ export default function UsersPage() {
     <div className="p-4 md:p-8">
       <PageHeader
         title="Users"
-        description="Manage users and their roles."
+        description="Manage user profiles and their roles."
       >
         <AddUserDialog />
       </PageHeader>
@@ -78,7 +81,7 @@ export default function UsersPage() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'Admin' ? 'destructive' : 'outline'}>{user.role}</Badge>
+                    <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge>
                   </TableCell>
                   <TableCell>
                     {user.lastLogin
@@ -114,8 +117,8 @@ export default function UsersPage() {
                             <AlertDialogHeader>
                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the user
-                                &quot;{user.name}&quot; and revoke their access.
+                                This action cannot be undone. This will permanently delete the user profile for
+                                &quot;{user.name}&quot;. Their authentication credentials in Firebase will not be removed.
                             </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

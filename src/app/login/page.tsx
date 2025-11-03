@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth, useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, updateDoc } from '@firebase/firestore';
@@ -60,24 +59,23 @@ function LoginContent() {
       const userDocRef = doc(firestore, 'users', userCredential.user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      // ✅ Check if user document exists in Firestore
+      // Check if user document exists in Firestore
       if (!userDoc.exists()) {
-        // Sign out the user since they don't have a Firestore document
         await signOut(auth);
         throw new Error('User account not found. Please contact an administrator.');
       }
 
       const userData = userDoc.data();
       
-      // ✅ Check if user has proper role
+      // Check if user has proper role
       if (userData.role !== 'Admin' && userData.role !== 'Editor') {
         await signOut(auth);
         throw new Error('You do not have permission to access the admin dashboard.');
       }
 
-      // ✅ Update last login time
+      // Update last login time
       await updateDoc(userDocRef, {
-        updatedAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
       });
 
       toast({
@@ -85,7 +83,6 @@ function LoginContent() {
         description: 'Welcome back!',
       });
 
-      // Mark that we're redirecting
       hasRedirected.current = true;
       router.replace('/admin');
       
@@ -99,7 +96,6 @@ function LoginContent() {
     }
   };
 
-  // Show loading while checking initial auth state
   if (isUserLoading) {
     return (
         <div className="flex items-center justify-center min-h-screen">
@@ -108,7 +104,6 @@ function LoginContent() {
     )
   }
 
-  // If user is already logged in, show redirecting message
   if (user) {
     return (
         <div className="flex items-center justify-center min-h-screen">
@@ -171,12 +166,6 @@ function LoginContent() {
               </Button>
             </form>
           </Form>
-          <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="underline">
-              Sign up
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>

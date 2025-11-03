@@ -38,7 +38,7 @@ interface EditUserDialogProps {
 const userSchema = z.object({
   name: z.string().min(1, 'User name is required.'),
   email: z.string().email('Invalid email address.'),
-  role: z.enum(['Admin', 'Editor', 'Customer']),
+  role: z.enum(['Admin', 'Editor']),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -140,7 +140,6 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
                     <SelectContent>
                       <SelectItem value="Admin">Admin</SelectItem>
                       <SelectItem value="Editor">Editor</SelectItem>
-                      <SelectItem value="Customer">Customer</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
