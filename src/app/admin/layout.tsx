@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { User as AppUser } from '@/types';
 
@@ -34,32 +33,64 @@ function AdminLayoutContent({
   
   const dbFromUrl = searchParams.get('db') || 'retailers';
   const [selectedDb, setSelectedDb] = useState(dbFromUrl as 'retailers' | 'buyers');
-
-  const userDocRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [firestore, user]);
-
-  const { data: appUser, isLoading: isAppUserLoading, error: appUserError } = useDoc<AppUser>(userDocRef);
+  const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [isAppUserLoading, setIsAppUserLoading] = useState(true);
 
   const isLoading = isUserLoading || isAppUserLoading;
 
-  // This effect handles the redirection logic once the loading state is resolved.
   useEffect(() => {
-    if (isUserLoading || isAppUserLoading) return;
+    if (isUserLoading) return; // Wait until Firebase Auth check is complete
 
     if (!user) {
-      router.replace('/login')
+      // If no user from Firebase Auth, redirect to login
+      router.replace('/login');
       return;
     }
 
-    if (!appUser) return;
+    // User is authenticated, now fetch their profile from Firestore by email
+    const fetchAppUser = async () => {
+      setIsAppUserLoading(true);
+      if (!firestore || !user.email) {
+        setIsAppUserLoading(false);
+        return;
+      }
+      const usersCollection = collection(firestore, 'users');
+      const userQuery = query(usersCollection, where("email", "==", user.email), 1);
+      
+      try {
+        const querySnapshot = await getDocs(userQuery);
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+        } else {
+          setAppUser(null);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        setAppUser(null);
+      } finally {
+        setIsAppUserLoading(false);
+      }
+    };
 
-    if (appUser.role !== 'Admin' && appUser.role !== 'Editor') {
-      router.replace('/login?error=unauthorized');
+    fetchAppUser();
+
+  }, [user, isUserLoading, firestore, router]);
+
+
+  useEffect(() => {
+    // This effect handles redirection after all data is loaded
+    if (isLoading) {
+      return; // Don't do anything while loading
     }
 
-  }, [isAppUserLoading, isUserLoading, user, appUser, router]);
+    // Once loading is complete, check for authorization
+    if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
+        // To prevent a flicker of unauthorized content, we check here and redirect.
+        router.replace('/login?error=unauthorized');
+    }
+  }, [isLoading, user, appUser, router]);
+
 
   // While loading, always show the skeleton.
   if (isLoading) {
@@ -80,7 +111,7 @@ function AdminLayoutContent({
     );
   }
 
-  // If the user is not authorized, show skeleton while redirect happens
+  // If unauthorized, show skeleton while redirect happens
   return <AdminLayoutSkeleton />;
 }
 
