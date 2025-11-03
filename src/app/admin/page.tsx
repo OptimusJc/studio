@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -20,7 +19,7 @@ import { useSearchParams } from 'next/navigation';
 
 const databases = ['retailers', 'buyers'];
 
-export default function AdminDashboardPage() {
+function DashboardContent() {
   const firestore = useFirestore();
   const searchParams = useSearchParams();
   const db = searchParams.get('db') || 'retailers';
@@ -34,7 +33,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalCategories: 0,
-    totalUsers: 0, // Placeholder, user management not implemented
+    totalUsers: 0,
   });
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,12 +123,10 @@ export default function AdminDashboardPage() {
       }
     };
 
-    // This is the key change: We must handle the case where categories have loaded but are empty.
     if (!isLoadingCategories) {
         if (categoriesData && categoriesData.length > 0) {
             fetchData();
         } else {
-             // Handle case with no categories (e.g., empty DB)
             setIsLoading(false);
             setRecentProducts([]);
             setStats(prev => ({ ...prev, totalProducts: 0, totalCategories: 0 }));
@@ -139,18 +136,6 @@ export default function AdminDashboardPage() {
 
 
   return (
-    <Suspense fallback={
-      <div className="p-4 md:p-8">
-        <Skeleton className="h-12 w-64 mb-8" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-        </div>
-      </div>
-    }>
-
     <div className="p-4 md:p-8">
       <PageHeader
         title="Dashboard"
@@ -250,8 +235,23 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
     </div>
-    </Suspense>
   );
 }
 
-    
+export default function AdminDashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-4 md:p-8">
+        <Skeleton className="h-12 w-64 mb-8" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
+  );
+}

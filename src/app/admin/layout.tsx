@@ -1,10 +1,9 @@
-
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -23,7 +22,7 @@ function AdminLayoutSkeleton() {
   )
 }
 
-export default function AdminLayout({
+function AdminLayoutContent({
   children,
 }: {
   children: React.ReactNode;
@@ -32,39 +31,60 @@ export default function AdminLayout({
   const searchParams = useSearchParams();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const hasRedirected = useRef(false);
   
   const dbFromUrl = searchParams.get('db') || 'retailers';
   const [selectedDb, setSelectedDb] = useState(dbFromUrl as 'retailers' | 'buyers');
-  const hasRedirected = useRef(false);
 
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
 
-  const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
+  const { data: appUser, isLoading: isAppUserLoading, error: appUserError } = useDoc<AppUser>(userDocRef);
 
   const isLoading = isUserLoading || isAppUserLoading;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('AdminLayout Debug:', {
+      isUserLoading,
+      isAppUserLoading,
+      hasUser: !!user,
+      hasAppUser: !!appUser,
+      appUserRole: appUser?.role,
+      userDocRef: userDocRef ? 'exists' : 'null',
+      appUserError
+    });
+  }, [isUserLoading, isAppUserLoading, user, appUser, userDocRef, appUserError]);
 
   // This effect handles the redirection logic once the loading state is resolved.
   useEffect(() => {
     // Do not run the check until all user data has been loaded.
     if (isLoading) {
+      console.log('Still loading, waiting...');
       return;
     }
 
+    console.log('Loading complete. Checking authorization...', {
+      hasUser: !!user,
+      hasAppUser: !!appUser,
+      role: appUser?.role
+    });
+
     // After loading, if the user is not authenticated or not an Admin/Editor, redirect them.
     if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
-      // Use a ref to prevent multiple redirects, which can happen in strict mode
-      if (hasRedirected.current) return;
-      hasRedirected.current = true;
-      router.replace('/login?error=unauthorized');
+      if (!hasRedirected.current) {
+        console.log('User not authorized, redirecting to login');
+        hasRedirected.current = true;
+        router.replace('/login?error=unauthorized');
+      }
     } else {
-        // Reset the ref if the user is authorized, allowing for re-checking if state changes
-        hasRedirected.current = false;
+      console.log('User authorized:', appUser.role);
+      // Reset the ref if the user is authorized
+      hasRedirected.current = false;
     }
   }, [isLoading, user, appUser, router]);
-
 
   // While loading, always show the skeleton.
   if (isLoading) {
@@ -85,8 +105,18 @@ export default function AdminLayout({
     );
   }
 
-  // If the user is not authorized, the useEffect above will have already triggered a redirect.
-  // We render the skeleton here to prevent showing a broken or empty page in the brief moment
-  // before the redirect completes.
+  // If the user is not authorized, show skeleton while redirect happens
   return <AdminLayoutSkeleton />;
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={<AdminLayoutSkeleton />}>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </Suspense>
+  );
 }

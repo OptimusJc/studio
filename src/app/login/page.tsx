@@ -32,7 +32,8 @@ function LoginContent() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const hasRedirected = useRef(false);
 
   const error = searchParams.get('error');
 
@@ -44,19 +45,25 @@ function LoginContent() {
     },
   });
 
-  // Only redirect if user is already logged in when page loads
-  // Use a ref to prevent multiple redirects
-  const hasCheckedAuth = useRef(false);
-  
   useEffect(() => {
-    if (!isUserLoading && user && !isLoading && !hasCheckedAuth.current) {
-      hasCheckedAuth.current = true;
+    console.log("Login page auth check: ", {
+      isUserLoading,
+      hasUser: !!user,
+      isLoggedIn,
+      hasRedirected: hasRedirected.current
+    })
+  })
+
+  // Only redirect if user is already logged in when page loads
+  useEffect(() => {
+    if (!isUserLoading && user && !isLoggingIn && !hasRedirected.current) {
+      hasRedirected.current = true;
       router.replace('/admin');
     }
-  }, [user, isUserLoading, router, isLoading]);
+  }, [user, isUserLoading, isLoggingIn, router]);
 
   const onSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
+    setIsLoggingIn(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       const userDocRef = doc(firestore, 'users', userCredential.user.uid);
@@ -87,7 +94,8 @@ function LoginContent() {
         description: 'Welcome back!',
       });
 
-      // Redirect immediately - the auth state change will be handled by useEffect
+      // Mark that we're redirecting
+      hasRedirected.current = true;
       router.replace('/admin');
       
     } catch (error) {
@@ -96,10 +104,11 @@ function LoginContent() {
         title: 'Login Failed',
         description: (error as Error).message,
       });
-      setIsLoading(false);
+      setIsLoggingIn(false);
     }
   };
 
+  // Show loading while checking initial auth state
   if (isUserLoading) {
     return (
         <div className="flex items-center justify-center min-h-screen">
@@ -108,11 +117,11 @@ function LoginContent() {
     )
   }
 
-  // If user is already logged in, show loading while redirecting
-  if (user && !isLoading) {
+  // If user is already logged in, show redirecting message
+  if (user) {
     return (
         <div className="flex items-center justify-center min-h-screen">
-            <p>Loading...</p>
+            <p>Redirecting to dashboard...</p>
         </div>
     )
   }
@@ -166,8 +175,8 @@ function LoginContent() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
+              <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                {isLoggingIn ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
           </Form>
@@ -186,7 +195,11 @@ function LoginContent() {
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen">
+            <p>Loading...</p>
+          </div>
+        }>
             <LoginContent />
         </Suspense>
     )
