@@ -1,10 +1,11 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'CatalogLink',
+  title: 'Ruby Catalogue',
   description: 'Manage and share your product catalogs with ease.',
 };
 

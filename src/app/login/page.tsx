@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Suspense, useRef } from 'react';
@@ -121,7 +122,7 @@ function LoginContent() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
        <div className="absolute top-8 left-8 flex items-center space-x-2">
             <Logo className="h-6 w-6 text-primary" />
-            <span className="inline-block font-bold text-lg">CatalogLink</span>
+            <span className="inline-block font-bold text-lg">Ruby Catalogue</span>
         </div>
       <Card className="w-full max-w-sm">
         <CardHeader>

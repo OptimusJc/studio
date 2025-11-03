@@ -102,7 +102,7 @@ export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminS
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <Logo className="size-7 text-primary" />
-          <span className="text-lg font-semibold">CatalogLink</span>
+          <span className="text-lg font-semibold">Ruby Catalogue</span>
           <SidebarTrigger className="ml-auto" />
         </div>
       </SidebarHeader>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Logo } from '@/components/icons/Logo';
@@ -17,7 +18,7 @@ export default function Header({ searchTerm, setSearchTerm }: HeaderProps) {
         <div className="flex gap-6 md:gap-10">
           <Link href="/catalog" className="flex items-center space-x-2">
             <Logo className="h-6 w-6 text-primary" />
-            <span className="inline-block font-bold text-lg">CatalogLink</span>
+            <span className="inline-block font-bold text-lg">Ruby Catalogue</span>
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">
