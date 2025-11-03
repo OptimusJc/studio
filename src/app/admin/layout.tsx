@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState, useEffect, Suspense, useMemo, ReactNode } from 'react';
+import { useState, useEffect, Suspense, ReactNode } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { User as AppUser } from '@/types';
@@ -19,7 +19,7 @@ function AdminLayoutSkeleton() {
         <Skeleton className="h-96 w-full" />
       </div>
     </div>
-  )
+  );
 }
 
 function useAppUser() {
@@ -45,6 +45,7 @@ function useAppUser() {
                 setIsAppUserLoading(false);
                 return;
             }
+            setIsAppUserLoading(true);
             const usersCollection = collection(firestore, 'users');
             const userQuery = query(usersCollection, where("email", "==", user.email));
             
@@ -65,7 +66,8 @@ function useAppUser() {
         };
 
         fetchAppUser();
-    }, [user, isUserLoading, firestore]);
+    // Using user.uid ensures this effect only re-runs when the user actually changes.
+    }, [user?.uid, isUserLoading, firestore]); 
 
     return { appUser, isAppUserLoading };
 }
