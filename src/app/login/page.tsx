@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth, useUser, useFirestore } from '@/firebase';
-import { doc, getDoc, updateDoc } from '@firebase/firestore';
+import { doc, getDocs, updateDoc, collection, query, where, limit } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,25 +55,30 @@ function LoginContent() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoggingIn(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      const userDocRef = doc(firestore, 'users', userCredential.user.uid);
-      const userDoc = await getDoc(userDocRef);
+      // Step 1: Sign in with Firebase Auth
+      await signInWithEmailAndPassword(auth, data.email, data.password);
+      
+      // Step 2: Find the user document in Firestore by email
+      const usersCollection = collection(firestore, 'users');
+      const userQuery = query(usersCollection, where("email", "==", data.email), limit(1));
+      const querySnapshot = await getDocs(userQuery);
 
-      // Check if user document exists in Firestore
-      if (!userDoc.exists()) {
-        await signOut(auth);
+      if (querySnapshot.empty) {
+        await signOut(auth); // Sign out if no matching profile is found
         throw new Error('User account not found. Please contact an administrator.');
       }
-
-      const userData = userDoc.data();
       
-      // Check if user has proper role
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      const userDocRef = userDoc.ref;
+      
+      // Step 3: Check if user has proper role
       if (userData.role !== 'Admin' && userData.role !== 'Editor') {
         await signOut(auth);
         throw new Error('You do not have permission to access the admin dashboard.');
       }
 
-      // Update last login time
+      // Step 4: Update last login time
       await updateDoc(userDocRef, {
         lastLogin: new Date().toISOString(),
       });
@@ -104,7 +109,7 @@ function LoginContent() {
     )
   }
 
-  if (user) {
+  if (user && !isLoggingIn) {
     return (
         <div className="flex items-center justify-center min-h-screen">
             <p>Redirecting to dashboard...</p>
