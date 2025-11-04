@@ -31,9 +31,10 @@ export async function updateTheme(data: ThemeFormValues) {
 
     let newCss = currentCss;
     
-    // Light mode variables
+    // === Light Mode Variables ===
     const { primary, accent, background } = selectedTheme.light;
-    const { primary: darkPrimary, accent: darkAccent, background: darkBackground } = selectedTheme.dark;
+    const { primary: sidebarPrimary, accent: sidebarAccent, background: sidebarBackground } = selectedTheme.sidebar.light;
+    const { foreground: sidebarForeground, 'accent-foreground': sidebarAccentForeground, 'primary-foreground': sidebarPrimaryForeground } = selectedTheme.sidebar.light;
 
     newCss = newCss.replace(/--background:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--background: ${background.h} ${background.s}% ${background.l}%;`);
     newCss = newCss.replace(/--primary:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--primary: ${primary.h} ${primary.s}% ${primary.l}%;`);
@@ -45,7 +46,19 @@ export async function updateTheme(data: ThemeFormValues) {
     newCss = newCss.replace(/--primary-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--primary-foreground: ${primaryForeground};`);
     newCss = newCss.replace(/--accent-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--accent-foreground: ${accentForeground};`);
 
-    // Dark mode variables
+    // Sidebar light mode
+    newCss = newCss.replace(/--sidebar-background:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--sidebar-background: ${sidebarBackground.h} ${sidebarBackground.s}% ${sidebarBackground.l}%;`);
+    newCss = newCss.replace(/--sidebar-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--sidebar-foreground: ${sidebarForeground.h} ${sidebarForeground.s}% ${sidebarForeground.l}%;`);
+    newCss = newCss.replace(/--sidebar-primary:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--sidebar-primary: ${sidebarPrimary.h} ${sidebarPrimary.s}% ${sidebarPrimary.l}%;`);
+    newCss = newCss.replace(/--sidebar-primary-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--sidebar-primary-foreground: ${sidebarPrimaryForeground.h} ${sidebarPrimaryForeground.s}% ${sidebarPrimaryForeground.l}%;`);
+    newCss = newCss.replace(/--sidebar-accent:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--sidebar-accent: ${sidebarAccent.h} ${sidebarAccent.s}% ${sidebarAccent.l}%;`);
+    newCss = newCss.replace(/--sidebar-accent-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--sidebar-accent-foreground: ${sidebarAccentForeground.h} ${sidebarAccentForeground.s}% ${sidebarAccentForeground.l}%;`);
+
+    // === Dark Mode Variables ===
+    const { primary: darkPrimary, accent: darkAccent, background: darkBackground } = selectedTheme.dark;
+    const { primary: darkSidebarPrimary, accent: darkSidebarAccent, background: darkSidebarBackground } = selectedTheme.sidebar.dark;
+    const { foreground: darkSidebarForeground, 'accent-foreground': darkSidebarAccentForeground, 'primary-foreground': darkSidebarPrimaryForeground } = selectedTheme.sidebar.dark;
+
     newCss = newCss.replace(/\.dark\s*{\s*--background:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {\n    --background: ${darkBackground.h} ${darkBackground.s}% ${darkBackground.l}%;`);
     newCss = newCss.replace(/\.dark\s*{([^}]*)--primary:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--primary: ${darkPrimary.h} ${darkPrimary.s}% ${darkPrimary.l}%;`);
     newCss = newCss.replace(/\.dark\s*{([^}]*)--accent:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--accent: ${darkAccent.h} ${darkAccent.s}% ${darkAccent.l}%;`);
@@ -55,6 +68,14 @@ export async function updateTheme(data: ThemeFormValues) {
 
     newCss = newCss.replace(/\.dark\s*{([^}]*)--primary-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--primary-foreground: ${darkPrimaryForeground};`);
     newCss = newCss.replace(/\.dark\s*{([^}]*)--accent-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--accent-foreground: ${darkAccentForeground};`);
+
+    // Sidebar dark mode
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--sidebar-background:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--sidebar-background: ${darkSidebarBackground.h} ${darkSidebarBackground.s}% ${darkSidebarBackground.l}%;`);
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--sidebar-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--sidebar-foreground: ${darkSidebarForeground.h} ${darkSidebarForeground.s}% ${darkSidebarForeground.l}%;`);
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--sidebar-primary:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--sidebar-primary: ${darkSidebarPrimary.h} ${darkSidebarPrimary.s}% ${darkSidebarPrimary.l}%;`);
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--sidebar-primary-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--sidebar-primary-foreground: ${darkSidebarPrimaryForeground.h} ${darkSidebarPrimaryForeground.s}% ${darkSidebarPrimaryForeground.l}%;`);
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--sidebar-accent:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--sidebar-accent: ${darkSidebarAccent.h} ${darkSidebarAccent.s}% ${darkSidebarAccent.l}%;`);
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--sidebar-accent-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--sidebar-accent-foreground: ${darkSidebarAccentForeground.h} ${darkSidebarAccentForeground.s}% ${darkSidebarAccentForeground.l}%;`);
 
     await fs.writeFile(cssFilePath, newCss, 'utf8');
 
