@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useEffect, useState, useMemo } from 'react';
@@ -13,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Filter } from 'lucide-react';
+import Link from 'next/link';
 
 function CatalogContent() {
   const firestore = useFirestore();
@@ -193,7 +193,9 @@ function CatalogContent() {
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                         {filteredProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} />
+                           <Link key={product.id} href={`/shop/${product.id}`} className="h-full">
+                                <ProductCard product={product} />
+                           </Link>
                         ))}
                     </div>
                     {filteredProducts.length === 0 && (

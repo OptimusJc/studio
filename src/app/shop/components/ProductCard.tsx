@@ -20,15 +20,11 @@ export default function ProductCard({ product }: ProductCardProps) {
             className="object-cover rounded-t-lg"
             data-ai-hint={product.imageHint}
           />
-           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <Button variant="destructive" size="sm">See Preview</Button>
-                <Button variant="secondary" size="sm">Similar Items</Button>
-            </div>
         </div>
       <CardContent className="p-4 flex-grow flex flex-col bg-card rounded-b-lg">
         <h3 className="text-md font-bold">{product.productCode}</h3>
-        <p className="text-sm text-muted-foreground flex-grow">{product.productDescription}</p>
-        <div className="text-xs text-muted-foreground mt-2">Dimensions: 53cmx20m</div>
+        <p className="text-sm text-muted-foreground flex-grow line-clamp-2">{product.productDescription}</p>
+        <div className="text-xs text-muted-foreground mt-2">Dimensions: {product.specifications || 'N/A'}</div>
         <div className="mt-4">
             <Badge variant="outline">Premium Quality</Badge>
         </div>
