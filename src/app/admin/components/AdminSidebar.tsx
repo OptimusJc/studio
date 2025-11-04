@@ -1,5 +1,6 @@
 
 'use client';
+import { Dispatch, SetStateAction } from "react";
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -41,10 +42,11 @@ import type { Category, User as AppUser } from '@/types';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
+type DbType = "retailers" | "buyers";
 
 interface AdminSidebarProps {
-    selectedDb: string;
-    setSelectedDb: (db: string) => void;
+    selectedDb: DbType;
+    setSelectedDb: Dispatch<SetStateAction<DbType>>;
     user: AppUser | null;
 }
 
@@ -65,7 +67,7 @@ export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminS
 
   const currentCategory = searchParams.get('category');
 
-  const handleDbChange = (value: string) => {
+  const handleDbChange = (value: DbType) => {
     setSelectedDb(value);
     const params = new URLSearchParams(searchParams);
     params.set('db', value);
