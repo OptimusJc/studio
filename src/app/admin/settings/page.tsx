@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -15,13 +15,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { themes, type ThemeName, type Theme } from '@/lib/themes';
+import { themes, type ThemeName } from '@/lib/themes';
 import { cn } from '@/lib/utils';
 
 const themeSchema = z.object({
@@ -137,7 +137,7 @@ function ThemeSelector({ form }: { form: any }) {
           <FormControl>
             <RadioGroup
               onValueChange={field.onChange}
-              defaultValue={field.value}
+              value={field.value}
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
               {Object.entries(themes).map(([name, theme]) => (
@@ -174,34 +174,25 @@ function ThemeSelector({ form }: { form: any }) {
 }
 
 function AppearanceSettings() {
+    const firestore = useFirestore();
     const { toast } = useToast();
-    const { setTheme, theme } = useTheme();
-    const [currentThemeName, setCurrentThemeName] = useState<ThemeName>('clarity');
+    const { setTheme, theme: activeMode } = useTheme();
+    
+    const activeThemeRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'activeTheme') : null, [firestore]);
+    const { data: activeTheme, isLoading: isLoadingTheme } = useDoc<{ name: ThemeName }>(activeThemeRef);
 
     const form = useForm<ThemeFormValues>({
         resolver: zodResolver(themeSchema),
         defaultValues: {
-            theme: currentThemeName,
+            theme: 'clarity',
         },
     });
 
-     useEffect(() => {
-        const style = getComputedStyle(document.documentElement);
-        const primaryColor = style.getPropertyValue('--primary').trim();
-        
-        let detectedTheme: ThemeName = 'clarity';
-        
-        for (const [name, themeData] of Object.entries(themes)) {
-            const { h, s, l } = themeData.light.primary;
-            const themePrimary = `${h} ${s}% ${l}%`;
-            if (primaryColor === themePrimary) {
-                detectedTheme = name as ThemeName;
-                break;
-            }
+    useEffect(() => {
+        if (activeTheme?.name) {
+            form.reset({ theme: activeTheme.name });
         }
-        setCurrentThemeName(detectedTheme);
-        form.reset({ theme: detectedTheme });
-    }, [form]);
+    }, [activeTheme, form]);
 
 
     const onSubmit = async (data: ThemeFormValues) => {
@@ -221,11 +212,26 @@ function AppearanceSettings() {
         }
     };
 
+    if (isLoadingTheme) {
+        return (
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-1/3" />
+                    <Skeleton className="h-4 w-2/3" />
+                </CardHeader>
+                <CardContent className="space-y-8">
+                     <Skeleton className="h-24 w-full" />
+                     <Skeleton className="h-48 w-full" />
+                </CardContent>
+            </Card>
+        )
+    }
+
     return (
         <div className="space-y-8">
             <Card>
                 <CardHeader>
-                    <CardTitle>Appearance</CardTitle>
+                    <CardTitle>Dark/Light Mode</CardTitle>
                     <CardDescription>
                         Toggle between light and dark mode for the application.
                     </CardDescription>
@@ -234,7 +240,7 @@ function AppearanceSettings() {
                     <div className="flex items-center space-x-2">
                         <Sun className="h-5 w-5" />
                         <Switch
-                            checked={theme === 'dark'}
+                            checked={activeMode === 'dark'}
                             onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
                         />
                         <Moon className="h-5 w-5" />

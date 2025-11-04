@@ -20,15 +20,18 @@ const companyProfileSchema = z.object({
 type CompanyProfileFormValues = z.infer<typeof companyProfileSchema>;
 
 export async function updateTheme(data: ThemeFormValues) {
+  const { firebaseApp } = initializeFirebase();
+  const { firestore } = getSdks(firebaseApp);
   const cssFilePath = path.join(process.cwd(), 'src', 'app', 'globals.css');
   const selectedTheme = themes[data.theme];
+
   if (!selectedTheme) {
     throw new Error('Invalid theme selected.');
   }
   
   try {
+    // 1. Update CSS file
     const currentCss = await fs.readFile(cssFilePath, 'utf8');
-
     let newCss = currentCss;
     
     // === Light Mode Variables ===
@@ -79,10 +82,15 @@ export async function updateTheme(data: ThemeFormValues) {
 
     await fs.writeFile(cssFilePath, newCss, 'utf8');
 
+    // 2. Save theme name to Firestore
+    const activeThemeRef = doc(firestore, 'settings', 'activeTheme');
+    await setDoc(activeThemeRef, { name: data.theme });
+
     return { success: true, message: 'Theme updated successfully.' };
+
   } catch (error) {
     console.error("Error updating theme:", error);
-    throw new Error('Could not write to CSS file.');
+    throw new Error('Could not write to CSS file or Firestore.');
   }
 }
 
