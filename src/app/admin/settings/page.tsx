@@ -6,15 +6,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
-import { updateTheme, updateProfile } from './actions';
+import { updateTheme, updateCompanyProfile } from './actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAppUser } from '../layout';
 import { useRouter } from 'next/navigation';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { useEffect } from 'react';
+import { Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Switch } from '@/components/ui/switch';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Schema for theme customization
 const themeSchema = z.object({
@@ -36,11 +42,11 @@ const themeSchema = z.object({
 });
 type ThemeFormValues = z.infer<typeof themeSchema>;
 
-// Schema for profile updates
-const profileSchema = z.object({
-    name: z.string().min(2, 'Name must be at least 2 characters.'),
+// Schema for company profile updates
+const companyProfileSchema = z.object({
+    name: z.string().min(2, 'Company name must be at least 2 characters.'),
 });
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type CompanyProfileFormValues = z.infer<typeof companyProfileSchema>;
 
 
 function ColorPicker({ form, name, label }: { form: any, name: "primary" | "accent" | "background", label: string }) {
@@ -125,27 +131,34 @@ function ColorPicker({ form, name, label }: { form: any, name: "primary" | "acce
 }
 
 
-function ProfileSettings() {
-    const { appUser } = useAppUser();
+function CompanyProfileSettings() {
+    const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
+    
+    const companyProfileRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'companyProfile') : null, [firestore]);
+    const { data: companyProfile, isLoading: isLoadingProfile } = useDoc<{ name: string }>(companyProfileRef);
 
-    const form = useForm<ProfileFormValues>({
-        resolver: zodResolver(profileSchema),
+    const form = useForm<CompanyProfileFormValues>({
+        resolver: zodResolver(companyProfileSchema),
         defaultValues: {
-            name: appUser?.name || '',
+            name: '',
         },
     });
 
-    const onSubmit = async (data: ProfileFormValues) => {
-        if (!appUser?.id) return;
+    useEffect(() => {
+        if (companyProfile) {
+            form.reset({ name: companyProfile.name });
+        }
+    }, [companyProfile, form]);
+
+    const onSubmit = async (data: CompanyProfileFormValues) => {
         try {
-            await updateProfile({ userId: appUser.id, name: data.name });
+            await updateCompanyProfile({ name: data.name });
             toast({
-                title: 'Profile Updated',
-                description: 'Your name has been successfully updated.',
+                title: 'Company Profile Updated',
+                description: 'Your company name has been successfully updated.',
             });
-            // Refresh server components
             router.refresh();
         } catch (error) {
             toast({
@@ -155,12 +168,32 @@ function ProfileSettings() {
             });
         }
     };
+    
+    if (isLoadingProfile) {
+        return (
+             <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-1/2" />
+                    <Skeleton className="h-4 w-3/4" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-1/4" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                    <div className="flex justify-end">
+                        <Skeleton className="h-10 w-24" />
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
 
     return (
          <Card>
             <CardHeader>
-                <CardTitle>Your Profile</CardTitle>
-                <CardDescription>Manage your account details.</CardDescription>
+                <CardTitle>Company Profile</CardTitle>
+                <CardDescription>Manage your company's details.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -170,22 +203,14 @@ function ProfileSettings() {
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Full Name</FormLabel>
+                                    <FormLabel>Company Name</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. John Doe" {...field} />
+                                        <Input placeholder="e.g. Ruby Inc." {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-                         <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <Input value={appUser?.email || ''} readOnly disabled />
-                        </FormItem>
-                        <FormItem>
-                            <FormLabel>Role</FormLabel>
-                             <Input value={appUser?.role || ''} readOnly disabled />
-                        </FormItem>
                         <div className="flex justify-end pt-4">
                             <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isDirty}>Save Changes</Button>
                         </div>
@@ -198,13 +223,15 @@ function ProfileSettings() {
 
 function AppearanceSettings() {
     const { toast } = useToast();
+    const { setTheme, theme } = useTheme();
+
     const form = useForm<ThemeFormValues>({
         resolver: zodResolver(themeSchema),
         // These initial values should match your globals.css
         defaultValues: {
             primary: { h: 196, s: 35, l: 43 },
             accent: { h: 106, s: 35, l: 44 },
-            background: { h: 196, s: 39, l: 92 },
+            background: { h: 192, s: 72, l: 92 },
         },
     });
 
@@ -226,26 +253,47 @@ function AppearanceSettings() {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Theme Colors</CardTitle>
-                <CardDescription>
-                    Adjust the main colors of your application. The changes will be applied globally.
-                </CardDescription>
-            </CardHeader>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <ColorPicker form={form} name="primary" label="Primary Color" />
-                        <ColorPicker form={form} name="accent" label="Accent Color" />
-                        <ColorPicker form={form} name="background" label="Background Color" />
-                    </CardContent>
-                    <div className="flex justify-end p-6 pt-0">
-                        <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isDirty}>Save Appearance</Button>
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Appearance</CardTitle>
+                    <CardDescription>
+                        Toggle between light and dark mode for the application.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center space-x-2">
+                        <Sun className="h-5 w-5" />
+                        <Switch
+                            checked={theme === 'dark'}
+                            onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                        />
+                        <Moon className="h-5 w-5" />
                     </div>
-                </form>
-            </Form>
-        </Card>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Theme Colors</CardTitle>
+                    <CardDescription>
+                        Adjust the main colors of your application. The changes will be applied globally.
+                    </CardDescription>
+                </CardHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <ColorPicker form={form} name="primary" label="Primary Color" />
+                            <ColorPicker form={form} name="accent" label="Accent Color" />
+                            <ColorPicker form={form} name="background" label="Background Color" />
+                        </CardContent>
+                        <div className="flex justify-end p-6 pt-0">
+                            <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isDirty}>Save Appearance</Button>
+                        </div>
+                    </form>
+                </Form>
+            </Card>
+        </div>
     );
 }
 
@@ -254,16 +302,16 @@ export default function SettingsPage() {
         <div className="p-4 md:p-8 space-y-8">
             <PageHeader
                 title="Settings"
-                description="Manage your account and customize the appearance of your catalog."
+                description="Manage your company profile and customize the appearance of your catalog."
             />
             
-            <Tabs defaultValue="profile" className="w-full">
+            <Tabs defaultValue="company" className="w-full">
                 <TabsList className="grid w-full max-w-md grid-cols-2">
-                    <TabsTrigger value="profile">Profile</TabsTrigger>
+                    <TabsTrigger value="company">Company</TabsTrigger>
                     <TabsTrigger value="appearance">Appearance</TabsTrigger>
                 </TabsList>
-                <TabsContent value="profile" className="pt-6">
-                   <ProfileSettings />
+                <TabsContent value="company" className="pt-6">
+                   <CompanyProfileSettings />
                 </TabsContent>
                 <TabsContent value="appearance" className="pt-6">
                    <AppearanceSettings />

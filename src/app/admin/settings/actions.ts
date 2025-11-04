@@ -5,7 +5,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { z } from 'zod';
 import { getSdks, initializeFirebase } from '@/firebase/server-init';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 const colorSchema = z.object({
   h: z.number(),
@@ -21,11 +21,10 @@ const themeSchema = z.object({
 
 type ThemeFormValues = z.infer<typeof themeSchema>;
 
-const profileSchema = z.object({
-    userId: z.string(),
-    name: z.string().min(2, 'Name must be at least 2 characters.'),
+const companyProfileSchema = z.object({
+    name: z.string().min(2, 'Company name must be at least 2 characters.'),
 });
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type CompanyProfileFormValues = z.infer<typeof companyProfileSchema>;
 
 export async function updateTheme(data: ThemeFormValues) {
   const cssFilePath = path.join(process.cwd(), 'src', 'app', 'globals.css');
@@ -54,23 +53,23 @@ export async function updateTheme(data: ThemeFormValues) {
   }
 }
 
-export async function updateProfile(data: ProfileFormValues) {
+export async function updateCompanyProfile(data: CompanyProfileFormValues) {
     const { firebaseApp } = initializeFirebase();
     const { firestore } = getSdks(firebaseApp);
 
-    const validatedData = profileSchema.safeParse(data);
+    const validatedData = companyProfileSchema.safeParse(data);
     if (!validatedData.success) {
-        throw new Error('Invalid data provided for profile update.');
+        throw new Error('Invalid data provided for company profile update.');
     }
     
-    const { userId, name } = validatedData.data;
+    const { name } = validatedData.data;
 
     try {
-        const userRef = doc(firestore, 'users', userId);
-        await updateDoc(userRef, { name });
-        return { success: true, message: 'Profile updated successfully.' };
+        const companyProfileRef = doc(firestore, 'settings', 'companyProfile');
+        await setDoc(companyProfileRef, { name }, { merge: true });
+        return { success: true, message: 'Company profile updated successfully.' };
     } catch(error) {
-        console.error("Error updating profile:", error);
-        throw new Error('Could not update user profile in Firestore.');
+        console.error("Error updating company profile:", error);
+        throw new Error('Could not update company profile in Firestore.');
     }
 }
