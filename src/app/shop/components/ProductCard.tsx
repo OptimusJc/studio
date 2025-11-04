@@ -1,7 +1,7 @@
 
 import Image from 'next/image';
 import type { Product } from '@/types';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -11,29 +11,28 @@ type ProductCardProps = {
 
 export default function ProductCard({ product }: ProductCardProps) {
   return (
-    <Card className="flex flex-col overflow-hidden h-full transition-shadow duration-300 hover:shadow-xl">
-      <CardHeader className="p-0">
-        <div className="aspect-square relative">
+    <Card className="group relative flex flex-col overflow-hidden h-full border-none shadow-md hover:shadow-xl transition-shadow duration-300">
+        <div className="aspect-[4/3] relative">
           <Image
             src={product.imageUrl}
             alt={product.name}
             fill
-            className="object-cover"
+            className="object-cover rounded-t-lg"
             data-ai-hint={product.imageHint}
           />
+           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <Button variant="destructive" size="sm">See Preview</Button>
+                <Button variant="secondary" size="sm">Similar Items</Button>
+            </div>
         </div>
-      </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <div className='flex justify-between items-center mb-2'>
-            <Badge variant="secondary">{product.category}</Badge>
-            {product.attributes.brand && <Badge variant="outline">{product.attributes.brand as string}</Badge>}
+      <CardContent className="p-4 flex-grow flex flex-col bg-card rounded-b-lg">
+        <h3 className="text-md font-bold">{product.productCode}</h3>
+        <p className="text-sm text-muted-foreground flex-grow">{product.productDescription}</p>
+        <div className="text-xs text-muted-foreground mt-2">Dimensions: 53cmx20m</div>
+        <div className="mt-4">
+            <Badge variant="outline">Premium Quality</Badge>
         </div>
-        <CardTitle className="text-lg font-semibold leading-snug">{product.name}</CardTitle>
       </CardContent>
-      <CardFooter className="p-4 flex justify-between items-center">
-        <p className="text-xl font-bold text-primary">${(product.price ?? 0).toFixed(2)}</p>
-        <Button variant="outline">View</Button>
-      </CardFooter>
     </Card>
   );
 }

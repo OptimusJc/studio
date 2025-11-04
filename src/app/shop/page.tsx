@@ -10,6 +10,9 @@ import Header from './components/Header';
 import FacetedSearch from './components/FacetedSearch';
 import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Filter } from 'lucide-react';
 
 function CatalogContent() {
   const firestore = useFirestore();
@@ -140,28 +143,50 @@ function CatalogContent() {
   const memoizedCategories = useMemo(() => categoriesData || [], [categoriesData]);
   const memoizedAttributes = useMemo(() => attributesData || [], [attributesData]);
 
+  const facetedSearchComponent = (
+    isLoadingCategories || isLoadingAttributes ? (
+        <Skeleton className="h-[600px] w-full" />
+    ) : (
+        <FacetedSearch
+        categories={memoizedCategories}
+        attributes={memoizedAttributes}
+        appliedFilters={filters}
+        onFilterChange={setFilters}
+        />
+    )
+  )
+
   return (
-    <div className="bg-background min-h-screen">
-      <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+    <div className="bg-muted/40 min-h-screen">
+      <Header 
+        categories={memoizedCategories} 
+        appliedFilters={filters}
+        onFilterChange={setFilters}
+      />
       <main className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          <aside className="lg:col-span-1">
-            {isLoadingCategories || isLoadingAttributes ? (
-                 <Skeleton className="h-96 w-full" />
-            ) : (
-                <FacetedSearch
-                categories={memoizedCategories}
-                attributes={memoizedAttributes}
-                appliedFilters={filters}
-                onFilterChange={setFilters}
-                />
-            )}
+        <div className="grid lg:grid-cols-4 gap-8 items-start">
+          <aside className="lg:col-span-1 hidden lg:block">
+            {facetedSearchComponent}
           </aside>
           <section className="lg:col-span-3">
+             <div className="flex items-center justify-between mb-6 lg:hidden">
+                <h1 className="text-2xl font-bold">Products</h1>
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="outline">
+                            <Filter className="mr-2 h-4 w-4" />
+                            Filter & Sort
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                        {facetedSearchComponent}
+                    </SheetContent>
+                </Sheet>
+            </div>
             {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {[...Array(6)].map((_, i) => (
-                        <Skeleton key={i} className="h-96 w-full" />
+                    {[...Array(9)].map((_, i) => (
+                        <Skeleton key={i} className="h-80 w-full" />
                     ))}
                 </div>
             ) : (
@@ -172,7 +197,7 @@ function CatalogContent() {
                         ))}
                     </div>
                     {filteredProducts.length === 0 && (
-                        <div className="col-span-full flex flex-col items-center justify-center h-96 bg-card rounded-lg border border-dashed">
+                        <div className="col-span-full flex flex-col items-center justify-center h-96 bg-background rounded-lg border border-dashed">
                             <h2 className="text-2xl font-semibold text-muted-foreground">No Products Found</h2>
                             <p className="text-muted-foreground mt-2">Try adjusting your filters or search term.</p>
                         </div>
@@ -188,17 +213,27 @@ function CatalogContent() {
 
 function ShopPageSkeleton() {
     return (
-        <div className="bg-background min-h-screen">
-            <Header searchTerm="" setSearchTerm={() => {}} />
+        <div className="bg-muted/40 min-h-screen">
+             <header className="sticky top-0 z-40 w-full border-b bg-background">
+                <div className="container mx-auto flex h-16 items-center justify-between px-4">
+                    <Skeleton className="h-8 w-32" />
+                    <Skeleton className="h-8 w-8 md:hidden" />
+                    <div className="hidden md:flex gap-2">
+                        <Skeleton className="h-9 w-24" />
+                        <Skeleton className="h-9 w-24" />
+                        <Skeleton className="h-9 w-24" />
+                    </div>
+                </div>
+             </header>
             <main className="container mx-auto px-4 py-8">
                 <div className="grid lg:grid-cols-4 gap-8">
-                    <aside className="lg:col-span-1">
-                        <Skeleton className="h-96 w-full" />
+                    <aside className="lg:col-span-1 hidden lg:block">
+                        <Skeleton className="h-[600px] w-full" />
                     </aside>
                     <section className="lg:col-span-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {[...Array(6)].map((_, i) => (
-                                <Skeleton key={i} className="h-96 w-full" />
+                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {[...Array(9)].map((_, i) => (
+                                <Skeleton key={i} className="h-80 w-full" />
                             ))}
                         </div>
                     </section>
