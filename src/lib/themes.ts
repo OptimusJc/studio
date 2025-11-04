@@ -127,6 +127,38 @@ export const themes = {
       },
     }
   },
+  'teal-tonic': {
+    label: "Teal Tonic",
+    description: "A refreshing, modern theme with soft teals and clean lines.",
+    light: {
+      primary: { h: 175, s: 70, l: 30 },
+      accent: { h: 165, s: 80, l: 60 },
+      background: { h: 180, s: 50, l: 96 },
+    },
+    dark: {
+      primary: { h: 175, s: 75, l: 45 },
+      accent: { h: 165, s: 80, l: 60 },
+      background: { h: 195, s: 30, l: 12 },
+    },
+     sidebar: {
+      light: {
+        background: { h: 180, s: 20, l: 99 },
+        foreground: { h: 195, s: 20, l: 25 },
+        primary: { h: 175, s: 70, l: 30 },
+        'primary-foreground': { h: 0, s: 0, l: 100 },
+        accent: { h: 180, s: 5, l: 90 },
+        'accent-foreground': { h: 195, s: 20, l: 25 },
+      },
+      dark: {
+        background: { h: 195, s: 25, l: 10 },
+        foreground: { h: 180, s: 10, l: 95 },
+        primary: { h: 175, s: 75, l: 45 },
+        'primary-foreground': { h: 0, s: 0, l: 100 },
+        accent: { h: 195, s: 20, l: 15 },
+        'accent-foreground': { h: 180, s: 10, l: 95 },
+      },
+    }
+  },
 } as const;
 
 export type ThemeName = keyof typeof themes;
