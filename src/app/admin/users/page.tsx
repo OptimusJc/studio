@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemoFirebase, useCollection, useFirestore, deleteDocumentNonBlocking } from '@/firebase';
@@ -16,8 +17,6 @@ import { Button } from '@/components/ui/button';
 import { EditUserDialog } from './components/EditUserDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
 
 
 export default function UsersPage() {
@@ -37,7 +36,7 @@ export default function UsersPage() {
     deleteDocumentNonBlocking(docRef);
     toast({
         title: "User Profile Deleted",
-        description: `The profile for "${user.name}" has been deleted. Remember to remove their auth credentials from the Firebase console.`,
+        description: `The profile for "${user.name}" has been deleted. Their auth account is not affected.`,
     });
   };
 

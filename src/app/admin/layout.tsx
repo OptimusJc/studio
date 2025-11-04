@@ -22,7 +22,7 @@ function AdminLayoutSkeleton() {
   );
 }
 
-function useAppUser() {
+export function useAppUser() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const [appUser, setAppUser] = useState<AppUser | null>(null);
@@ -40,22 +40,30 @@ function useAppUser() {
         }
 
         const fetchAppUser = async () => {
-            if (!firestore || !user.email) {
+            if (!firestore || !user.uid) { // Use UID for reliability
                 setAppUser(null);
                 setIsAppUserLoading(false);
                 return;
             }
             setIsAppUserLoading(true);
-            const usersCollection = collection(firestore, 'users');
-            const userQuery = query(usersCollection, where("email", "==", user.email));
+            // The user document ID should be the same as the Auth UID
+            const userDocRef = doc(firestore, 'users', user.uid);
             
             try {
-                const querySnapshot = await getDocs(userQuery);
-                if (!querySnapshot.empty) {
-                    const userDoc = querySnapshot.docs[0];
-                    setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    setAppUser({ id: userDocSnap.id, ...userDocSnap.data() } as AppUser);
                 } else {
-                    setAppUser(null);
+                    // Fallback for older user structures that might not use UID as doc ID
+                    const usersCollection = collection(firestore, 'users');
+                    const userQuery = query(usersCollection, where("email", "==", user.email));
+                    const querySnapshot = await getDocs(userQuery);
+                    if (!querySnapshot.empty) {
+                        const userDoc = querySnapshot.docs[0];
+                        setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+                    } else {
+                        setAppUser(null);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching app user:", error);
@@ -66,7 +74,7 @@ function useAppUser() {
         };
 
         fetchAppUser();
-    }, [user?.uid, isUserLoading, firestore]); 
+    }, [user, isUserLoading, firestore]); 
 
     return { appUser, isAppUserLoading };
 }

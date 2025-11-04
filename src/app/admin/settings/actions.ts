@@ -4,6 +4,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { z } from 'zod';
+import { getSdks, initializeFirebase } from '@/firebase/server-init';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const colorSchema = z.object({
   h: z.number(),
@@ -18,6 +20,12 @@ const themeSchema = z.object({
 });
 
 type ThemeFormValues = z.infer<typeof themeSchema>;
+
+const profileSchema = z.object({
+    userId: z.string(),
+    name: z.string().min(2, 'Name must be at least 2 characters.'),
+});
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export async function updateTheme(data: ThemeFormValues) {
   const cssFilePath = path.join(process.cwd(), 'src', 'app', 'globals.css');
@@ -44,4 +52,25 @@ export async function updateTheme(data: ThemeFormValues) {
     console.error("Error updating theme:", error);
     throw new Error('Could not write to CSS file.');
   }
+}
+
+export async function updateProfile(data: ProfileFormValues) {
+    const { firebaseApp } = initializeFirebase();
+    const { firestore } = getSdks(firebaseApp);
+
+    const validatedData = profileSchema.safeParse(data);
+    if (!validatedData.success) {
+        throw new Error('Invalid data provided for profile update.');
+    }
+    
+    const { userId, name } = validatedData.data;
+
+    try {
+        const userRef = doc(firestore, 'users', userId);
+        await updateDoc(userRef, { name });
+        return { success: true, message: 'Profile updated successfully.' };
+    } catch(error) {
+        console.error("Error updating profile:", error);
+        throw new Error('Could not update user profile in Firestore.');
+    }
 }

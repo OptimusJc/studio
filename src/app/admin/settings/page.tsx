@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,21 +11,37 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
-import { updateTheme } from './actions';
+import { updateTheme, updateProfile } from './actions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAppUser } from '../layout';
+import { useRouter } from 'next/navigation';
 
-const colorSchema = z.object({
-  h: z.number().min(0).max(360),
-  s: z.number().min(0).max(100),
-  l: z.number().min(0).max(100),
-});
-
+// Schema for theme customization
 const themeSchema = z.object({
-  primary: colorSchema,
-  accent: colorSchema,
-  background: colorSchema,
+  primary: z.object({
+    h: z.number().min(0).max(360),
+    s: z.number().min(0).max(100),
+    l: z.number().min(0).max(100),
+  }),
+  accent: z.object({
+    h: z.number().min(0).max(360),
+    s: z.number().min(0).max(100),
+    l: z.number().min(0).max(100),
+  }),
+  background: z.object({
+    h: z.number().min(0).max(360),
+    s: z.number().min(0).max(100),
+    l: z.number().min(0).max(100),
+  }),
 });
-
 type ThemeFormValues = z.infer<typeof themeSchema>;
+
+// Schema for profile updates
+const profileSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters.'),
+});
+type ProfileFormValues = z.infer<typeof profileSchema>;
+
 
 function ColorPicker({ form, name, label }: { form: any, name: "primary" | "accent" | "background", label: string }) {
   const h = form.watch(`${name}.h`);
@@ -110,11 +125,82 @@ function ColorPicker({ form, name, label }: { form: any, name: "primary" | "acce
 }
 
 
-export default function SettingsPage() {
+function ProfileSettings() {
+    const { appUser } = useAppUser();
+    const router = useRouter();
     const { toast } = useToast();
-    // These initial values should match your globals.css
+
+    const form = useForm<ProfileFormValues>({
+        resolver: zodResolver(profileSchema),
+        defaultValues: {
+            name: appUser?.name || '',
+        },
+    });
+
+    const onSubmit = async (data: ProfileFormValues) => {
+        if (!appUser?.id) return;
+        try {
+            await updateProfile({ userId: appUser.id, name: data.name });
+            toast({
+                title: 'Profile Updated',
+                description: 'Your name has been successfully updated.',
+            });
+            // Refresh server components
+            router.refresh();
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: 'Failed to Update Profile',
+                description: (error as Error).message,
+            });
+        }
+    };
+
+    return (
+         <Card>
+            <CardHeader>
+                <CardTitle>Your Profile</CardTitle>
+                <CardDescription>Manage your account details.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Full Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g. John Doe" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <Input value={appUser?.email || ''} readOnly disabled />
+                        </FormItem>
+                        <FormItem>
+                            <FormLabel>Role</FormLabel>
+                             <Input value={appUser?.role || ''} readOnly disabled />
+                        </FormItem>
+                        <div className="flex justify-end pt-4">
+                            <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isDirty}>Save Changes</Button>
+                        </div>
+                    </form>
+                </Form>
+            </CardContent>
+        </Card>
+    )
+}
+
+function AppearanceSettings() {
+    const { toast } = useToast();
     const form = useForm<ThemeFormValues>({
         resolver: zodResolver(themeSchema),
+        // These initial values should match your globals.css
         defaultValues: {
             primary: { h: 196, s: 35, l: 43 },
             accent: { h: 106, s: 35, l: 44 },
@@ -129,7 +215,6 @@ export default function SettingsPage() {
                 title: "Theme Updated",
                 description: "Your new theme colors have been applied.",
             });
-            // Optional: force a reload to see changes if they don't apply dynamically
             window.location.reload();
         } catch (error) {
             toast({
@@ -141,33 +226,49 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="p-4 md:p-8">
-        <PageHeader
-            title="Settings"
-            description="Customize the appearance and behavior of your catalog."
-        />
-        
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <Card>
-                    <CardHeader>
-                    <CardTitle>Theme Colors</CardTitle>
-                    <CardDescription>
-                        Adjust the main colors of your application. The changes will be applied globally.
-                    </CardDescription>
-                    </CardHeader>
+        <Card>
+            <CardHeader>
+                <CardTitle>Theme Colors</CardTitle>
+                <CardDescription>
+                    Adjust the main colors of your application. The changes will be applied globally.
+                </CardDescription>
+            </CardHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
                     <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <ColorPicker form={form} name="primary" label="Primary Color" />
                         <ColorPicker form={form} name="accent" label="Accent Color" />
                         <ColorPicker form={form} name="background" label="Background Color" />
                     </CardContent>
-                </Card>
+                    <div className="flex justify-end p-6 pt-0">
+                        <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isDirty}>Save Appearance</Button>
+                    </div>
+                </form>
+            </Form>
+        </Card>
+    );
+}
 
-                 <div className="flex justify-end">
-                    <Button type="submit">Save Changes</Button>
-                </div>
-            </form>
-        </Form>
+export default function SettingsPage() {
+    return (
+        <div className="p-4 md:p-8 space-y-8">
+            <PageHeader
+                title="Settings"
+                description="Manage your account and customize the appearance of your catalog."
+            />
+            
+            <Tabs defaultValue="profile" className="w-full">
+                <TabsList className="grid w-full max-w-md grid-cols-2">
+                    <TabsTrigger value="profile">Profile</TabsTrigger>
+                    <TabsTrigger value="appearance">Appearance</TabsTrigger>
+                </TabsList>
+                <TabsContent value="profile" className="pt-6">
+                   <ProfileSettings />
+                </TabsContent>
+                <TabsContent value="appearance" className="pt-6">
+                   <AppearanceSettings />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }
