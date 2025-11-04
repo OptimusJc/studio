@@ -25,6 +25,7 @@ import {
   Home,
   Tags,
   List,
+  Folder,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -97,6 +98,18 @@ export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminS
       });
     }
   }
+
+  const handleSidebarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.currentTarget.getAttribute('data-state') === 'collapsed')) {
+      // Prevent click on interactive elements inside from bubbling up
+      if ((e.target as HTMLElement).closest('button, a')) {
+          return;
+      }
+      if (typeof (e.currentTarget as any).toggleSidebar === 'function') {
+        (e.currentTarget as any).toggleSidebar();
+      }
+    }
+}
 
   return (
     <Sidebar>
@@ -204,6 +217,18 @@ export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminS
                 <Link href={`/admin/attributes?db=${selectedDb}`}>
                   <Tags />
                   <span>Attributes</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === '/admin/assets'}
+                tooltip="Assets"
+              >
+                <Link href={`/admin/assets?db=${selectedDb}`}>
+                  <Folder />
+                  <span>Assets</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
