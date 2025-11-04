@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Library } from 'lucide-react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
+import { AssetPickerDialog } from './AssetPickerDialog';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 interface ImageUploaderProps {
   field: 'productImages' | 'additionalImages';
@@ -35,6 +36,19 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
     setPreviewUrl(imageUrl || null);
   }, [imageUrl]);
 
+  const updateFormValue = (url: string) => {
+    if (field === 'productImages') {
+      setValue(field, [url], { shouldValidate: true });
+    } else {
+      const currentImages = getValues(field) || [];
+      if (index !== undefined) {
+        currentImages[index] = url;
+        setValue(field, currentImages, { shouldValidate: true });
+      } else {
+        setValue(field, [...currentImages, url], { shouldValidate: true });
+      }
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -53,7 +67,7 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
       toast({
         variant: 'destructive',
         title: 'Invalid File Type',
-        description: 'Please select a JPG, PNG, or GIF image.',
+        description: 'Please select a JPG, PNG, GIF, or WebP image.',
       });
       return;
     }
@@ -96,19 +110,7 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           setIsUploading(false);
           setUploadProgress(null);
-          
-          if (field === 'productImages') {
-             setValue(field, [downloadURL], { shouldValidate: true });
-          } else {
-             const currentImages = getValues(field) || [];
-             if (index !== undefined) {
-                currentImages[index] = downloadURL;
-                setValue(field, currentImages, { shouldValidate: true });
-             } else {
-                setValue(field, [...currentImages, downloadURL], { shouldValidate: true });
-             }
-          }
-
+          updateFormValue(downloadURL);
           toast({
             title: 'Upload Successful',
             description: 'Image has been uploaded and linked.',
@@ -128,6 +130,13 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
     }
   };
 
+  const handleAssetSelect = (url: string) => {
+    updateFormValue(url);
+    toast({
+        title: 'Image Selected',
+        description: 'Image from library has been linked.',
+    });
+  }
 
   return (
     <Card className="border-dashed relative group">
@@ -145,7 +154,7 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
              </Button>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center text-center h-48 cursor-pointer" onClick={() => document.getElementById(`file-input-${field}-${index ?? 'new'}`)?.click()}>
+          <div className="flex flex-col items-center justify-center text-center h-48">
              <Input 
                 id={`file-input-${field}-${index ?? 'new'}`}
                 type="file" 
@@ -154,11 +163,28 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
                 accept={ALLOWED_FILE_TYPES.join(',')}
                 disabled={isUploading}
              />
-            <Upload className="h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+            <Upload className="h-10 w-10 text-muted-foreground" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              <Button 
+                type="button" 
+                variant="link" 
+                className="p-0 h-auto"
+                onClick={() => document.getElementById(`file-input-${field}-${index ?? 'new'}`)?.click()}
+              >
+                Click to upload
+              </Button>
             </p>
-            <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 2MB</p>
+             <div className="flex items-center gap-2 my-2">
+                <div className="flex-1 border-t"></div>
+                <span className="text-xs text-muted-foreground">OR</span>
+                <div className="flex-1 border-t"></div>
+            </div>
+             <AssetPickerDialog onAssetSelect={handleAssetSelect}>
+                <Button type="button" variant="outline" size="sm">
+                    <Library className="mr-2 h-4 w-4" />
+                    Browse Library
+                </Button>
+             </AssetPickerDialog>
              {isUploading && uploadProgress !== null && (
                 <div className="w-full px-4 absolute bottom-4">
                     <Progress value={uploadProgress} className="w-full h-2" />

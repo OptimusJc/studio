@@ -402,7 +402,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{attr.name}</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <Select onValueChange={field.onChange} value={field.value as string || ''}>
                                 <FormControl>
                                     <SelectTrigger>
                                     <SelectValue placeholder={`Select ${attr.name.toLowerCase()}`} />
