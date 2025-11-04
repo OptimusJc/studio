@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -24,57 +25,95 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useFirestore, useAuth } from '@/firebase';
+import { collection, doc, setDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
-
+import { useRouter } from 'next/navigation';
 
 const userSchema = z.object({
   name: z.string().min(1, 'User name is required.'),
   email: z.string().email('Invalid email address.'),
+  password: z.string().min(6, 'Password must be at least 6 characters.'),
   role: z.enum(['Admin', 'Editor']),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
 
+// A temporary, secondary Firebase app instance for creating users
+// This is a workaround to create a user without logging in the current admin out
+async function createSecondaryApp() {
+    const { initializeApp } = await import('firebase/app');
+    const { getAuth } = await import('firebase/auth');
+    const { firebaseConfig } = await import('@/firebase/config');
+    const appName = `secondary-app-${Date.now()}`;
+    const secondaryApp = initializeApp(firebaseConfig, appName);
+    return getAuth(secondaryApp);
+}
+
+
 export function AddUserDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       name: '',
       email: '',
+      password: '',
       role: 'Editor',
     },
   });
 
   const onSubmit = async (data: UserFormValues) => {
     if (!firestore) return;
+    setIsSubmitting(true);
+    let secondaryAuth;
+    try {
+        secondaryAuth = await createSecondaryApp();
+        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, data.email, data.password);
+        const newUser = userCredential.user;
 
-    // This only creates the user profile in Firestore.
-    // The actual authentication user must be created in the Firebase Console.
-    const usersCollection = collection(firestore, 'users');
-    const newUser = {
-      ...data,
-      createdAt: new Date().toISOString(),
-      lastLogin: null,
-    };
-    
-    await addDocumentNonBlocking(usersCollection, newUser);
+        const userDocRef = doc(firestore, 'users', newUser.uid);
+        const newUserProfile = {
+            name: data.name,
+            email: data.email,
+            role: data.role,
+            createdAt: new Date().toISOString(),
+            lastLogin: null,
+        };
 
-    toast({
-      title: 'User Profile Created',
-      description: `The profile for "${data.name}" has been created. Remember to add their login credentials in the Firebase Console.`,
-    });
-    
-    setIsOpen(false);
-    form.reset();
+        await setDoc(userDocRef, newUserProfile);
+
+        toast({
+            title: 'User Created Successfully',
+            description: `The profile for "${data.name}" has been created with their login credentials.`,
+        });
+
+        setIsOpen(false);
+        form.reset();
+        router.refresh();
+
+    } catch (error) {
+        console.error("Error creating user:", error);
+        toast({
+            variant: "destructive",
+            title: 'Failed to Create User',
+            description: (error as Error).message,
+        });
+    } finally {
+        setIsSubmitting(false);
+        if (secondaryAuth) {
+            const { deleteApp } = await import('firebase/app');
+            deleteApp(secondaryAuth.app);
+        }
+    }
   };
   
   const handleOpenChange = (open: boolean) => {
@@ -93,16 +132,9 @@ export function AddUserDialog() {
         <DialogHeader>
           <DialogTitle>Add New User</DialogTitle>
           <DialogDescription>
-            Create a new user profile and assign a role.
+            Create a new user profile and their login credentials.
           </DialogDescription>
         </DialogHeader>
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertTitle>Important!</AlertTitle>
-          <AlertDescription>
-            This form only creates the user's profile. You must add their authentication credentials (email/password) in the Firebase Console afterwards.
-          </AlertDescription>
-        </Alert>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -131,6 +163,19 @@ export function AddUserDialog() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Must be at least 6 characters" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
              <FormField
               control={form.control}
               name="role"
@@ -153,7 +198,9 @@ export function AddUserDialog() {
               )}
             />
             <DialogFooter>
-              <Button type="submit">Save User Profile</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating User...' : 'Save User'}
+                </Button>
             </DialogFooter>
           </form>
         </Form>

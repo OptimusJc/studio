@@ -6,7 +6,7 @@ import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, DocumentData } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { User as AppUser } from '@/types';
 
@@ -22,7 +22,7 @@ function AdminLayoutSkeleton() {
   );
 }
 
-function useAppUser() {
+export function useAppUser() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const [appUser, setAppUser] = useState<AppUser | null>(null);
@@ -40,25 +40,24 @@ function useAppUser() {
         }
 
         const fetchAppUser = async () => {
-            if (!firestore || !user.email) {
-                setAppUser(null);
+            if (!firestore) {
                 setIsAppUserLoading(false);
                 return;
             }
+
             setIsAppUserLoading(true);
-            const usersCollection = collection(firestore, 'users');
-            const userQuery = query(usersCollection, where("email", "==", user.email));
+            const userDocRef = doc(firestore, 'users', user.uid);
             
             try {
-                const querySnapshot = await getDocs(userQuery);
-                if (!querySnapshot.empty) {
-                    const userDoc = querySnapshot.docs[0];
-                    setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    setAppUser({ id: userDocSnap.id, ...userDocSnap.data() } as AppUser);
                 } else {
+                    console.warn(`No user profile found in Firestore for UID: ${user.uid}`);
                     setAppUser(null);
                 }
             } catch (error) {
-                console.error("Error fetching app user:", error);
+                console.error("Error fetching app user from Firestore:", error);
                 setAppUser(null);
             } finally {
                 setIsAppUserLoading(false);
@@ -66,7 +65,7 @@ function useAppUser() {
         };
 
         fetchAppUser();
-    }, [user?.uid, isUserLoading, firestore]); 
+    }, [user, isUserLoading, firestore]); 
 
     return { appUser, isAppUserLoading };
 }

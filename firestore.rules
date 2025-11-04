@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Firestore Security Rules for the application.
  *
@@ -16,14 +17,6 @@
  * - Share links created by a user are stored as subcollections under their
  *   user document in `/users/{userId}/shareLinks/{shareLinkId}`.
  * - Admin users are stored in the `roles_admin/{userId}` collection, where the document's existence grants admin privileges.
- *
- * Key Security Decisions:
- * - User listing is disallowed to protect user privacy.
- * - Public read access is granted to product catalogs to allow open browsing.
- * - Data validation is relaxed for rapid prototyping, focusing on authorization.
- * - All write operations must pass authorization checks to prevent data
- *   tampering.
- * - Admin privileges are determined by the existence of a document in the `/roles_admin/{userId}` collection.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -219,6 +212,19 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
+    
+    /**
+     * @description Rules for the 'settings' collection.
+     * @path /databases/{database}/documents/settings/{settingId}
+     * @allow (get) - Any authenticated user can read settings.
+     * @allow (write) - Only admins can create or update settings.
+     * @principle Allows public read access to settings but restricts write access to admins.
+     */
+    match /settings/{settingId} {
+        allow get: if isSignedIn();
+        allow write: if isAdmin();
+    }
+
 
     /**
      * @description Rules for the 'shareLinks' subcollection under 'users'.
