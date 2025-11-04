@@ -6,7 +6,7 @@ import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
 import { useEffect, useState, Suspense } from 'react';
 import { PageHeader } from './components/PageHeader';
 import { StatCard } from './components/StatCard';
-import { ShoppingBasket, Users, LayoutGrid, Link as LinkIcon } from 'lucide-react';
+import { ShoppingBasket, Users, LayoutGrid, Rocket } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +41,7 @@ function DashboardContent() {
     totalProducts: 0,
     totalCategories: 0,
     totalUsers: 0,
+    publishedProducts: 0,
   });
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,8 +128,15 @@ function DashboardContent() {
         const allProducts = Array.from(productMap.values());
         allProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         
+        const publishedCount = allProducts.filter(p => p.status === 'Published').length;
+        
         setRecentProducts(allProducts.slice(0, 5));
-        setStats(prev => ({ ...prev, totalProducts: allProducts.length }));
+        setStats(prev => ({ 
+            ...prev, 
+            totalProducts: allProducts.length,
+            publishedProducts: publishedCount,
+        }));
+
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -142,7 +150,7 @@ function DashboardContent() {
         } else {
             setIsLoading(false);
             setRecentProducts([]);
-            setStats(prev => ({ ...prev, totalProducts: 0 }));
+            setStats(prev => ({ ...prev, totalProducts: 0, publishedProducts: 0 }));
         }
     }
   }, [firestore, categoriesData, isLoadingCategories]);
@@ -185,10 +193,10 @@ function DashboardContent() {
                 description="The total number of users."
                 />
                 <StatCard 
-                title="Shared Links"
-                value="12"
-                icon={LinkIcon}
-                description="Links generated this month."
+                title="Published Products"
+                value={stats.publishedProducts.toString()}
+                icon={Rocket}
+                description="Products currently live in catalogs."
                 />
             </>
         )}
