@@ -227,13 +227,35 @@ function AppearanceSettings() {
 
     const form = useForm<ThemeFormValues>({
         resolver: zodResolver(themeSchema),
-        // These initial values should match your globals.css
         defaultValues: {
-            primary: { h: 196, s: 35, l: 43 },
-            accent: { h: 106, s: 35, l: 44 },
-            background: { h: 192, s: 72, l: 92 },
+            primary: { h: 0, s: 0, l: 0 },
+            accent: { h: 0, s: 0, l: 0 },
+            background: { h: 0, s: 0, l: 0 },
         },
     });
+
+    useEffect(() => {
+        // Function to parse HSL string "h s% l%" into an object
+        const parseHsl = (hslStr: string) => {
+            if (!hslStr) return { h: 0, s: 0, l: 0 };
+            const [h, s, l] = hslStr.replace(/%/g, '').split(' ').map(parseFloat);
+            return { h: h || 0, s: s || 0, l: l || 0 };
+        };
+
+        // This code runs on the client, so `window` is available
+        const style = getComputedStyle(document.documentElement);
+        
+        const primary = style.getPropertyValue('--primary').trim();
+        const accent = style.getPropertyValue('--accent').trim();
+        const background = style.getPropertyValue('--background').trim();
+
+        form.reset({
+            primary: parseHsl(primary),
+            accent: parseHsl(accent),
+            background: parseHsl(background),
+        });
+    }, [form]);
+
 
     const onSubmit = async (data: ThemeFormValues) => {
         try {
@@ -242,7 +264,8 @@ function AppearanceSettings() {
                 title: "Theme Updated",
                 description: "Your new theme colors have been applied.",
             });
-            window.location.reload();
+            // A brief delay to allow CSS to be written, then reload
+            setTimeout(() => window.location.reload(), 500);
         } catch (error) {
             toast({
                 variant: "destructive",
@@ -320,3 +343,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    
