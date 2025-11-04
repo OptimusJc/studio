@@ -193,9 +193,7 @@ function CatalogContent() {
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                         {filteredProducts.map((product) => (
-                           <Link key={product.id} href={`/shop/${product.id}`} className="h-full">
-                                <ProductCard product={product} />
-                           </Link>
+                           <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
                     {filteredProducts.length === 0 && (
@@ -217,14 +215,14 @@ function ShopPageSkeleton() {
     return (
         <div className="bg-muted/40 min-h-screen">
              <header className="sticky top-0 z-40 w-full border-b bg-background">
-                <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                    <Skeleton className="h-8 w-32" />
-                    <Skeleton className="h-8 w-8 md:hidden" />
-                    <div className="hidden md:flex gap-2">
+                <div className="container mx-auto flex h-20 items-center justify-between px-4">
+                    <Skeleton className="h-8 w-48" />
+                    <div className="hidden lg:flex gap-2">
                         <Skeleton className="h-9 w-24" />
                         <Skeleton className="h-9 w-24" />
                         <Skeleton className="h-9 w-24" />
                     </div>
+                    <Skeleton className="h-8 w-8 lg:hidden" />
                 </div>
              </header>
             <main className="container mx-auto px-4 py-8">
