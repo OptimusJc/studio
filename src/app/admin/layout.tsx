@@ -3,7 +3,7 @@
 
 import { useState, useEffect, Suspense, ReactNode } from 'react';
 import AdminSidebar from './components/AdminSidebar';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
@@ -66,7 +66,6 @@ function useAppUser() {
         };
 
         fetchAppUser();
-    // Using user.uid ensures this effect only re-runs when the user actually changes.
     }, [user?.uid, isUserLoading, firestore]); 
 
     return { appUser, isAppUserLoading };
@@ -89,9 +88,7 @@ function AdminLayoutContent({
   const isLoading = isAuthLoading || isAppUserLoading;
   
   useEffect(() => {
-    // Only run this effect once loading is complete.
     if (!isLoading) {
-      // If loading is done and there's no authorized user, redirect.
       if (!user || !appUser || (appUser.role !== 'Admin' && appUser.role !== 'Editor')) {
         router.replace('/login?error=unauthorized');
       }
@@ -99,18 +96,19 @@ function AdminLayoutContent({
   }, [isLoading, user, appUser, router]);
 
 
-  // Render skeleton while loading.
   if (isLoading) {
     return <AdminLayoutSkeleton />;
   }
 
-  // After loading, if user is authorized, render the dashboard.
   if (user && appUser && (appUser.role === 'Admin' || appUser.role === 'Editor')) {
     return (
       <SidebarProvider>
         <AdminSidebar selectedDb={selectedDb} setSelectedDb={setSelectedDb} user={appUser} />
         <SidebarInset>
-          <div className="min-h-screen">
+          <div className="relative min-h-screen">
+            <div className="absolute top-4 left-4 z-20">
+               <SidebarTrigger />
+            </div>
             {children}
           </div>
         </SidebarInset>
@@ -118,7 +116,6 @@ function AdminLayoutContent({
     );
   }
 
-  // If not loading and not authorized, render skeleton while redirecting.
   return <AdminLayoutSkeleton />;
 }
 
