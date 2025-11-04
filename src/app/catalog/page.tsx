@@ -10,6 +10,7 @@ import Header from './components/Header';
 import FacetedSearch from './components/FacetedSearch';
 import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { products as placeholderProducts } from '@/lib/placeholder-data';
 
 function CatalogContent() {
   const firestore = useFirestore();
@@ -40,6 +41,14 @@ function CatalogContent() {
       setIsLoading(true);
 
       const productMap = new Map<string, Product>();
+      
+      // Add placeholder products first
+      placeholderProducts.forEach(p => {
+        if (p.db === 'buyers' && p.status === 'Published') {
+            productMap.set(p.id, p);
+        }
+      });
+      
       const productCategories = categoriesData.map(c => ({
           slug: c.name.toLowerCase().replace(/\s+/g, '-'),
           name: c.name

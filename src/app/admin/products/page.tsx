@@ -14,6 +14,7 @@ import { useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { products as placeholderProducts } from '@/lib/placeholder-data';
 
 
 function ProductTableSkeleton() {
@@ -63,6 +64,14 @@ export default function ProductsPage() {
       
       const newDb = searchParams.get('db') || 'retailers';
       const newCategory = searchParams.get('category');
+
+      // Add placeholder products first
+      placeholderProducts.forEach(p => {
+        const categorySlug = p.category.toLowerCase().replace(/\s+/g, '-');
+        if (p.db === newDb && (!newCategory || newCategory === categorySlug)) {
+            productMap.set(p.id, p);
+        }
+      });
       
       // 1. Fetch Drafts
       const draftsQuery = query(collection(firestore, 'drafts'));
@@ -100,7 +109,7 @@ export default function ProductsPage() {
                   category: cat,
                   db: newDb,
                 } as Product;
-                // If a published product exists, it should overwrite the draft in the map
+                // If a published product exists, it should overwrite the placeholder/draft
                 productMap.set(product.id, product);
             });
           } catch(e) {
