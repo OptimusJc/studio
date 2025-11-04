@@ -175,7 +175,7 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile, toggleSidebar, open } = useSidebar()
 
     if (collapsible === "none") {
       return (
@@ -212,6 +212,16 @@ const Sidebar = React.forwardRef<
       )
     }
 
+    const handleSidebarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!open) {
+          // Prevent click on interactive elements inside from bubbling up
+          if ((e.target as HTMLElement).closest('button, a')) {
+              return;
+          }
+          toggleSidebar();
+        }
+    }
+
     return (
       <div
         ref={ref}
@@ -220,6 +230,7 @@ const Sidebar = React.forwardRef<
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
         data-side={side}
+        onClick={handleSidebarClick}
       >
         {/* This is what handles the sidebar gap on desktop */}
         <div
