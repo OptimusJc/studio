@@ -95,6 +95,38 @@ export const themes = {
       },
     }
   },
+  sunrise: {
+    label: "Sunrise",
+    description: "A high-contrast theme with an energetic orange accent.",
+    light: {
+      primary: { h: 25, s: 95, l: 53 },
+      accent: { h: 240, s: 5, l: 65 },
+      background: { h: 240, s: 5, l: 96 },
+    },
+    dark: {
+      primary: { h: 25, s: 95, l: 60 },
+      accent: { h: 240, s: 4, l: 30 },
+      background: { h: 220, s: 13, l: 10 },
+    },
+     sidebar: {
+      light: {
+        background: { h: 220, s: 13, l: 10 },
+        foreground: { h: 240, s: 5, l: 96 },
+        primary: { h: 25, s: 95, l: 53 },
+        'primary-foreground': { h: 25, s: 85, l: 95 },
+        accent: { h: 220, s: 10, l: 20 },
+        'accent-foreground': { h: 240, s: 5, l: 96 },
+      },
+      dark: {
+        background: { h: 220, s: 13, l: 10 },
+        foreground: { h: 240, s: 5, l: 96 },
+        primary: { h: 25, s: 95, l: 60 },
+        'primary-foreground': { h: 25, s: 85, l: 95 },
+        accent: { h: 220, s: 10, l: 20 },
+        'accent-foreground': { h: 240, s: 5, l: 96 },
+      },
+    }
+  },
 } as const;
 
 export type ThemeName = keyof typeof themes;
