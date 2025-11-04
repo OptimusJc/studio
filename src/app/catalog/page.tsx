@@ -10,7 +10,6 @@ import Header from './components/Header';
 import FacetedSearch from './components/FacetedSearch';
 import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { products as placeholderProducts } from '@/lib/placeholder-data';
 
 function CatalogContent() {
   const firestore = useFirestore();
@@ -42,13 +41,6 @@ function CatalogContent() {
 
       const productMap = new Map<string, Product>();
       
-      // Add placeholder products first
-      placeholderProducts.forEach(p => {
-        if (p.db === 'buyers' && p.status === 'Published') {
-            productMap.set(p.id, p);
-        }
-      });
-      
       const productCategories = categoriesData.map(c => ({
           slug: c.name.toLowerCase().replace(/\s+/g, '-'),
           name: c.name
@@ -64,15 +56,17 @@ function CatalogContent() {
           const publishedSnapshot = await getDocs(publishedQuery);
           publishedSnapshot.forEach(doc => {
             const data = doc.data() as DocumentData;
-            const product = {
-              id: doc.id,
-              ...data,
-              name: data.productTitle,
-              imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-              category: cat.name, // Use the proper name, not slug
-              db: db,
-            } as Product;
-            productMap.set(product.id, product);
+            if (data.status === 'Published') { // Ensure we only show published products
+                const product = {
+                id: doc.id,
+                ...data,
+                name: data.productTitle,
+                imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                category: cat.name, // Use the proper name, not slug
+                db: db,
+                } as Product;
+                productMap.set(product.id, product);
+            }
           });
         } catch (e) {
           // It's ok if a collection doesn't exist.
