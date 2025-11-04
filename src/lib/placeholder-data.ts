@@ -1,3 +1,4 @@
+
 import type { Product, Category, Attribute, User } from '@/types';
 
 export const products: Product[] = [
@@ -6,6 +7,7 @@ export const products: Product[] = [
     name: 'Damask Elegance Wallpaper',
     productTitle: 'Damask Elegance Wallpaper',
     productCode: 'WP-DAM-01',
+    productDescription: 'A classic damask pattern wallpaper for a touch of elegance.',
     category: 'Wallpapers',
     price: 59.99,
     stock: 150,
@@ -23,8 +25,8 @@ export const products: Product[] = [
     name: 'Modern Geometric Mural',
     productTitle: 'Modern Geometric Mural',
     productCode: 'MRL-GEO-02',
+    productDescription: 'A bold geometric mural to create a stunning feature wall.',
     category: 'Wall Murals',
-    price: 199.0,
     stock: 45,
     sku: 'MRL-GEO-02',
     status: 'Published',
@@ -40,6 +42,7 @@ export const products: Product[] = [
     name: 'Faux Wood Blinds',
     productTitle: 'Faux Wood Blinds',
     productCode: 'WB-FW-03',
+    productDescription: 'Durable and stylish faux wood blinds for any room.',
     category: 'Window Blinds',
     price: 89.5,
     stock: 75,
@@ -57,6 +60,7 @@ export const products: Product[] = [
     name: 'Plush Shag Carpet',
     productTitle: 'Plush Shag Carpet',
     productCode: 'CPT-SHG-04',
+    productDescription: 'A soft and cozy shag carpet, perfect for living rooms.',
     category: 'Carpets',
     price: 249.99,
     stock: 110,
@@ -74,8 +78,8 @@ export const products: Product[] = [
     name: 'Frosted Privacy Window Film',
     productTitle: 'Frosted Privacy Window Film',
     productCode: 'WF-PRV-05',
+    productDescription: 'Easy-to-apply frosted film for privacy and style.',
     category: 'Window Films',
-    price: 25.0,
     stock: 200,
     sku: 'WF-PRV-05',
     status: 'Draft',
@@ -91,6 +95,7 @@ export const products: Product[] = [
     name: 'Oak Fluted Panel',
     productTitle: 'Oak Fluted Panel',
     productCode: 'FP-OAK-06',
+    productDescription: 'Elegant oak fluted panels for a modern wall treatment.',
     category: 'Fluted Panels',
     price: 120.0,
     stock: 60,
