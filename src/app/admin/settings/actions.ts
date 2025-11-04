@@ -6,17 +6,10 @@ import path from 'path';
 import { z } from 'zod';
 import { getSdks, initializeFirebase } from '@/firebase/server-init';
 import { doc, setDoc } from 'firebase/firestore';
-
-const colorSchema = z.object({
-  h: z.number(),
-  s: z.number(),
-  l: z.number(),
-});
+import { themes, type ThemeName } from '@/lib/themes';
 
 const themeSchema = z.object({
-  primary: colorSchema,
-  accent: colorSchema,
-  background: colorSchema,
+  theme: z.custom<ThemeName>(),
 });
 
 type ThemeFormValues = z.infer<typeof themeSchema>;
@@ -28,21 +21,40 @@ type CompanyProfileFormValues = z.infer<typeof companyProfileSchema>;
 
 export async function updateTheme(data: ThemeFormValues) {
   const cssFilePath = path.join(process.cwd(), 'src', 'app', 'globals.css');
+  const selectedTheme = themes[data.theme];
+  if (!selectedTheme) {
+    throw new Error('Invalid theme selected.');
+  }
   
   try {
     const currentCss = await fs.readFile(cssFilePath, 'utf8');
 
     let newCss = currentCss;
-    newCss = newCss.replace(/--primary:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--primary: ${data.primary.h} ${data.primary.s}% ${data.primary.l}%;`);
-    newCss = newCss.replace(/--accent:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--accent: ${data.accent.h} ${data.accent.s}% ${data.accent.l}%;`);
-    newCss = newCss.replace(/--background:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--background: ${data.background.h} ${data.background.s}% ${data.background.l}%;`);
+    
+    // Light mode variables
+    const { primary, accent, background } = selectedTheme.light;
+    const { primary: darkPrimary, accent: darkAccent, background: darkBackground } = selectedTheme.dark;
 
-    // A simple way to adjust foreground color based on lightness
-    const primaryForeground = data.primary.l > 50 ? '240 10% 3.9%' : '0 0% 98%';
-    const accentForeground = data.accent.l > 50 ? '240 10% 3.9%' : '0 0% 98%';
+    newCss = newCss.replace(/--background:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--background: ${background.h} ${background.s}% ${background.l}%;`);
+    newCss = newCss.replace(/--primary:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--primary: ${primary.h} ${primary.s}% ${primary.l}%;`);
+    newCss = newCss.replace(/--accent:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--accent: ${accent.h} ${accent.s}% ${accent.l}%;`);
+
+    const primaryForeground = primary.l > 50 ? '240 10% 3.9%' : '0 0% 98%';
+    const accentForeground = accent.l > 50 ? '240 10% 3.9%' : '0 0% 98%';
     
     newCss = newCss.replace(/--primary-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--primary-foreground: ${primaryForeground};`);
     newCss = newCss.replace(/--accent-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `--accent-foreground: ${accentForeground};`);
+
+    // Dark mode variables
+    newCss = newCss.replace(/\.dark\s*{\s*--background:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {\n    --background: ${darkBackground.h} ${darkBackground.s}% ${darkBackground.l}%;`);
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--primary:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--primary: ${darkPrimary.h} ${darkPrimary.s}% ${darkPrimary.l}%;`);
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--accent:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--accent: ${darkAccent.h} ${darkAccent.s}% ${darkAccent.l}%;`);
+    
+    const darkPrimaryForeground = darkPrimary.l > 50 ? '240 10% 3.9%' : '0 0% 98%';
+    const darkAccentForeground = darkAccent.l > 50 ? '240 10% 3.9%' : '0 0% 98%';
+
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--primary-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--primary-foreground: ${darkPrimaryForeground};`);
+    newCss = newCss.replace(/\.dark\s*{([^}]*)--accent-foreground:\s*[\d.]+\s+[\d.]+%?\s+[\d.]+%?;/, `.dark {$1--accent-foreground: ${darkAccentForeground};`);
 
     await fs.writeFile(cssFilePath, newCss, 'utf8');
 

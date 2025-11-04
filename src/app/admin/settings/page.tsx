@@ -10,125 +10,30 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Slider } from '@/components/ui/slider';
 import { updateTheme, updateCompanyProfile } from './actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { themes, type ThemeName, type Theme } from '@/lib/themes';
+import { cn } from '@/lib/utils';
 
-// Schema for theme customization
 const themeSchema = z.object({
-  primary: z.object({
-    h: z.number().min(0).max(360),
-    s: z.number().min(0).max(100),
-    l: z.number().min(0).max(100),
-  }),
-  accent: z.object({
-    h: z.number().min(0).max(360),
-    s: z.number().min(0).max(100),
-    l: z.number().min(0).max(100),
-  }),
-  background: z.object({
-    h: z.number().min(0).max(360),
-    s: z.number().min(0).max(100),
-    l: z.number().min(0).max(100),
-  }),
+  theme: z.custom<ThemeName>((val) => Object.keys(themes).includes(val as string)),
 });
+
 type ThemeFormValues = z.infer<typeof themeSchema>;
 
-// Schema for company profile updates
 const companyProfileSchema = z.object({
     name: z.string().min(2, 'Company name must be at least 2 characters.'),
 });
 type CompanyProfileFormValues = z.infer<typeof companyProfileSchema>;
-
-
-function ColorPicker({ form, name, label }: { form: any, name: "primary" | "accent" | "background", label: string }) {
-  const h = form.watch(`${name}.h`);
-  const s = form.watch(`${name}.s`);
-  const l = form.watch(`${name}.l`);
-
-  return (
-    <div className="space-y-4 rounded-lg border p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{label}</h3>
-        <div 
-          className="h-8 w-16 rounded-md border" 
-          style={{ backgroundColor: `hsl(${h}, ${s}%, ${l}%)` }}
-        />
-      </div>
-      <FormField
-        control={form.control}
-        name={`${name}.h`}
-        render={({ field }) => (
-          <FormItem>
-            <div className="flex justify-between items-center">
-              <FormLabel>Hue</FormLabel>
-              <span className="text-sm text-muted-foreground">{field.value}</span>
-            </div>
-            <FormControl>
-               <Slider
-                min={0}
-                max={360}
-                step={1}
-                value={[field.value]}
-                onValueChange={(vals) => field.onChange(vals[0])}
-              />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-       <FormField
-        control={form.control}
-        name={`${name}.s`}
-        render={({ field }) => (
-          <FormItem>
-            <div className="flex justify-between items-center">
-                <FormLabel>Saturation</FormLabel>
-                <span className="text-sm text-muted-foreground">{field.value}%</span>
-            </div>
-            <FormControl>
-                <Slider
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={[field.value]}
-                    onValueChange={(vals) => field.onChange(vals[0])}
-                />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-       <FormField
-        control={form.control}
-        name={`${name}.l`}
-        render={({ field }) => (
-          <FormItem>
-            <div className="flex justify-between items-center">
-                <FormLabel>Lightness</FormLabel>
-                <span className="text-sm text-muted-foreground">{field.value}%</span>
-            </div>
-            <FormControl>
-                 <Slider
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={[field.value]}
-                    onValueChange={(vals) => field.onChange(vals[0])}
-                />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-    </div>
-  );
-}
 
 
 function CompanyProfileSettings() {
@@ -221,39 +126,81 @@ function CompanyProfileSettings() {
     )
 }
 
+function ThemeSelector({ form }: { form: any }) {
+  return (
+    <FormField
+      control={form.control}
+      name="theme"
+      render={({ field }) => (
+        <FormItem className="space-y-3">
+          <FormLabel>Select a Theme</FormLabel>
+          <FormControl>
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              {Object.entries(themes).map(([name, theme]) => (
+                <FormItem key={name} className="flex items-center space-x-3 space-y-0">
+                  <FormControl>
+                    <RadioGroupItem value={name} id={name} className="sr-only" />
+                  </FormControl>
+                  <FormLabel
+                    htmlFor={name}
+                    className={cn(
+                      "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer w-full",
+                      field.value === name && "border-primary"
+                    )}
+                  >
+                    <div className="mb-2 text-center">
+                      <p className="font-semibold">{theme.label}</p>
+                      <p className="text-xs text-muted-foreground">{theme.description}</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: `hsl(${theme.light.primary.h}, ${theme.light.primary.s}%, ${theme.light.primary.l}%)` }} />
+                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: `hsl(${theme.light.accent.h}, ${theme.light.accent.s}%, ${theme.light.accent.l}%)` }} />
+                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: `hsl(${theme.light.background.h}, ${theme.light.background.s}%, ${theme.light.background.l}%)` }} />
+                    </div>
+                  </FormLabel>
+                </FormItem>
+              ))}
+            </RadioGroup>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  )
+}
+
 function AppearanceSettings() {
     const { toast } = useToast();
     const { setTheme, theme } = useTheme();
+    const [currentThemeName, setCurrentThemeName] = useState<ThemeName>('clarity');
 
     const form = useForm<ThemeFormValues>({
         resolver: zodResolver(themeSchema),
         defaultValues: {
-            primary: { h: 0, s: 0, l: 0 },
-            accent: { h: 0, s: 0, l: 0 },
-            background: { h: 0, s: 0, l: 0 },
+            theme: currentThemeName,
         },
     });
 
-    useEffect(() => {
-        // Function to parse HSL string "h s% l%" into an object
-        const parseHsl = (hslStr: string) => {
-            if (!hslStr) return { h: 0, s: 0, l: 0 };
-            const [h, s, l] = hslStr.replace(/%/g, '').split(' ').map(parseFloat);
-            return { h: h || 0, s: s || 0, l: l || 0 };
-        };
-
-        // This code runs on the client, so `window` is available
+     useEffect(() => {
         const style = getComputedStyle(document.documentElement);
+        const primaryColor = style.getPropertyValue('--primary').trim();
         
-        const primary = style.getPropertyValue('--primary').trim();
-        const accent = style.getPropertyValue('--accent').trim();
-        const background = style.getPropertyValue('--background').trim();
-
-        form.reset({
-            primary: parseHsl(primary),
-            accent: parseHsl(accent),
-            background: parseHsl(background),
-        });
+        let detectedTheme: ThemeName = 'clarity';
+        
+        for (const [name, themeData] of Object.entries(themes)) {
+            const { h, s, l } = themeData.light.primary;
+            const themePrimary = `${h} ${s}% ${l}%`;
+            if (primaryColor === themePrimary) {
+                detectedTheme = name as ThemeName;
+                break;
+            }
+        }
+        setCurrentThemeName(detectedTheme);
+        form.reset({ theme: detectedTheme });
     }, [form]);
 
 
@@ -262,9 +209,8 @@ function AppearanceSettings() {
             await updateTheme(data);
             toast({
                 title: "Theme Updated",
-                description: "Your new theme colors have been applied.",
+                description: "Your new theme has been applied.",
             });
-            // A brief delay to allow CSS to be written, then reload
             setTimeout(() => window.location.reload(), 500);
         } catch (error) {
             toast({
@@ -298,17 +244,15 @@ function AppearanceSettings() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Theme Colors</CardTitle>
+                    <CardTitle>Application Theme</CardTitle>
                     <CardDescription>
-                        Adjust the main colors of your application. The changes will be applied globally.
+                        Select a pre-designed theme for your application.
                     </CardDescription>
                 </CardHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <ColorPicker form={form} name="primary" label="Primary Color" />
-                            <ColorPicker form={form} name="accent" label="Accent Color" />
-                            <ColorPicker form={form} name="background" label="Background Color" />
+                        <CardContent>
+                            <ThemeSelector form={form} />
                         </CardContent>
                         <div className="flex justify-end p-6 pt-0">
                             <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isDirty}>Save Appearance</Button>
@@ -343,5 +287,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    
