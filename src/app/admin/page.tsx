@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -13,7 +14,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Product, Category } from '@/types';
+import type { Product, Category, User } from '@/types';
 import { useSearchParams } from 'next/navigation';
 
 
@@ -30,6 +31,12 @@ function DashboardContent() {
   }, [firestore]);
   const { data: categoriesData, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
 
+  const usersCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'users');
+  }, [firestore]);
+  const { data: usersData, isLoading: isLoadingUsers } = useCollection<User>(usersCollection);
+
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalCategories: 0,
@@ -45,6 +52,12 @@ function DashboardContent() {
   }, [categoriesData]);
 
   useEffect(() => {
+    if (usersData) {
+      setStats(prev => ({ ...prev, totalUsers: usersData.length }));
+    }
+  }, [usersData]);
+
+  useEffect(() => {
     const fetchData = async () => {
       if (!firestore || !categoriesData) return;
       setIsLoading(true);
@@ -54,7 +67,7 @@ function DashboardContent() {
         
         const productCategories = categoriesData.map(c => c.name.toLowerCase().replace(/\s+/g, '-'));
 
-        // 1. Fetch Drafts for all DBs
+        // 1. Fetch Drafts
         const draftsQuery = query(collection(firestore, 'drafts'));
         const draftsSnapshot = await getDocs(draftsQuery);
         draftsSnapshot.forEach(doc => {
@@ -129,11 +142,13 @@ function DashboardContent() {
         } else {
             setIsLoading(false);
             setRecentProducts([]);
-            setStats(prev => ({ ...prev, totalProducts: 0, totalCategories: 0 }));
+            setStats(prev => ({ ...prev, totalProducts: 0 }));
         }
     }
   }, [firestore, categoriesData, isLoadingCategories]);
 
+
+  const isOverallLoading = isLoading || isLoadingCategories || isLoadingUsers;
 
   return (
     <div className="p-4 md:p-8">
@@ -142,7 +157,7 @@ function DashboardContent() {
         description="Here's a quick overview of your catalog."
       />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {isLoading ? (
+        {isOverallLoading ? (
             <>
                 <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-28 w-full" />
