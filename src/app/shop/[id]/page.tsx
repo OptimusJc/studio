@@ -91,16 +91,16 @@ function ProductDetailPageContent() {
 
         let foundProduct: Product | null = null;
         let productCategorySlug: string | null = null;
-        let productDb: string | null = null;
+        const db = 'buyers';
         
-        for (const db of ['buyers', 'retailers']) {
-            for (const cat of categoriesData) {
-                const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
-                const liveCollectionPath = `${db}/${categorySlug}/products`;
-                const productRef = doc(firestore, liveCollectionPath, productId);
-                const productSnap = await getDoc(productRef);
-                if (productSnap.exists()) {
-                    const data = productSnap.data() as DocumentData;
+        for (const cat of categoriesData) {
+            const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
+            const liveCollectionPath = `${db}/${categorySlug}/products`;
+            const productRef = doc(firestore, liveCollectionPath, productId);
+            const productSnap = await getDoc(productRef);
+            if (productSnap.exists()) {
+                const data = productSnap.data() as DocumentData;
+                 if (data.status === 'Published') {
                     foundProduct = {
                         id: productSnap.id,
                         ...data,
@@ -110,11 +110,9 @@ function ProductDetailPageContent() {
                         db: db,
                     } as Product;
                     productCategorySlug = categorySlug;
-                    productDb = db;
                     break;
                 }
             }
-            if (foundProduct) break;
         }
 
         if (foundProduct) {
@@ -122,8 +120,8 @@ function ProductDetailPageContent() {
             setActiveImage(foundProduct.productImages?.[0] || '');
             
             // Fetch related products
-            if (productCategorySlug && productDb) {
-                 const relatedCollectionPath = `${productDb}/${productCategorySlug}/products`;
+            if (productCategorySlug) {
+                 const relatedCollectionPath = `${db}/${productCategorySlug}/products`;
                  const q = query(collection(firestore, relatedCollectionPath), where("status", "==", "Published"), limit(7));
                  const querySnapshot = await getDocs(q);
                  const fetchedRelated: Product[] = [];
@@ -136,7 +134,7 @@ function ProductDetailPageContent() {
                             name: data.productTitle,
                             imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
                             category: (foundProduct as Product).category,
-                            db: productDb as 'buyers' | 'retailers',
+                            db: db,
                         } as Product)
                      }
                  });
@@ -144,12 +142,12 @@ function ProductDetailPageContent() {
             }
 
         } else {
-            console.warn(`Product with ID ${productId} not found.`);
+            console.warn(`Published product with ID ${productId} not found in 'buyers' database.`);
         }
         setIsLoading(false);
     };
 
-    if (!isLoadingCategories) {
+    if (!isLoadingCategories && categoriesData) {
         findProduct();
     }
   }, [firestore, productId, categoriesData, isLoadingCategories]);
@@ -167,7 +165,7 @@ function ProductDetailPageContent() {
     return (
         <div className="flex flex-col items-center justify-center h-[60vh] bg-background">
             <h2 className="text-2xl font-semibold text-muted-foreground">Product Not Found</h2>
-            <p className="text-muted-foreground mt-2">The product you are looking for does not exist.</p>
+            <p className="text-muted-foreground mt-2">The product you are looking for does not exist or is not available.</p>
             <Button onClick={() => router.push('/shop')} className="mt-6">Back to Shop</Button>
         </div>
     );

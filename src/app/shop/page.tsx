@@ -43,42 +43,52 @@ function CatalogContent() {
       if (!firestore || !categoriesData) return;
       setIsLoading(true);
 
-      const productMap = new Map<string, Product>();
+      const productList: Product[] = [];
       
       const productCategories = categoriesData.map(c => ({
           slug: c.name.toLowerCase().replace(/\s+/g, '-'),
           name: c.name
       }));
 
-      // We only care about published products in the buyer's database for the catalog
       const db = 'buyers';
 
       for (const cat of productCategories) {
         const collectionPath = `${db}/${cat.slug}/products`;
         try {
-          // Correctly query for only published products
-          const publishedQuery = query(collection(firestore, collectionPath), where("status", "==", "Published"));
-          const publishedSnapshot = await getDocs(publishedQuery);
+          const q = query(collection(firestore, collectionPath), where("status", "==", "Published"));
+          const querySnapshot = await getDocs(q);
           
-          publishedSnapshot.forEach(doc => {
+          querySnapshot.forEach(doc => {
             const data = doc.data() as DocumentData;
-            const product = {
+            const product: Product = {
               id: doc.id,
-              ...data,
               name: data.productTitle,
+              productTitle: data.productTitle,
+              productCode: data.productCode,
+              productDescription: data.productDescription,
+              category: cat.name,
+              price: data.price,
+              status: 'Published',
+              attributes: data.attributes,
               imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-              category: cat.name, // Use the proper name, not slug
-              db: db,
-            } as Product;
-            productMap.set(product.id, product);
+              productImages: data.productImages,
+              additionalImages: data.additionalImages,
+              specifications: data.specifications,
+              db: 'buyers',
+              stock: data.stock || 0,
+              sku: data.sku || '',
+              imageHint: data.imageHint || '',
+              createdAt: data.createdAt || '',
+            };
+            productList.push(product);
           });
         } catch (e) {
-          // It's ok if a collection doesn't exist.
+          // Collection might not exist, which is fine.
+          // console.warn(`Could not fetch from ${collectionPath}:`, e);
         }
       }
       
-      const products = Array.from(productMap.values());
-      setAllProducts(products);
+      setAllProducts(productList);
       setIsLoading(false);
     };
 
@@ -112,8 +122,8 @@ function CatalogContent() {
     // Apply search term filter
     if (searchTerm) {
       newFilteredProducts = newFilteredProducts.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.attributes.brand as string)?.toLowerCase().includes(searchTerm.toLowerCase())
+        (p.productTitle && p.productTitle.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p.productCode && p.productCode.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
@@ -158,7 +168,7 @@ function CatalogContent() {
   )
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-muted/40 min-h-screen">
       <Header 
         categories={memoizedCategories} 
         appliedFilters={filters}
@@ -187,14 +197,14 @@ function CatalogContent() {
                 </Sheet>
             </div>
             {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                     {[...Array(12)].map((_, i) => (
                         <Skeleton key={i} className="h-80 w-full" />
                     ))}
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredProducts.map((product) => (
                            <ProductCard key={product.id} product={product} />
                         ))}
@@ -202,7 +212,7 @@ function CatalogContent() {
                     {filteredProducts.length === 0 && (
                         <div className="col-span-full flex flex-col items-center justify-center h-96 bg-background rounded-lg border border-dashed">
                             <h2 className="text-2xl font-semibold text-muted-foreground">No Products Found</h2>
-                            <p className="text-muted-foreground mt-2">Try adjusting your filters or search term.</p>
+                            <p className="text-muted-foreground mt-2">Try adjusting your filters or add a new product.</p>
                         </div>
                     )}
                 </>
@@ -216,7 +226,7 @@ function CatalogContent() {
 
 function ShopPageSkeleton() {
     return (
-        <div className="bg-gray-50 min-h-screen">
+        <div className="bg-muted/40 min-h-screen">
              <header className="sticky top-0 z-40 w-full border-b bg-background">
                 <div className="container mx-auto flex h-20 items-center justify-between px-4">
                     <Skeleton className="h-8 w-48" />
@@ -234,7 +244,7 @@ function ShopPageSkeleton() {
                         <Skeleton className="h-[600px] w-full" />
                     </aside>
                     <section className="lg:col-span-3">
-                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                             {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-80 w-full" />
                             ))}
