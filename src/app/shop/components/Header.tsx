@@ -35,28 +35,28 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
             onFilterChange({ ...appliedFilters, category: [categoryName] });
         }
     }
+    
+    // Manually define categories for now to match the design
+    const displayCategories = [
+        { id: 'all', name: 'All Categories' },
+        { id: 'cat_01', name: 'Wallpapers' },
+        { id: 'cat_03', name: 'Wall Murals' },
+        { id: 'cat_02', name: 'Window Blinds' },
+        { id: 'cat_05', name: 'Window Films' },
+        { id: 'cat_04', name: 'Carpets' },
+    ];
+
 
     return (
         <nav className={cn("flex items-center gap-2", className)}>
-            <Button 
-                variant="ghost" 
-                size="sm"
-                className={cn(
-                    "rounded-full", 
-                    activeCategory === 'All Categories' && 'bg-accent text-accent-foreground'
-                )}
-                onClick={() => handleCategoryClick('All Categories')}
-            >
-                All Categories
-            </Button>
-            {categories.map((cat) => (
+            {displayCategories.map((cat) => (
                 <Button 
                     key={cat.id} 
                     variant="ghost" 
                     size="sm"
                     className={cn(
-                        "rounded-full",
-                        activeCategory === cat.name && 'bg-accent text-accent-foreground'
+                        "rounded-full px-4 py-2 text-sm font-normal",
+                        activeCategory === cat.name ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-200/50 hover:text-gray-900'
                     )}
                     onClick={() => handleCategoryClick(cat.name)}
                 >
@@ -85,7 +85,7 @@ export default function Header({ categories, appliedFilters, onFilterChange }: H
                         <Menu />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right">
+                <SheetContent side="right" className="w-full max-w-xs">
                     <div className="p-4">
                         <div className="mb-8">
                             <Logo />

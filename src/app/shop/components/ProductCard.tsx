@@ -11,8 +11,8 @@ type ProductCardProps = {
 
 export default function ProductCard({ product }: ProductCardProps) {
   return (
-    <Card className="group relative flex flex-col overflow-hidden h-full border-none shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg">
-      <div className="aspect-[4/3] relative">
+    <Card className="group relative flex flex-col overflow-hidden h-full bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-lg border border-gray-200">
+      <div className="aspect-square relative">
         <Image
           src={product.imageUrl}
           alt={product.name}
@@ -20,7 +20,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="object-cover rounded-t-lg"
           data-ai-hint={product.imageHint}
         />
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="flex flex-col gap-2">
                 <Link href={`/shop/${product.id}`} legacyBehavior>
                     <a className="w-full">
@@ -31,12 +31,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
         </div>
       </div>
-      <CardContent className="p-4 flex-grow flex flex-col bg-card rounded-b-lg">
-        <h3 className="text-md font-bold">{product.productCode}</h3>
-        <p className="text-sm text-muted-foreground flex-grow line-clamp-2">{product.productDescription}</p>
-        <div className="text-xs text-muted-foreground mt-2">Dimensions: {product.specifications || 'N/A'}</div>
+      <CardContent className="p-4 flex-grow flex flex-col bg-white rounded-b-lg">
+        <h3 className="text-md font-bold text-gray-800">{product.productCode}</h3>
+        <p className="text-sm text-gray-600 flex-grow mt-1">{product.productTitle}</p>
+        <div className="text-xs text-gray-500 mt-2">Dimensions: {product.specifications || 'N/A'}</div>
         <div className="mt-4">
-            <Badge variant="outline">Premium Quality</Badge>
+            <Badge variant="outline" className="border-gray-300 text-gray-600">Premium Quality</Badge>
         </div>
       </CardContent>
     </Card>

@@ -157,7 +157,7 @@ function CatalogContent() {
   )
 
   return (
-    <div className="bg-muted/40 min-h-screen">
+    <div className="bg-gray-50 min-h-screen">
       <Header 
         categories={memoizedCategories} 
         appliedFilters={filters}
@@ -165,7 +165,7 @@ function CatalogContent() {
       />
       <main className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-4 gap-8 items-start">
-          <aside className="lg:col-span-1 hidden lg:block">
+          <aside className="lg:col-span-1 hidden lg:block sticky top-24">
             {facetedSearchComponent}
           </aside>
           <section className="lg:col-span-3">
@@ -175,23 +175,25 @@ function CatalogContent() {
                     <SheetTrigger asChild>
                         <Button variant="outline">
                             <Filter className="mr-2 h-4 w-4" />
-                            Filter & Sort
+                            Filters
                         </Button>
                     </SheetTrigger>
-                    <SheetContent>
-                        {facetedSearchComponent}
+                    <SheetContent className="w-full max-w-sm">
+                        <div className="p-4">
+                            {facetedSearchComponent}
+                        </div>
                     </SheetContent>
                 </Sheet>
             </div>
             {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {[...Array(9)].map((_, i) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {[...Array(12)].map((_, i) => (
                         <Skeleton key={i} className="h-80 w-full" />
                     ))}
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredProducts.map((product) => (
                            <ProductCard key={product.id} product={product} />
                         ))}
@@ -213,7 +215,7 @@ function CatalogContent() {
 
 function ShopPageSkeleton() {
     return (
-        <div className="bg-muted/40 min-h-screen">
+        <div className="bg-gray-50 min-h-screen">
              <header className="sticky top-0 z-40 w-full border-b bg-background">
                 <div className="container mx-auto flex h-20 items-center justify-between px-4">
                     <Skeleton className="h-8 w-48" />
@@ -231,8 +233,8 @@ function ShopPageSkeleton() {
                         <Skeleton className="h-[600px] w-full" />
                     </aside>
                     <section className="lg:col-span-3">
-                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {[...Array(9)].map((_, i) => (
+                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                            {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-80 w-full" />
                             ))}
                         </div>
