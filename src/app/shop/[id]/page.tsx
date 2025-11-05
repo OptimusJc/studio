@@ -90,27 +90,27 @@ function ProductDetailPageContent() {
         setIsLoading(true);
 
         let foundProduct: Product | null = null;
-        let productCategorySlug: string | null = null;
-        const db = 'buyers';
+        let productCategoryName: string | null = null;
         
         for (const cat of categoriesData) {
             const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
-            const liveCollectionPath = `${db}/${categorySlug}/products`;
+            const liveCollectionPath = categorySlug; // Query top-level collections
             const productRef = doc(firestore, liveCollectionPath, productId);
             const productSnap = await getDoc(productRef);
+            
             if (productSnap.exists()) {
                 const data = productSnap.data() as DocumentData;
-                 if (data.status === 'Published') {
+                 if (data.status === 'Published' && data.db === 'buyers') {
                     foundProduct = {
                         id: productSnap.id,
                         ...data,
                         name: data.productTitle,
                         imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
                         category: cat.name,
-                        db: db,
+                        db: 'buyers',
                     } as Product;
-                    productCategorySlug = categorySlug;
-                    break;
+                    productCategoryName = cat.name;
+                    break; // Found the product, no need to search further
                 }
             }
         }
@@ -120,9 +120,15 @@ function ProductDetailPageContent() {
             setActiveImage(foundProduct.productImages?.[0] || '');
             
             // Fetch related products
-            if (productCategorySlug) {
-                 const relatedCollectionPath = `${db}/${productCategorySlug}/products`;
-                 const q = query(collection(firestore, relatedCollectionPath), where("status", "==", "Published"), limit(7));
+            if (productCategoryName) {
+                 const categorySlug = productCategoryName.toLowerCase().replace(/\s+/g, '-');
+                 const relatedCollectionPath = categorySlug;
+                 const q = query(
+                     collection(firestore, relatedCollectionPath), 
+                     where("status", "==", "Published"),
+                     where("db", "==", "buyers"),
+                     limit(7)
+                 );
                  const querySnapshot = await getDocs(q);
                  const fetchedRelated: Product[] = [];
                  querySnapshot.forEach((doc) => {
@@ -133,8 +139,8 @@ function ProductDetailPageContent() {
                             ...data,
                             name: data.productTitle,
                             imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                            category: (foundProduct as Product).category,
-                            db: db,
+                            category: productCategoryName,
+                            db: 'buyers',
                         } as Product)
                      }
                  });

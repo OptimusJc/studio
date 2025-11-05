@@ -50,12 +50,15 @@ function CatalogContent() {
           name: c.name
       }));
 
-      const db = 'buyers';
-
       for (const cat of productCategories) {
-        const collectionPath = `${db}/${cat.slug}/products`;
+        const collectionPath = cat.slug; // Query top-level collections
         try {
-          const q = query(collection(firestore, collectionPath), where("status", "==", "Published"));
+          // Query for products that are for 'buyers' AND are 'Published'
+          const q = query(
+            collection(firestore, collectionPath), 
+            where("db", "==", "buyers"), 
+            where("status", "==", "Published")
+          );
           const querySnapshot = await getDocs(q);
           
           querySnapshot.forEach(doc => {
@@ -66,7 +69,7 @@ function CatalogContent() {
               productTitle: data.productTitle,
               productCode: data.productCode,
               productDescription: data.productDescription,
-              category: cat.name,
+              category: cat.name, // Use the proper category name
               price: data.price,
               status: 'Published',
               attributes: data.attributes,
@@ -83,7 +86,7 @@ function CatalogContent() {
             productList.push(product);
           });
         } catch (e) {
-          // Collection might not exist, which is fine.
+          // It's normal for some collections to not exist if they have no products yet
           // console.warn(`Could not fetch from ${collectionPath}:`, e);
         }
       }
@@ -92,13 +95,11 @@ function CatalogContent() {
       setIsLoading(false);
     };
 
-    if (!isLoadingCategories) {
-      if (categoriesData && categoriesData.length > 0) {
+    if (!isLoadingCategories && categoriesData) {
         fetchAllProducts();
-      } else {
-        setAllProducts([]);
+    } else if (!isLoadingCategories) {
+        // If there are no categories, there are no products to fetch
         setIsLoading(false);
-      }
     }
   }, [firestore, categoriesData, isLoadingCategories]);
 
