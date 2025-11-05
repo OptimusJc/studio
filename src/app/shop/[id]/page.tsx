@@ -94,24 +94,28 @@ function ProductDetailPageContent() {
         
         for (const cat of categoriesData) {
             const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
-            const liveCollectionPath = categorySlug; // Query top-level collections
-            const productRef = doc(firestore, liveCollectionPath, productId);
-            const productSnap = await getDoc(productRef);
-            
-            if (productSnap.exists()) {
-                const data = productSnap.data() as DocumentData;
-                 if (data.status === 'Published' && data.db === 'buyers') {
-                    foundProduct = {
-                        id: productSnap.id,
-                        ...data,
-                        name: data.productTitle,
-                        imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                        category: cat.name,
-                        db: 'buyers',
-                    } as Product;
-                    productCategoryName = cat.name;
-                    break; // Found the product, no need to search further
+            const liveCollectionPath = `buyers/${categorySlug}/products`;
+            try {
+                const productRef = doc(firestore, liveCollectionPath, productId);
+                const productSnap = await getDoc(productRef);
+                
+                if (productSnap.exists()) {
+                    const data = productSnap.data() as DocumentData;
+                     if (data.status === 'Published') {
+                        foundProduct = {
+                            id: productSnap.id,
+                            ...data,
+                            name: data.productTitle,
+                            imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                            category: cat.name,
+                            db: 'buyers',
+                        } as Product;
+                        productCategoryName = cat.name;
+                        break; // Found the product, no need to search further
+                    }
                 }
+            } catch(e) {
+                // Collection might not exist, which is fine.
             }
         }
 
@@ -122,11 +126,10 @@ function ProductDetailPageContent() {
             // Fetch related products
             if (productCategoryName) {
                  const categorySlug = productCategoryName.toLowerCase().replace(/\s+/g, '-');
-                 const relatedCollectionPath = categorySlug;
+                 const relatedCollectionPath = `buyers/${categorySlug}/products`;
                  const q = query(
                      collection(firestore, relatedCollectionPath), 
                      where("status", "==", "Published"),
-                     where("db", "==", "buyers"),
                      limit(7)
                  );
                  const querySnapshot = await getDocs(q);

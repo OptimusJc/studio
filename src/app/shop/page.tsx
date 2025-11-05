@@ -51,12 +51,11 @@ function CatalogContent() {
       }));
 
       for (const cat of productCategories) {
-        const collectionPath = cat.slug; // Query top-level collections
+        const collectionPath = `buyers/${cat.slug}/products`;
         try {
-          // Query for products that are for 'buyers' AND are 'Published'
+          // Query for products that are 'Published'
           const q = query(
             collection(firestore, collectionPath), 
-            where("db", "==", "buyers"), 
             where("status", "==", "Published")
           );
           const querySnapshot = await getDocs(q);
