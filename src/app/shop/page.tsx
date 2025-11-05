@@ -1,9 +1,10 @@
+
 'use client';
 
 import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
+import { collection, query, getDocs, DocumentData, where } from 'firebase/firestore';
 import type { Product, Category, Attribute } from '@/types';
 import Header from './components/Header';
 import FacetedSearch from './components/FacetedSearch';
@@ -55,21 +56,21 @@ function CatalogContent() {
       for (const cat of productCategories) {
         const collectionPath = `${db}/${cat.slug}/products`;
         try {
-          const publishedQuery = query(collection(firestore, collectionPath));
+          // Correctly query for only published products
+          const publishedQuery = query(collection(firestore, collectionPath), where("status", "==", "Published"));
           const publishedSnapshot = await getDocs(publishedQuery);
+          
           publishedSnapshot.forEach(doc => {
             const data = doc.data() as DocumentData;
-            if (data.status === 'Published') { // Ensure we only show published products
-                const product = {
-                id: doc.id,
-                ...data,
-                name: data.productTitle,
-                imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                category: cat.name, // Use the proper name, not slug
-                db: db,
-                } as Product;
-                productMap.set(product.id, product);
-            }
+            const product = {
+              id: doc.id,
+              ...data,
+              name: data.productTitle,
+              imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+              category: cat.name, // Use the proper name, not slug
+              db: db,
+            } as Product;
+            productMap.set(product.id, product);
           });
         } catch (e) {
           // It's ok if a collection doesn't exist.
