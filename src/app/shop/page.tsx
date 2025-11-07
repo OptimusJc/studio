@@ -161,24 +161,24 @@ function CatalogContent() {
     if (!attributesData) return [];
 
     const allowedFilters = ['Color', 'Material', 'Texture', 'Pattern'];
-    const filteredAttributes = attributesData.filter(attr => allowedFilters.includes(attr.name));
+    const attributeMap = new Map<string, { id: string; values: Set<string> }>();
 
-    const attributeMap = new Map<string, Set<string>>();
-
-    filteredAttributes.forEach(attr => {
-        const filterName = attr.name === 'Pattern' ? 'Style' : attr.name;
-        if (!attributeMap.has(filterName)) {
-            attributeMap.set(filterName, new Set());
+    attributesData.forEach(attr => {
+        if (allowedFilters.includes(attr.name)) {
+            const filterName = attr.name === 'Pattern' ? 'Style' : attr.name;
+            if (!attributeMap.has(filterName)) {
+                attributeMap.set(filterName, { id: attr.id, values: new Set() });
+            }
+            const attrGroup = attributeMap.get(filterName)!;
+            attr.values.forEach(val => attrGroup.values.add(val));
         }
-        const valueSet = attributeMap.get(filterName)!;
-        attr.values.forEach(val => valueSet.add(val));
     });
 
-    return Array.from(attributeMap.entries()).map(([name, valuesSet], index) => ({
-        id: `consolidated-attr-${index}`,
+    return Array.from(attributeMap.entries()).map(([name, group]) => ({
+        id: group.id,
         name: name,
-        category: 'All', // Category is no longer relevant for the combined filter
-        values: Array.from(valuesSet).sort(),
+        category: 'All', // Category is not needed for the filter UI itself
+        values: Array.from(group.values).sort(),
     }));
   }, [attributesData]);
 
@@ -188,7 +188,6 @@ function CatalogContent() {
         <Skeleton className="h-[600px] w-full" />
     ) : (
         <FacetedSearch
-        categories={memoizedCategories}
         attributes={consolidatedAttributes}
         appliedFilters={filters}
         onFilterChange={setFilters}

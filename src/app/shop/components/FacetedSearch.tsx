@@ -1,20 +1,19 @@
 
 'use client';
 
-import type { Category, Attribute } from '@/types';
+import type { Attribute } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
 type FacetedSearchProps = {
-  categories: Category[];
   attributes: Attribute[];
   appliedFilters: Record<string, any[]>;
   onFilterChange: (filters: Record<string, any[]>) => void;
 };
 
-export default function FacetedSearch({ categories, attributes, appliedFilters, onFilterChange }: FacetedSearchProps) {
+export default function FacetedSearch({ attributes, appliedFilters, onFilterChange }: FacetedSearchProps) {
 
   const handleCheckedChange = (filterKey: string, value: string, checked: boolean) => {
     const newFilters = { ...appliedFilters };
@@ -46,30 +45,7 @@ export default function FacetedSearch({ categories, attributes, appliedFilters, 
                 Reset All
             </Button>
         </div>
-        <Accordion type="multiple" defaultValue={['category', ...attributes.map(a => a.id)]} className="w-full">
-            <AccordionItem value="category">
-                <AccordionTrigger className="font-semibold text-base py-3">Category</AccordionTrigger>
-                <AccordionContent className="pt-2">
-                    <div className="grid gap-2">
-                        {categories.map((category) => (
-                        <div key={category.id} className="flex items-center space-x-2">
-                            <Checkbox
-                                id={`cat-${category.id}`}
-                                checked={appliedFilters.category?.includes(category.name)}
-                                onCheckedChange={(checked) => handleCheckedChange('category', category.name, !!checked)}
-                            />
-                            <Label
-                                htmlFor={`cat-${category.id}`}
-                                className="font-normal text-gray-700"
-                            >
-                                {category.name}
-                            </Label>
-                        </div>
-                        ))}
-                    </div>
-              </AccordionContent>
-            </AccordionItem>
-            
+        <Accordion type="multiple" defaultValue={[...attributes.map(a => a.id)]} className="w-full">
             {attributes.map((attribute) => (
                 <AccordionItem key={attribute.id} value={attribute.id}>
                     <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
