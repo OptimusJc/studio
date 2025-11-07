@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { WhatsAppIcon } from '@/components/icons/WhatsappIcon';
 import Link from 'next/link';
+import ProductDetailHeader from '../components/ProductDetailHeader';
 
 function ProductDetailSkeleton() {
     return (
@@ -187,7 +188,7 @@ function ProductDetailPageContent() {
 
   return (
     <>
-      <Header />
+      <ProductDetailHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
             <div className="grid grid-cols-1 md:grid-cols-[100px_1fr] gap-4">
