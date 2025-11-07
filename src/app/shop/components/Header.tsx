@@ -100,8 +100,8 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
         <div className="lg:hidden flex items-center gap-1">
              <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Search className="h-8 w-8" />
+                    <Button variant="ghost">
+                        <Search className='h-8 w-8' />
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md top-[25%]">
@@ -119,14 +119,14 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
                 </DialogContent>
              </Dialog>
 
-             <Button variant="ghost" size="icon" onClick={openMobileFilters}>
+             <Button variant="ghost" onClick={openMobileFilters}>
                 <Filter className="h-8 w-8" />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost">
                             <Menu className="h-8 w-8" />
                         </Button>
                     </SheetTrigger>
