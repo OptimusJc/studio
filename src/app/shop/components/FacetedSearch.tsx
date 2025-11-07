@@ -46,7 +46,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
       <div className="flex flex-col h-full bg-background">
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
           <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-6 w-6" />
+              <X className="h-8 w-8" />
           </Button>
           <h3 className="text-lg font-semibold">Filters</h3>
           <Button variant="link" className="p-0 h-auto text-sm" onClick={handleResetFilters}>

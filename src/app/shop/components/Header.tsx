@@ -101,7 +101,7 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
              <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="icon">
-                        <Search className="h-6 w-6" />
+                        <Search className="h-8 w-8" />
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md top-[25%]">
@@ -120,14 +120,14 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
              </Dialog>
 
              <Button variant="ghost" size="icon" onClick={openMobileFilters}>
-                <Filter className="h-6 w-6" />
+                <Filter className="h-8 w-8" />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon">
-                            <Menu className="h-6 w-6" />
+                            <Menu className="h-8 w-8" />
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="right" className="w-full max-w-xs">
