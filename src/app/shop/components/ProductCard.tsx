@@ -14,7 +14,7 @@ type ProductCardProps = {
 export default function ProductCard({ product, priority = false }: ProductCardProps) {
   return (
     <Card className="group relative flex flex-col overflow-hidden h-full bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-3xl border border-gray-200">
-      <div className="aspect-[4/5] relative rounded-t-lg overflow-hidden">
+      <div className="aspect-[5/4] relative rounded-t-lg overflow-hidden">
         <Image
           src={product.imageUrl}
           alt={product.name}
