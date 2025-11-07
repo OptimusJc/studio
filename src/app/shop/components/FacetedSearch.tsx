@@ -45,7 +45,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
 
   return (
     <WrapperComponent {...wrapperProps}>
-       <div className={cn("flex items-center justify-between border-b mb-4", isMobile ? "py-4 pr-12" : "pb-4")}>
+       <div className={cn("flex items-center justify-between border-b mb-4", isMobile ? "py-4" : "pb-4")}>
         <h3 className="text-lg font-semibold">Filters</h3>
         {isMobile ? (
              <Button variant="ghost" size="icon" onClick={handleResetFilters}>
