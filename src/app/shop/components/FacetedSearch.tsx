@@ -5,6 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 
 type FacetedSearchProps = {
   categories: Category[];
@@ -36,12 +37,22 @@ export default function FacetedSearch({ categories, attributes, appliedFilters, 
     onFilterChange(newFilters);
   }
 
+  const handleResetFilters = () => {
+    onFilterChange({});
+  }
+
   // Define filters as per the design
   const colorOptions = ['Gray', 'White', 'Red', 'Green'];
   const subCategoryOptions = ['Premium', 'Standard'];
 
   return (
     <div className="w-full bg-white p-6 rounded-lg shadow-sm">
+        <div className="flex items-center justify-between pb-4 border-b mb-4">
+            <h3 className="text-lg font-semibold">Filters</h3>
+            <Button variant="link" className="p-0 h-auto" onClick={handleResetFilters}>
+                Reset
+            </Button>
+        </div>
         <Accordion type="multiple" defaultValue={['Color', 'Sub Category', 'Material']} className="w-full">
             <AccordionItem value="Color">
               <AccordionTrigger className="font-semibold text-base py-3">Color</AccordionTrigger>

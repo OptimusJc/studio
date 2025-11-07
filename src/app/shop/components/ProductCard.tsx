@@ -12,12 +12,12 @@ type ProductCardProps = {
 export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className="group relative flex flex-col overflow-hidden h-full bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-lg border border-gray-200">
-      <div className="aspect-square relative">
+      <div className="aspect-square relative rounded-t-lg overflow-hidden">
         <Image
           src={product.imageUrl}
           alt={product.name}
           fill
-          className="object-cover rounded-t-lg"
+          className="object-cover"
           data-ai-hint={product.imageHint}
         />
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">

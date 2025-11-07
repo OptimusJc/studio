@@ -181,7 +181,7 @@ function CatalogContent() {
        <main className="container mx-auto px-4 py-6">
             <div className="grid lg:grid-cols-4 gap-8 items-start">
                 {/* Desktop Sidebar */}
-                <aside className="hidden lg:block sticky top-24">
+                <aside className="hidden lg:block lg:col-span-1 sticky top-24">
                   {facetedSearchComponent}
                 </aside>
                 
@@ -214,14 +214,14 @@ function CatalogContent() {
                     </div>
 
                      {isLoading ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {[...Array(9)].map((_, i) => (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-80 w-full" />
                             ))}
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {filteredProducts.map((product) => (
                                    <ProductCard key={product.id} product={product} />
                                 ))}
@@ -257,7 +257,7 @@ function ShopPageSkeleton() {
              </header>
             <main className="container mx-auto px-4 py-8">
                  <div className="grid lg:grid-cols-4 gap-8 items-start">
-                    <aside className="hidden lg:block">
+                    <aside className="hidden lg:block lg:col-span-1">
                         <Skeleton className="h-[600px] w-full" />
                     </aside>
                     <div className="lg:col-span-3 space-y-6">
@@ -265,8 +265,8 @@ function ShopPageSkeleton() {
                             <Skeleton className="h-12 w-28 lg:hidden" />
                             <Skeleton className="h-12 flex-1" />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {[...Array(9)].map((_, i) => (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                            {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-80 w-full" />
                             ))}
                         </div>
