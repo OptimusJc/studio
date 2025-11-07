@@ -225,7 +225,7 @@ function CatalogContent() {
                         </div>
                     </div>
                      <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-                         <DialogContent className="p-0 h-full w-full max-w-full sm:max-w-full overflow-y-auto">
+                         <DialogContent className="p-0 h-[100dvh] w-full max-w-full sm:max-w-full overflow-y-auto block !rounded-none !border-0">
                             {facetedSearchComponent}
                          </DialogContent>
                     </Dialog>
