@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Attribute } from '@/types';
@@ -6,7 +5,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type FacetedSearchProps = {
@@ -57,7 +55,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
             </Button>
         )}
       </div>
-      <Accordion type="multiple" defaultValue={[...attributes.map(a => a.id)]} className="w-full">
+      <Accordion type="multiple" className="w-full">
         {attributes.map((attribute) => (
           <AccordionItem key={attribute.id} value={attribute.id}>
             <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
