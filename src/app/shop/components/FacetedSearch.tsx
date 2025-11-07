@@ -6,6 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Trash2 } from 'lucide-react';
 
 type FacetedSearchProps = {
   attributes: Attribute[];
@@ -45,9 +46,16 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
     <WrapperComponent {...wrapperProps}>
        <div className="flex items-center justify-between pb-4 border-b mb-4">
         <h3 className="text-lg font-semibold">Filters</h3>
-        <Button variant="link" className="p-0 h-auto text-sm" onClick={handleResetFilters}>
-            Reset All
-        </Button>
+        {isMobile ? (
+             <Button variant="ghost" size="icon" onClick={handleResetFilters}>
+                <Trash2 className="h-5 w-5" />
+                <span className="sr-only">Reset All</span>
+            </Button>
+        ) : (
+            <Button variant="link" className="p-0 h-auto text-sm" onClick={handleResetFilters}>
+                Reset All
+            </Button>
+        )}
       </div>
       <Accordion type="multiple" defaultValue={[...attributes.map(a => a.id)]} className="w-full">
         {attributes.map((attribute) => (
