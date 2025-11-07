@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -8,9 +9,9 @@ import { Menu } from 'lucide-react';
 import Link from 'next/link';
 
 type HeaderProps = {
-  categories: Category[];
-  appliedFilters: Record<string, any[]>;
-  onFilterChange: (filters: Record<string, any[]>) => void;
+  categories?: Category[];
+  appliedFilters?: Record<string, any[]>;
+  onFilterChange?: (filters: Record<string, any[]>) => void;
 };
 
 function Logo() {
@@ -24,9 +25,10 @@ function Logo() {
 }
 
 function CategoryNav({ categories, appliedFilters, onFilterChange, className }: HeaderProps & { className?: string }) {
-    const activeCategory = appliedFilters.category?.[0] || 'All Categories';
+    const activeCategory = appliedFilters?.category?.[0] || 'All Categories';
 
     const handleCategoryClick = (categoryName: string) => {
+        if (!onFilterChange || !appliedFilters) return;
         if (categoryName === 'All Categories') {
             const newFilters = { ...appliedFilters };
             delete newFilters.category;
@@ -69,40 +71,48 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
 
 
 export default function Header({ categories, appliedFilters, onFilterChange }: HeaderProps) {
+  const hasNav = !!(categories && appliedFilters && onFilterChange);
+  
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
         <Logo />
         
-        <div className="hidden lg:flex lg:justify-center lg:flex-1">
-            <CategoryNav categories={categories} appliedFilters={appliedFilters} onFilterChange={onFilterChange} />
-        </div>
+        {hasNav && (
+            <div className="hidden lg:flex lg:justify-center lg:flex-1">
+                <CategoryNav categories={categories} appliedFilters={appliedFilters} onFilterChange={onFilterChange} />
+            </div>
+        )}
 
         <div className="lg:hidden">
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Menu />
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full max-w-xs">
-                    <div className="p-4">
-                        <div className="mb-8">
-                            <Logo />
+            {hasNav && (
+                 <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Menu />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-full max-w-xs">
+                        <div className="p-4">
+                            <div className="mb-8">
+                                <Logo />
+                            </div>
+                            <CategoryNav 
+                                categories={categories} 
+                                appliedFilters={appliedFilters} 
+                                onFilterChange={onFilterChange}
+                                className="flex-col items-start gap-4"
+                            />
                         </div>
-                        <CategoryNav 
-                            categories={categories} 
-                            appliedFilters={appliedFilters} 
-                            onFilterChange={onFilterChange}
-                            className="flex-col items-start gap-4"
-                        />
-                    </div>
-                </SheetContent>
-            </Sheet>
+                    </SheetContent>
+                </Sheet>
+            )}
         </div>
 
-        <div className="hidden lg:flex w-[138px]">
-            {/* Placeholder for potential right-side content */}
+        <div className={cn("hidden lg:flex", !hasNav && 'flex-1 justify-end')}>
+             <div className="w-[138px]">
+                {/* Placeholder for potential right-side content */}
+            </div>
         </div>
       </div>
     </header>
