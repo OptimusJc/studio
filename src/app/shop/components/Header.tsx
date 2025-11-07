@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import type { Category } from '@/types';
 import { Menu, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 type HeaderProps = {
   categories?: Category[];
@@ -77,6 +78,13 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
 
 export default function Header({ categories, appliedFilters, onFilterChange, searchTerm, setSearchTerm, openMobileFilters }: HeaderProps) {
   const hasNav = !!(categories && appliedFilters && onFilterChange);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      setMobileSearchOpen(false);
+    }
+  };
   
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm">
@@ -90,7 +98,7 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
         )}
 
         <div className="lg:hidden flex items-center gap-1">
-             <Dialog>
+             <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="icon">
                         <Search className="h-6 w-6" />
@@ -105,6 +113,7 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
                         className="pl-12 pr-4 py-3 h-12 text-base rounded-md shadow-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={handleSearchKeyDown}
                         />
                     </div>
                 </DialogContent>
