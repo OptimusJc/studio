@@ -15,6 +15,7 @@ export default {
         headline: ['Inter', 'sans-serif'],
         code: ['"Source Code Pro"', 'monospace'],
         serif: ['"Playfair Display"', 'serif'],
+        logo: ['"Dancing Script"', 'cursive'],
       },
       colors: {
         background: 'hsl(var(--background))',

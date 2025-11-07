@@ -22,7 +22,7 @@ type HeaderProps = {
 function Logo() {
     return (
         <Link href="/shop" className="flex items-center space-x-2">
-            <span className="font-bold text-xl font-serif italic">
+            <span className="font-bold text-2xl font-logo">
                 <span className="text-red-600">Ruby</span> Catalogue
             </span>
         </Link>
