@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type FacetedSearchProps = {
   attributes: Attribute[];
@@ -44,7 +45,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
 
   return (
     <WrapperComponent {...wrapperProps}>
-       <div className="flex items-center justify-between pb-4 border-b mb-4">
+       <div className={cn("flex items-center justify-between pb-4 border-b mb-4", isMobile && "pr-12")}>
         <h3 className="text-lg font-semibold">Filters</h3>
         {isMobile ? (
              <Button variant="ghost" size="icon" onClick={handleResetFilters}>
