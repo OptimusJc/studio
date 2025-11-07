@@ -11,9 +11,11 @@ type FacetedSearchProps = {
   attributes: Attribute[];
   appliedFilters: Record<string, any[]>;
   onFilterChange: (filters: Record<string, any[]>) => void;
+  isMobile?: boolean;
+  onClose?: () => void;
 };
 
-export default function FacetedSearch({ attributes, appliedFilters, onFilterChange }: FacetedSearchProps) {
+export default function FacetedSearch({ attributes, appliedFilters, onFilterChange, isMobile, onClose }: FacetedSearchProps) {
 
   const handleCheckedChange = (filterKey: string, value: string, checked: boolean) => {
     const newFilters = { ...appliedFilters };
@@ -25,7 +27,6 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
       newFilters[filterKey] = currentValues.filter((v) => v !== value);
     }
     
-    // If a category becomes empty, remove it from the filters object
     if (newFilters[filterKey].length === 0) {
       delete newFilters[filterKey];
     }
@@ -37,40 +38,56 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
     onFilterChange({});
   }
 
+  const WrapperComponent = isMobile ? 'div' : 'div';
+  const wrapperProps = isMobile ? {} : { className: "w-full bg-white p-6 rounded-lg shadow-sm" };
+
   return (
-    <div className="w-full bg-white p-6 rounded-lg shadow-sm">
-        <div className="flex items-center justify-between pb-4 border-b mb-4">
-            <h3 className="text-lg font-semibold">Filters</h3>
-            <Button variant="link" className="p-0 h-auto" onClick={handleResetFilters}>
-                Reset All
+    <WrapperComponent {...wrapperProps}>
+      <div className="flex items-center justify-between pb-4 border-b mb-4">
+        <h3 className="text-lg font-semibold">Filters</h3>
+        {isMobile ? (
+          <Button variant="link" className="p-0 h-auto" onClick={onClose}>
+            Done
+          </Button>
+        ) : (
+          <Button variant="link" className="p-0 h-auto" onClick={handleResetFilters}>
+            Reset All
+          </Button>
+        )}
+      </div>
+      <Accordion type="multiple" defaultValue={[...attributes.map(a => a.id)]} className="w-full">
+        {attributes.map((attribute) => (
+          <AccordionItem key={attribute.id} value={attribute.id}>
+            <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+                {attribute.values.map((value) => (
+                  <div key={value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`attr-${attribute.id}-${value}`}
+                      checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value)}
+                      onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
+                    />
+                    <Label
+                      htmlFor={`attr-${attribute.id}-${value}`}
+                      className="font-normal text-gray-700 leading-tight"
+                    >
+                      {value}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+      {isMobile && (
+         <div className="mt-6 pt-6 border-t">
+            <Button variant="outline" className="w-full" onClick={handleResetFilters}>
+                Reset Filters
             </Button>
         </div>
-        <Accordion type="multiple" defaultValue={[...attributes.map(a => a.id)]} className="w-full">
-            {attributes.map((attribute) => (
-                <AccordionItem key={attribute.id} value={attribute.id}>
-                    <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
-                    <AccordionContent className="pt-2">
-                        <div className="grid gap-2">
-                        {attribute.values.map((value) => (
-                            <div key={value} className="flex items-center space-x-2">
-                                <Checkbox
-                                    id={`attr-${attribute.id}-${value}`}
-                                    checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value)}
-                                    onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
-                                />
-                                <Label
-                                    htmlFor={`attr-${attribute.id}-${value}`}
-                                    className="font-normal text-gray-700"
-                                >
-                                    {value}
-                                </Label>
-                            </div>
-                        ))}
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-            ))}
-        </Accordion>
-    </div>
+      )}
+    </WrapperComponent>
   );
 }

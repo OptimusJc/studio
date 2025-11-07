@@ -11,14 +11,17 @@ import FacetedSearch from './components/FacetedSearch';
 import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Filter, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 
 function CatalogContent() {
   const firestore = useFirestore();
   const searchParams = useSearchParams();
+  const isMobile = useIsMobile();
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -54,7 +57,6 @@ function CatalogContent() {
       for (const cat of productCategories) {
         const collectionPath = `buyers/${cat.slug}/products`;
         try {
-          // Query for products that are 'Published'
           const q = query(
             collection(firestore, collectionPath), 
             where("status", "==", "Published")
@@ -69,7 +71,7 @@ function CatalogContent() {
               productTitle: data.productTitle,
               productCode: data.productCode,
               productDescription: data.productDescription,
-              category: cat.name, // Use the proper category name
+              category: cat.name,
               price: data.price,
               status: 'Published',
               attributes: data.attributes,
@@ -86,7 +88,6 @@ function CatalogContent() {
             productList.push(product);
           });
         } catch (e) {
-          // It's normal for some collections to not exist if they have no products yet
           // console.warn(`Could not fetch from ${collectionPath}:`, e);
         }
       }
@@ -98,7 +99,6 @@ function CatalogContent() {
     if (!isLoadingCategories && categoriesData) {
         fetchAllProducts();
     } else if (!isLoadingCategories) {
-        // If there are no categories, there are no products to fetch
         setIsLoading(false);
     }
   }, [firestore, categoriesData, isLoadingCategories]);
@@ -120,7 +120,6 @@ function CatalogContent() {
   useEffect(() => {
     let newFilteredProducts = [...allProducts];
 
-    // Apply search term filter
     if (searchTerm) {
         const lowercasedTerm = searchTerm.toLowerCase();
         newFilteredProducts = newFilteredProducts.filter(p =>
@@ -131,7 +130,6 @@ function CatalogContent() {
       );
     }
     
-    // Apply faceted filters
     Object.entries(filters).forEach(([key, values]) => {
       if (values.length > 0) {
         if (key === 'price') {
@@ -177,20 +175,22 @@ function CatalogContent() {
     return Array.from(attributeMap.entries()).map(([name, group]) => ({
         id: group.id,
         name: name,
-        category: 'All', // Category is not needed for the filter UI itself
+        category: 'All', 
         values: Array.from(group.values).sort(),
     }));
   }, [attributesData]);
 
 
   const facetedSearchComponent = (
-    isLoadingCategories || isLoadingAttributes ? (
+    isLoadingAttributes ? (
         <Skeleton className="h-[600px] w-full" />
     ) : (
         <FacetedSearch
         attributes={consolidatedAttributes}
         appliedFilters={filters}
         onFilterChange={setFilters}
+        isMobile={isMobile}
+        onClose={() => setMobileFiltersOpen(false)}
         />
     )
   );
@@ -204,27 +204,23 @@ function CatalogContent() {
       />
        <main className="container mx-auto px-4 py-6">
             <div className="grid lg:grid-cols-4 gap-8 items-start">
-                {/* Desktop Sidebar */}
                 <aside className="hidden lg:block lg:col-span-1 sticky top-24">
                   {facetedSearchComponent}
                 </aside>
                 
                 <section className="lg:col-span-3">
-                    {/* Search and Mobile Filter */}
                     <div className="flex items-center gap-4 mb-6">
-                        <Sheet>
-                             <SheetTrigger asChild>
+                        <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+                             <DialogTrigger asChild>
                                <Button variant="outline" className="lg:hidden shrink-0">
                                     <Filter className="mr-2 h-4 w-4" />
                                     Filters
                                 </Button>
-                             </SheetTrigger>
-                             <SheetContent side="left" className="w-full max-w-sm p-0">
-                                 <div className="p-6 h-full overflow-y-auto">
-                                     {facetedSearchComponent}
-                                 </div>
-                             </SheetContent>
-                        </Sheet>
+                             </DialogTrigger>
+                             <DialogContent className="p-6 h-full w-full max-w-full sm:max-w-full overflow-y-auto">
+                                {facetedSearchComponent}
+                             </DialogContent>
+                        </Dialog>
                         <div className="relative w-full">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input
@@ -238,14 +234,14 @@ function CatalogContent() {
                     </div>
 
                      {isLoading ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {[...Array(12)].map((_, i) => (
-                                <Skeleton key={i} className="h-80 w-full rounded-lg" />
+                                <Skeleton key={i} className="h-96 w-full rounded-lg" />
                             ))}
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {filteredProducts.map((product) => (
                                    <ProductCard key={product.id} product={product} />
                                 ))}
