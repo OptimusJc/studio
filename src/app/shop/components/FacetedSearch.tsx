@@ -62,7 +62,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
           <AccordionItem key={attribute.id} value={attribute.id}>
             <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
             <AccordionContent className="pt-2">
-              <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+              <div className="grid gap-y-3">
                 {attribute.values.map((value) => (
                   <div key={value} className="flex items-center space-x-2">
                     <Checkbox
