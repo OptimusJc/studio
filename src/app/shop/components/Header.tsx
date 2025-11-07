@@ -17,7 +17,7 @@ type HeaderProps = {
 function Logo() {
     return (
         <Link href="/shop" className="flex items-center space-x-2">
-            <span className="font-bold text-xl font-serif">
+            <span className="font-bold text-xl font-serif italic">
                 <span className="text-red-600">Ruby</span> Catalogue
             </span>
         </Link>
@@ -79,7 +79,7 @@ export default function Header({ categories, appliedFilters, onFilterChange }: H
         <Logo />
         
         {hasNav && (
-            <div className="hidden lg:flex lg:justify-center lg:flex-1">
+            <div className="hidden lg:flex items-center gap-4">
                 <CategoryNav categories={categories} appliedFilters={appliedFilters} onFilterChange={onFilterChange} />
             </div>
         )}
@@ -107,12 +107,6 @@ export default function Header({ categories, appliedFilters, onFilterChange }: H
                     </SheetContent>
                 </Sheet>
             )}
-        </div>
-
-        <div className={cn("hidden lg:flex", !hasNav && 'flex-1 justify-end')}>
-             <div className="w-[138px]">
-                {/* Placeholder for potential right-side content */}
-            </div>
         </div>
       </div>
     </header>
