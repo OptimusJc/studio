@@ -204,7 +204,14 @@ function ProductDetailPageContent() {
                 </div>
                 <div className="aspect-square w-full rounded-xl overflow-hidden bg-muted relative">
                     {activeImage && (
-                        <Image src={activeImage} alt={product.name} fill className="object-cover" priority />
+                        <Image 
+                            src={activeImage} 
+                            alt={product.name} 
+                            fill 
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className="object-cover" 
+                            priority 
+                        />
                     )}
                 </div>
             </div>

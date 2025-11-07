@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import type { Product } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,6 +19,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           src={product.imageUrl}
           alt={product.name}
           fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           className="object-cover"
           data-ai-hint={product.imageHint}
           priority={priority}
