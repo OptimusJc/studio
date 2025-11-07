@@ -33,11 +33,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             </div>
         </div>
       </div>
-      <CardContent className="p-4 flex-grow flex flex-col bg-white rounded-b-lg">
-        <h3 className="text-md font-bold text-gray-800">{product.productCode}</h3>
+      <CardContent className="p-3 flex-grow flex flex-col bg-white rounded-b-lg">
+        <h3 className="text-base font-bold text-gray-800">{product.productCode}</h3>
         <p className="text-sm text-gray-600 flex-grow mt-1">{product.productTitle}</p>
         <div className="text-xs text-gray-500 mt-2">Dimensions: {product.specifications || 'N/A'}</div>
-        <div className="mt-4">
+        <div className="mt-3">
             <Badge variant="outline" className="border-gray-300 text-gray-600">Premium Quality</Badge>
         </div>
       </CardContent>
