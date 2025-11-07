@@ -6,6 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { X, Trash2 } from 'lucide-react';
 
 type FacetedSearchProps = {
   attributes: Attribute[];
@@ -41,20 +42,28 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
   const WrapperComponent = isMobile ? 'div' : 'div';
   const wrapperProps = isMobile ? {} : { className: "w-full bg-white p-6 rounded-lg shadow-sm" };
 
+  const headerContent = isMobile ? (
+    <div className="flex items-center justify-between pb-4 border-b mb-4">
+        <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-5 w-5" />
+        </Button>
+        <h3 className="text-lg font-semibold">Filter</h3>
+        <Button variant="ghost" size="icon" onClick={handleResetFilters}>
+            <Trash2 className="h-5 w-5" />
+        </Button>
+    </div>
+  ) : (
+    <div className="flex items-center justify-between pb-4 border-b mb-4">
+        <h3 className="text-lg font-semibold">Filters</h3>
+        <Button variant="link" className="p-0 h-auto" onClick={handleResetFilters}>
+            Reset All
+        </Button>
+    </div>
+  );
+
   return (
     <WrapperComponent {...wrapperProps}>
-      <div className="flex items-center justify-between pb-4 border-b mb-4">
-        <h3 className="text-lg font-semibold">Filters</h3>
-        {isMobile ? (
-          <Button variant="link" className="p-0 h-auto" onClick={onClose}>
-            Done
-          </Button>
-        ) : (
-          <Button variant="link" className="p-0 h-auto" onClick={handleResetFilters}>
-            Reset All
-          </Button>
-        )}
-      </div>
+      {headerContent}
       <Accordion type="multiple" defaultValue={[...attributes.map(a => a.id)]} className="w-full">
         {attributes.map((attribute) => (
           <AccordionItem key={attribute.id} value={attribute.id}>
@@ -81,13 +90,6 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
           </AccordionItem>
         ))}
       </Accordion>
-      {isMobile && (
-         <div className="mt-6 pt-6 border-t">
-            <Button variant="outline" className="w-full" onClick={handleResetFilters}>
-                Reset Filters
-            </Button>
-        </div>
-      )}
     </WrapperComponent>
   );
 }
