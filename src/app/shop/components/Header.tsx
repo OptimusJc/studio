@@ -93,7 +93,7 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
              <Dialog>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="icon">
-                        <Search />
+                        <Search className="h-5 w-5" />
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md top-[25%]">
@@ -111,14 +111,14 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
              </Dialog>
 
              <Button variant="ghost" size="icon" onClick={openMobileFilters}>
-                <Filter />
+                <Filter className="h-5 w-5" />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon">
-                            <Menu />
+                            <Menu className="h-5 w-5" />
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="right" className="w-full max-w-xs">
