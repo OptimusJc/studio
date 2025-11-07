@@ -2,10 +2,9 @@
 
 import type { Category, Attribute } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 type FacetedSearchProps = {
   categories: Category[];
@@ -16,101 +15,84 @@ type FacetedSearchProps = {
 
 export default function FacetedSearch({ categories, attributes, appliedFilters, onFilterChange }: FacetedSearchProps) {
 
-  const handleRadioChange = (filterKey: string, value: string) => {
+  const handleCheckedChange = (filterKey: string, value: string, checked: boolean) => {
     const newFilters = { ...appliedFilters };
-    if (!value || value === appliedFilters[filterKey]?.[0]) {
-      // If the same value is clicked again, deselect it
-      delete newFilters[filterKey];
+    const currentValues = newFilters[filterKey] || [];
+    
+    if (checked) {
+      newFilters[filterKey] = [...currentValues, value];
     } else {
-        newFilters[filterKey] = [value];
+      newFilters[filterKey] = currentValues.filter((v) => v !== value);
     }
+    
+    // If a category becomes empty, remove it from the filters object
+    if (newFilters[filterKey].length === 0) {
+      delete newFilters[filterKey];
+    }
+    
     onFilterChange(newFilters);
   };
   
-  const handleToggleChange = (filterKey: string, checked: boolean) => {
-    const newFilters = { ...appliedFilters };
-    if (checked) {
-      newFilters[filterKey] = [true];
-    } else {
-      delete newFilters[filterKey];
-    }
-    onFilterChange(newFilters);
-  }
-
   const handleResetFilters = () => {
     onFilterChange({});
   }
-
-  // Define filters as per the design
-  const colorOptions = ['Gray', 'White', 'Red', 'Green'];
-  const subCategoryOptions = ['Premium', 'Standard'];
 
   return (
     <div className="w-full bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center justify-between pb-4 border-b mb-4">
             <h3 className="text-lg font-semibold">Filters</h3>
             <Button variant="link" className="p-0 h-auto" onClick={handleResetFilters}>
-                Reset
+                Reset All
             </Button>
         </div>
-        <Accordion type="multiple" defaultValue={['Color', 'Sub Category', 'Material']} className="w-full">
-            <AccordionItem value="Color">
-              <AccordionTrigger className="font-semibold text-base py-3">Color</AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <RadioGroup 
-                    onValueChange={(value) => handleRadioChange('color', value)}
-                    value={appliedFilters['color']?.[0] || ''}
-                    className="space-y-2"
-                >
-                    {colorOptions.map((color) => (
-                       <div key={color} className="flex items-center space-x-3">
-                        <RadioGroupItem value={color} id={`color-${color}`} />
-                        <Label htmlFor={`color-${color}`} className="font-normal text-gray-700">{color}</Label>
+        <Accordion type="multiple" defaultValue={['category', ...attributes.map(a => a.id)]} className="w-full">
+            <AccordionItem value="category">
+                <AccordionTrigger className="font-semibold text-base py-3">Category</AccordionTrigger>
+                <AccordionContent className="pt-2">
+                    <div className="grid gap-2">
+                        {categories.map((category) => (
+                        <div key={category.id} className="flex items-center space-x-2">
+                            <Checkbox
+                                id={`cat-${category.id}`}
+                                checked={appliedFilters.category?.includes(category.name)}
+                                onCheckedChange={(checked) => handleCheckedChange('category', category.name, !!checked)}
+                            />
+                            <Label
+                                htmlFor={`cat-${category.id}`}
+                                className="font-normal text-gray-700"
+                            >
+                                {category.name}
+                            </Label>
+                        </div>
+                        ))}
                     </div>
-                    ))}
-                </RadioGroup>
               </AccordionContent>
             </AccordionItem>
             
-            <AccordionItem value="Sub Category">
-              <AccordionTrigger className="font-semibold text-base py-3">Sub Category</AccordionTrigger>
-              <AccordionContent className="pt-2">
-                 <RadioGroup 
-                    onValueChange={(value) => handleRadioChange('subCategory', value)}
-                    value={appliedFilters['subCategory']?.[0] || ''}
-                    className="space-y-2"
-                >
-                    {subCategoryOptions.map((subCat) => (
-                       <div key={subCat} className="flex items-center space-x-3">
-                        <RadioGroupItem value={subCat} id={`subCat-${subCat}`} />
-                        <Label htmlFor={`subCat-${subCat}`} className="font-normal text-gray-700">{subCat}</Label>
-                    </div>
-                    ))}
-                </RadioGroup>
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="Material">
-              <AccordionTrigger className="font-semibold text-base py-3">Material</AccordionTrigger>
-              <AccordionContent className="pt-4 space-y-4">
-                 <div className="flex items-center justify-between">
-                    <Label htmlFor="material-toggle">Material Toggle</Label>
-                    <Switch 
-                        id="material-toggle"
-                        checked={!!appliedFilters['material']?.[0]}
-                        onCheckedChange={(checked) => handleToggleChange('material', checked)}
-                    />
-                 </div>
-                 <div className="flex items-center justify-between">
-                    <Label htmlFor="paterial-toggle">Paterial Toggle</Label>
-                    <Switch 
-                        id="paterial-toggle"
-                        checked={!!appliedFilters['paterial']?.[0]}
-                        onCheckedChange={(checked) => handleToggleChange('paterial', checked)}
-                     />
-                 </div>
-              </AccordionContent>
-            </AccordionItem>
+            {attributes.map((attribute) => (
+                <AccordionItem key={attribute.id} value={attribute.id}>
+                    <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
+                    <AccordionContent className="pt-2">
+                        <div className="grid gap-2">
+                        {attribute.values.map((value) => (
+                            <div key={value} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`attr-${attribute.id}-${value}`}
+                                    checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value)}
+                                    onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
+                                />
+                                <Label
+                                    htmlFor={`attr-${attribute.id}-${value}`}
+                                    className="font-normal text-gray-700"
+                                >
+                                    {value}
+                                </Label>
+                            </div>
+                        ))}
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            ))}
         </Accordion>
     </div>
   );
