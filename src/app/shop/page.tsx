@@ -12,8 +12,8 @@ import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Filter } from 'lucide-react';
-import Link from 'next/link';
+import { Filter, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 function CatalogContent() {
   const firestore = useFirestore();
@@ -121,9 +121,12 @@ function CatalogContent() {
 
     // Apply search term filter
     if (searchTerm) {
-      newFilteredProducts = newFilteredProducts.filter(p =>
-        (p.productTitle && p.productTitle.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (p.productCode && p.productCode.toLowerCase().includes(searchTerm.toLowerCase()))
+        const lowercasedTerm = searchTerm.toLowerCase();
+        newFilteredProducts = newFilteredProducts.filter(p =>
+            (p.productTitle && p.productTitle.toLowerCase().includes(lowercasedTerm)) ||
+            (p.productCode && p.productCode.toLowerCase().includes(lowercasedTerm)) ||
+            (p.productDescription && p.productDescription.toLowerCase().includes(lowercasedTerm)) ||
+            (p.specifications && p.specifications.toLowerCase().includes(lowercasedTerm))
       );
     }
     
@@ -174,6 +177,22 @@ function CatalogContent() {
         appliedFilters={filters}
         onFilterChange={setFilters}
       />
+
+       <div className="bg-background py-6">
+        <div className="container mx-auto px-4">
+            <div className="relative w-full max-w-xl mx-auto">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                type="search"
+                placeholder="Search by product name, code, or characteristics..."
+                className="pl-12 pr-4 py-3 h-12 text-base rounded-full shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+        </div>
+      </div>
+
       <main className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-4 gap-8 items-start">
           <aside className="lg:col-span-1 hidden lg:block sticky top-24">
@@ -212,7 +231,7 @@ function CatalogContent() {
                     {filteredProducts.length === 0 && (
                         <div className="col-span-full flex flex-col items-center justify-center h-96 bg-background rounded-lg border border-dashed">
                             <h2 className="text-2xl font-semibold text-muted-foreground">No Products Found</h2>
-                            <p className="text-muted-foreground mt-2">Try adjusting your filters or add a new product.</p>
+                            <p className="text-muted-foreground mt-2">Try adjusting your filters or search term.</p>
                         </div>
                     )}
                 </>
@@ -230,7 +249,7 @@ function ShopPageSkeleton() {
              <header className="sticky top-0 z-40 w-full border-b bg-background">
                 <div className="container mx-auto flex h-20 items-center justify-between px-4">
                     <Skeleton className="h-8 w-48" />
-                    <div className="hidden lg:flex gap-2">
+                    <div className="hidden lg:flex justify-end flex-1 gap-2">
                         <Skeleton className="h-9 w-24" />
                         <Skeleton className="h-9 w-24" />
                         <Skeleton className="h-9 w-24" />

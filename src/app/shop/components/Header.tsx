@@ -79,7 +79,7 @@ export default function Header({ categories, appliedFilters, onFilterChange }: H
         <Logo />
         
         {hasNav && (
-            <div className="hidden lg:flex items-center gap-4">
+            <div className="hidden lg:flex flex-1 justify-end">
                 <CategoryNav categories={categories} appliedFilters={appliedFilters} onFilterChange={onFilterChange} />
             </div>
         )}
