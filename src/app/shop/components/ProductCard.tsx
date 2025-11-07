@@ -7,9 +7,10 @@ import Link from 'next/link';
 
 type ProductCardProps = {
   product: Product;
+  priority?: boolean;
 };
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, priority = false }: ProductCardProps) {
   return (
     <Card className="group relative flex flex-col overflow-hidden h-full bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-lg border border-gray-200">
       <div className="aspect-square relative rounded-t-lg overflow-hidden">
@@ -19,10 +20,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           fill
           className="object-cover"
           data-ai-hint={product.imageHint}
+          priority={priority}
         />
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="flex flex-col gap-2">
-                <Link href={`/shop/${product.id}`} className="w-full">
+                <Link href={`/shop/${product.id}`}>
                     <Button variant="destructive" className="bg-red-600 hover:bg-red-700 w-32">See Preview</Button>
                 </Link>
                 <Button variant="secondary" className="w-32">Similar Items</Button>
