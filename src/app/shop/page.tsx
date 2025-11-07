@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useEffect, useState, useMemo } from 'react';
@@ -24,7 +25,6 @@ function CatalogContent() {
   const [filters, setFilters] = useState<Record<string, any[]>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   const categoriesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -169,18 +169,7 @@ function CatalogContent() {
         onFilterChange={setFilters}
         />
     )
-  )
-  
-   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) { // lg breakpoint
-        setSidebarOpen(false); // Close mobile sheet if window is resized to desktop
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  );
 
   return (
     <div className="bg-muted/40 min-h-screen">
@@ -189,54 +178,50 @@ function CatalogContent() {
         appliedFilters={filters}
         onFilterChange={setFilters}
       />
-       <main className="container mx-auto px-4">
-            <div className="py-6 sticky top-20 z-30 bg-muted/40">
-                <div className="flex items-center gap-4">
-                    {/* Filter Trigger for all screens */}
-                    <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
-                         <SheetTrigger asChild>
-                           <Button variant="outline" className="shrink-0">
-                                <Filter className="mr-2 h-4 w-4" />
-                                Filters
-                            </Button>
-                         </SheetTrigger>
-                         <SheetContent side="left" className="w-full max-w-sm p-0">
-                             <div className="p-6 h-full overflow-y-auto">
-                                 {facetedSearchComponent}
-                             </div>
-                         </SheetContent>
-                    </Sheet>
-
-                    {/* Search Bar */}
-                    <div className="relative w-full">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                        type="search"
-                        placeholder="Search by product name, code, or characteristics..."
-                        className="pl-12 pr-4 py-3 h-12 text-base rounded-md shadow-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className={cn("grid gap-8 items-start transition-all duration-300", isSidebarOpen ? 'lg:grid-cols-[300px_1fr]' : 'lg:grid-cols-1')}>
-                 {/* Desktop Sidebar - Now controlled by Sheet */}
-                <aside className={cn("hidden", isSidebarOpen && "lg:block sticky top-40")}>
-                    {facetedSearchComponent}
+       <main className="container mx-auto px-4 py-6">
+            <div className="grid lg:grid-cols-4 gap-8 items-start">
+                {/* Desktop Sidebar */}
+                <aside className="hidden lg:block sticky top-24">
+                  {facetedSearchComponent}
                 </aside>
                 
-                <section className="pb-8">
+                <section className="lg:col-span-3">
+                    {/* Search and Mobile Filter */}
+                    <div className="flex items-center gap-4 mb-6">
+                        <Sheet>
+                             <SheetTrigger asChild>
+                               <Button variant="outline" className="lg:hidden shrink-0">
+                                    <Filter className="mr-2 h-4 w-4" />
+                                    Filters
+                                </Button>
+                             </SheetTrigger>
+                             <SheetContent side="left" className="w-full max-w-sm p-0">
+                                 <div className="p-6 h-full overflow-y-auto">
+                                     {facetedSearchComponent}
+                                 </div>
+                             </SheetContent>
+                        </Sheet>
+                        <div className="relative w-full">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                            type="search"
+                            placeholder="Search by product name, code, or characteristics..."
+                            className="pl-12 pr-4 py-3 h-12 text-base rounded-md shadow-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
                      {isLoading ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {[...Array(12)].map((_, i) => (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {[...Array(9)].map((_, i) => (
                                 <Skeleton key={i} className="h-80 w-full" />
                             ))}
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {filteredProducts.map((product) => (
                                    <ProductCard key={product.id} product={product} />
                                 ))}
@@ -271,14 +256,21 @@ function ShopPageSkeleton() {
                 </div>
              </header>
             <main className="container mx-auto px-4 py-8">
-                 <div className="flex items-center gap-4 mb-6">
-                    <Skeleton className="h-12 w-28" />
-                    <Skeleton className="h-12 flex-1" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {[...Array(12)].map((_, i) => (
-                        <Skeleton key={i} className="h-80 w-full" />
-                    ))}
+                 <div className="grid lg:grid-cols-4 gap-8 items-start">
+                    <aside className="hidden lg:block">
+                        <Skeleton className="h-[600px] w-full" />
+                    </aside>
+                    <div className="lg:col-span-3 space-y-6">
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-12 w-28 lg:hidden" />
+                            <Skeleton className="h-12 flex-1" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {[...Array(9)].map((_, i) => (
+                                <Skeleton key={i} className="h-80 w-full" />
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
