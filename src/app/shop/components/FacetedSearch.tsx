@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Category, Attribute } from '@/types';

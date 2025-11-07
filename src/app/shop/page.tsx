@@ -160,13 +160,17 @@ function CatalogContent() {
   const consolidatedAttributes = useMemo(() => {
     if (!attributesData) return [];
 
+    const allowedFilters = ['Color', 'Material', 'Texture', 'Pattern'];
+    const filteredAttributes = attributesData.filter(attr => allowedFilters.includes(attr.name));
+
     const attributeMap = new Map<string, Set<string>>();
 
-    attributesData.forEach(attr => {
-        if (!attributeMap.has(attr.name)) {
-            attributeMap.set(attr.name, new Set());
+    filteredAttributes.forEach(attr => {
+        const filterName = attr.name === 'Pattern' ? 'Style' : attr.name;
+        if (!attributeMap.has(filterName)) {
+            attributeMap.set(filterName, new Set());
         }
-        const valueSet = attributeMap.get(attr.name)!;
+        const valueSet = attributeMap.get(filterName)!;
         attr.values.forEach(val => valueSet.add(val));
     });
 
