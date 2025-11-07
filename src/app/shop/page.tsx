@@ -156,7 +156,28 @@ function CatalogContent() {
   }, [filters, searchTerm, allProducts]);
 
   const memoizedCategories = useMemo(() => categoriesData || [], [categoriesData]);
-  const memoizedAttributes = useMemo(() => attributesData || [], [attributesData]);
+  
+  const consolidatedAttributes = useMemo(() => {
+    if (!attributesData) return [];
+
+    const attributeMap = new Map<string, Set<string>>();
+
+    attributesData.forEach(attr => {
+        if (!attributeMap.has(attr.name)) {
+            attributeMap.set(attr.name, new Set());
+        }
+        const valueSet = attributeMap.get(attr.name)!;
+        attr.values.forEach(val => valueSet.add(val));
+    });
+
+    return Array.from(attributeMap.entries()).map(([name, valuesSet], index) => ({
+        id: `consolidated-attr-${index}`,
+        name: name,
+        category: 'All', // Category is no longer relevant for the combined filter
+        values: Array.from(valuesSet).sort(),
+    }));
+  }, [attributesData]);
+
 
   const facetedSearchComponent = (
     isLoadingCategories || isLoadingAttributes ? (
@@ -164,7 +185,7 @@ function CatalogContent() {
     ) : (
         <FacetedSearch
         categories={memoizedCategories}
-        attributes={memoizedAttributes}
+        attributes={consolidatedAttributes}
         appliedFilters={filters}
         onFilterChange={setFilters}
         />
@@ -216,7 +237,7 @@ function CatalogContent() {
                      {isLoading ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                             {[...Array(12)].map((_, i) => (
-                                <Skeleton key={i} className="h-80 w-full" />
+                                <Skeleton key={i} className="h-80 w-full rounded-lg" />
                             ))}
                         </div>
                     ) : (
