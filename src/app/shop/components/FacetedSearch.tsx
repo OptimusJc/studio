@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Trash2 } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type FacetedSearchProps = {
@@ -67,7 +67,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
                   <div key={value} className="flex items-center space-x-2">
                     <Checkbox
                       id={`attr-${attribute.id}-${value}`}
-                      checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value)}
+                      checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value) || false}
                       onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
                     />
                     <Label
