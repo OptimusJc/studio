@@ -2,16 +2,21 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types';
-import { Menu } from 'lucide-react';
+import { Menu, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 
 type HeaderProps = {
   categories?: Category[];
   appliedFilters?: Record<string, any[]>;
   onFilterChange?: (filters: Record<string, any[]>) => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  openMobileFilters: () => void;
 };
 
 function Logo() {
@@ -24,7 +29,7 @@ function Logo() {
     )
 }
 
-function CategoryNav({ categories, appliedFilters, onFilterChange, className }: HeaderProps & { className?: string }) {
+function CategoryNav({ categories, appliedFilters, onFilterChange, className }: Pick<HeaderProps, 'categories'|'appliedFilters'|'onFilterChange'> & { className?: string }) {
     const activeCategory = appliedFilters?.category?.[0] || 'All Categories';
 
     const handleCategoryClick = (categoryName: string) => {
@@ -70,7 +75,7 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
 }
 
 
-export default function Header({ categories, appliedFilters, onFilterChange }: HeaderProps) {
+export default function Header({ categories, appliedFilters, onFilterChange, searchTerm, setSearchTerm, openMobileFilters }: HeaderProps) {
   const hasNav = !!(categories && appliedFilters && onFilterChange);
   
   return (
@@ -84,7 +89,31 @@ export default function Header({ categories, appliedFilters, onFilterChange }: H
             </div>
         )}
 
-        <div className="lg:hidden">
+        <div className="lg:hidden flex items-center gap-1">
+             <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <Search />
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md top-[25%]">
+                     <div className="relative w-full">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                        type="search"
+                        placeholder="Search by product name, code, or characteristics..."
+                        className="pl-12 pr-4 py-3 h-12 text-base rounded-md shadow-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </DialogContent>
+             </Dialog>
+
+             <Button variant="ghost" size="icon" onClick={openMobileFilters}>
+                <Filter />
+             </Button>
+            
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>

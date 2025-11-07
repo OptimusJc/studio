@@ -201,6 +201,9 @@ function CatalogContent() {
         categories={memoizedCategories} 
         appliedFilters={filters}
         onFilterChange={setFilters}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        openMobileFilters={() => setMobileFiltersOpen(true)}
       />
        <main className="container mx-auto px-4 py-6">
             <div className="grid lg:grid-cols-4 gap-8 items-start">
@@ -209,18 +212,7 @@ function CatalogContent() {
                 </aside>
                 
                 <section className="lg:col-span-3">
-                    <div className="flex items-center gap-4 mb-6">
-                        <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-                             <DialogTrigger asChild>
-                               <Button variant="outline" className="lg:hidden shrink-0">
-                                    <Filter className="mr-2 h-4 w-4" />
-                                    Filters
-                                </Button>
-                             </DialogTrigger>
-                             <DialogContent className="p-6 h-full w-full max-w-full sm:max-w-full overflow-y-auto">
-                                {facetedSearchComponent}
-                             </DialogContent>
-                        </Dialog>
+                    <div className="hidden lg:flex items-center gap-4 mb-6">
                         <div className="relative w-full">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input
@@ -232,6 +224,11 @@ function CatalogContent() {
                             />
                         </div>
                     </div>
+                     <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+                         <DialogContent className="p-0 h-full w-full max-w-full sm:max-w-full overflow-y-auto">
+                            {facetedSearchComponent}
+                         </DialogContent>
+                    </Dialog>
 
                      {isLoading ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
