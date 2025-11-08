@@ -16,6 +16,7 @@ import { WhatsAppIcon } from '@/components/icons/WhatsappIcon';
 import Link from 'next/link';
 import ProductDetailHeader from '../components/ProductDetailHeader';
 import { Separator } from '@/components/ui/separator';
+import { ChevronLeft } from 'lucide-react';
 
 function ProductDetailSkeleton() {
     return (
@@ -188,6 +189,12 @@ function ProductDetailPageContent() {
     <>
       <ProductDetailHeader />
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+            <Button variant="ghost" onClick={() => router.back()} className="text-muted-foreground hover:text-foreground">
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Back to Catalog
+            </Button>
+        </div>
         <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
             <div className="flex flex-col md:flex-row-reverse gap-4">
                 <div className="aspect-square w-full rounded-xl overflow-hidden bg-muted relative flex-grow">
