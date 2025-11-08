@@ -189,8 +189,8 @@ function ProductDetailPageContent() {
       <ProductDetailHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
-            <div className="space-y-4">
-                <div className="aspect-square w-full rounded-xl overflow-hidden bg-muted relative">
+            <div className="flex flex-col md:flex-row-reverse gap-4">
+                <div className="aspect-square w-full rounded-xl overflow-hidden bg-muted relative flex-grow">
                     {activeImage && (
                         <Image 
                             src={activeImage} 
@@ -202,7 +202,7 @@ function ProductDetailPageContent() {
                         />
                     )}
                 </div>
-                 <div className="grid grid-cols-5 gap-3">
+                 <div className="flex flex-row md:flex-col gap-3 md:w-20 flex-shrink-0">
                     {allImages.map((img, index) => (
                         <div key={index} 
                              className={`aspect-square w-full rounded-lg overflow-hidden border-2 cursor-pointer ${activeImage === img ? 'border-primary' : 'border-transparent'}`}
