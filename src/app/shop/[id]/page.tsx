@@ -281,8 +281,8 @@ function ProductDetailPageContent() {
                         <div className="border rounded-lg overflow-hidden">
                             <div className="grid grid-cols-2 text-sm">
                                 {Object.entries(product.attributes).map(([key, value], index) => (
-                                    <div key={key} className={`grid grid-cols-2 items-center`}>
-                                        <div className="font-medium capitalize p-3 bg-gray-200 dark:bg-gray-700 border-r">{key}</div>
+                                    <div key={key} className={`grid grid-cols-2 items-center ${index >= 2 ? 'border-t' : ''}`}>
+                                        <div className={`font-medium capitalize p-3 bg-gray-200 dark:bg-gray-700 border-r ${index % 2 === 0 ? 'border-r' : ''}`}>{key}</div>
                                         <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
                                     </div>
                                 ))}
@@ -296,9 +296,9 @@ function ProductDetailPageContent() {
                     <div className="space-y-3">
                         <Separator />
                         <h2 className="text-md font-semibold">Specifications</h2>
-                        <div className="space-y-1">
+                        <div className="space-y-1 text-sm">
                             {specificationItems.map((item, index) => (
-                                item && <div key={index} className="text-sm">
+                                item && <div key={index}>
                                     <span className="font-medium">{item.key}:</span>
                                     <span className="text-muted-foreground ml-2">{item.value}</span>
                                 </div>
