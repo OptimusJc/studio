@@ -271,21 +271,6 @@ function ProductDetailPageContent() {
                     </div>
                 )}
 
-                {specificationItems.length > 0 && (
-                    <div className="space-y-3">
-                        <Separator className="!my-6" />
-                        <h2 className="text-md font-semibold">Specifications</h2>
-                        <div className="space-y-1">
-                            {specificationItems.map((item, index) => (
-                                item && <div key={index} className="text-sm">
-                                    <span className="font-medium">{item.key}:</span>
-                                    <span className="text-muted-foreground ml-2">{item.value}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-                
                 {Object.keys(product.attributes).length > 0 && (
                   <>
                     <Separator />
@@ -305,6 +290,21 @@ function ProductDetailPageContent() {
                   </>
                 )}
 
+                {specificationItems.length > 0 && (
+                    <div className="space-y-3">
+                        <Separator className="!my-6" />
+                        <h2 className="text-md font-semibold">Specifications</h2>
+                        <div className="space-y-1">
+                            {specificationItems.map((item, index) => (
+                                item && <div key={index} className="text-sm">
+                                    <span className="font-medium">{item.key}:</span>
+                                    <span className="text-muted-foreground ml-2">{item.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
                 <div className="pt-4">
                     <Button asChild size="lg" className="bg-green-500 hover:bg-green-600 rounded-full text-white">
                         <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
