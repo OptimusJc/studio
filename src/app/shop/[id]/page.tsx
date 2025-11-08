@@ -236,7 +236,7 @@ function ProductDetailPageContent() {
         </div>
         <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
             <div className="flex flex-col md:flex-row-reverse gap-4">
-                <div className="aspect-square w-full rounded-xl overflow-hidden bg-muted relative flex-grow">
+                <div className="aspect-[4/5] w-full rounded-xl overflow-hidden bg-muted relative flex-grow">
                     {activeImage && (
                         <Image 
                             src={activeImage} 
@@ -260,7 +260,7 @@ function ProductDetailPageContent() {
                 </div>
             </div>
 
-            <div className="py-4 space-y-6">
+            <div className="py-4 space-y-4">
                 <div>
                     <h1 className="text-4xl lg:text-5xl font-bold font-mono">{product.productCode}</h1>
                     <p className="mt-2 text-lg text-muted-foreground">{product.productTitle}</p>
@@ -272,10 +272,29 @@ function ProductDetailPageContent() {
                         <p className="mt-1 text-sm text-muted-foreground">{product.productDescription}</p>
                     </div>
                 )}
+                
+                {Object.keys(product.attributes).length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h2 className="text-md font-semibold mb-3">Details</h2>
+                        <div className="border rounded-lg overflow-hidden">
+                            <div className="grid grid-cols-2 text-sm">
+                                {Object.entries(product.attributes).map(([key, value], index) => (
+                                    <div key={key} className={`grid grid-cols-2 items-center`}>
+                                        <div className="font-medium capitalize p-3 bg-muted/50 border-r">{key}</div>
+                                        <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                  </>
+                )}
 
-{specificationItems.length > 0 && (
+                {specificationItems.length > 0 && (
                     <div className="space-y-3">
-                        <Separator className="!my-6" />
+                        <Separator />
                         <h2 className="text-md font-semibold">Specifications</h2>
                         <div className="space-y-1">
                             {specificationItems.map((item, index) => (
@@ -286,25 +305,6 @@ function ProductDetailPageContent() {
                             ))}
                         </div>
                     </div>
-                )}
-                
-                {Object.keys(product.attributes).length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <h2 className="text-md font-semibold mb-3">Details</h2>
-                        <div className="border rounded-lg overflow-hidden">
-                            <div className="grid grid-cols-1 md:grid-cols-2 text-sm">
-                                {Object.entries(product.attributes).map(([key, value], index) => (
-                                    <div key={key} className={`grid grid-cols-2 items-center`}>
-                                        <div className="font-medium capitalize p-3 bg-gray-200 border-r">{key}</div>
-                                        <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                  </>
                 )}
                 
                 <div className="pt-4">
@@ -345,5 +345,7 @@ export default function ProductDetailPage() {
         </div>
     )
 }
+
+    
 
     
