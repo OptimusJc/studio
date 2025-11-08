@@ -168,15 +168,17 @@ function ProductDetailPageContent() {
     if (!product || !product.specifications) return [];
     
     // Example format: "Key1:Value1;Key2:Value2"
-    const pairs = product.specifications.split(';').map(s => s.trim());
-    
-    return pairs.map(pair => {
-      const parts = pair.split(':');
-      if (parts.length < 2) return null;
-      const key = parts[0].trim();
-      const value = parts.slice(1).join(':').trim();
-      return { key, value };
-    }).filter(item => item !== null) as { key: string, value: string }[];
+    return product.specifications
+      .split(';')
+      .map(s => s.trim())
+      .map(pair => {
+        const parts = pair.split(':');
+        if (parts.length < 2) return null;
+        const key = parts[0].trim();
+        const value = parts.slice(1).join(':').trim();
+        return { key, value };
+      })
+      .filter((item): item is { key: string; value: string } => item !== null);
 
   }, [product]);
   
@@ -282,12 +284,12 @@ function ProductDetailPageContent() {
                     <div>
                       <h2 className="text-md font-semibold mb-3">Details</h2>
                         <div className="border rounded-lg overflow-hidden">
-                            <div className="grid grid-cols-2 text-sm">
+                            <div className="grid grid-cols-1 md:grid-cols-2 text-sm">
                                 {Object.entries(product.attributes).map(([key, value], index) => (
-                                    <React.Fragment key={key}>
-                                        <div className="font-medium capitalize p-3 bg-muted border-b border-r">{key}</div>
-                                        <div className="text-muted-foreground p-3 border-b">{Array.isArray(value) ? value.join(', ') : value}</div>
-                                    </React.Fragment>
+                                    <div key={key} className="grid grid-cols-2 items-center border-b last:border-b-0 md:border-b-0 md:[&:nth-child(odd)]:border-r">
+                                        <div className="font-medium capitalize p-3 bg-muted border-r">{key}</div>
+                                        <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
+                                    </div>
                                 ))}
                             </div>
                         </div>
