@@ -188,6 +188,10 @@ function ProductDetailPageContent() {
     message += `*Product Details:*\n`;
     message += `Code: *${product.productCode}*\n`;
     message += `Title: ${product.productTitle}\n`;
+    
+    if (product.productImages && product.productImages.length > 0) {
+      message += `Image: ${product.productImages[0]}\n`;
+    }
 
     if (product.specifications) {
       message += `Specifications: ${product.specifications}\n`;
