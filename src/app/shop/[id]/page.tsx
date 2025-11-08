@@ -167,8 +167,7 @@ function ProductDetailPageContent() {
   const specificationItems = useMemo(() => {
     if (!product || !product.specifications) return [];
     
-    // Example format: "Key1:Value1,Key2:Value with comma,Key3:Value3"
-    // More robustly, we could expect "Key1:Value1;Key2:Value2"
+    // Example format: "Key1:Value1;Key2:Value2"
     const pairs = product.specifications.split(';').map(s => s.trim());
     
     return pairs.map(pair => {
@@ -209,10 +208,6 @@ function ProductDetailPageContent() {
     
     if (product.productImages && product.productImages.length > 0) {
       message += `Image: ${product.productImages[0]}\n`;
-    }
-
-    if (product.specifications) {
-      message += `Specifications: ${product.specifications}\n`;
     }
 
     if (product.attributes && Object.keys(product.attributes).length > 0) {
@@ -286,13 +281,15 @@ function ProductDetailPageContent() {
                     <Separator />
                     <div>
                       <h2 className="text-md font-semibold mb-3">Details</h2>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                            {Object.entries(product.attributes).map(([key, value]) => (
-                                <React.Fragment key={key}>
-                                    <div className="font-medium capitalize">{key}</div>
-                                    <div className="text-muted-foreground">{Array.isArray(value) ? value.join(', ') : value}</div>
-                                </React.Fragment>
-                            ))}
+                        <div className="border rounded-lg overflow-hidden">
+                            <div className="grid grid-cols-2 text-sm">
+                                {Object.entries(product.attributes).map(([key, value], index) => (
+                                    <React.Fragment key={key}>
+                                        <div className="font-medium capitalize p-3 bg-muted border-b border-r">{key}</div>
+                                        <div className="text-muted-foreground p-3 border-b">{Array.isArray(value) ? value.join(', ') : value}</div>
+                                    </React.Fragment>
+                                ))}
+                            </div>
                         </div>
                     </div>
                   </>
