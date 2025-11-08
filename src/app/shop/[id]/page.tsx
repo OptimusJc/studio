@@ -227,9 +227,11 @@ function ProductDetailPageContent() {
       <ProductDetailHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
-            <Button variant="ghost" onClick={() => router.back()} className="text-muted-foreground hover:text-foreground">
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Back to Catalog
+            <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+                <Link href="/shop" prefetch={false}>
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Back to Catalog
+                </Link>
             </Button>
         </div>
         <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
@@ -279,7 +281,7 @@ function ProductDetailPageContent() {
                         <div className="border rounded-lg overflow-hidden">
                             <div className="grid grid-cols-1 md:grid-cols-2 text-sm">
                                 {Object.entries(product.attributes).map(([key, value], index) => (
-                                    <div key={key} className={`grid grid-cols-2 items-center ${(index % 2 === 0 && index < Object.keys(product.attributes).length - 2) ? 'md:border-b-0' : 'border-b'} last:border-b-0 md:border-b`}>
+                                    <div key={key} className={`grid grid-cols-2 items-center`}>
                                         <div className="font-medium capitalize p-3 bg-muted/50 border-r">{key}</div>
                                         <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
                                     </div>
@@ -343,3 +345,5 @@ export default function ProductDetailPage() {
         </div>
     )
 }
+
+    
