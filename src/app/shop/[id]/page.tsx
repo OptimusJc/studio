@@ -216,8 +216,8 @@ function ProductDetailPageContent() {
 
             <div className="py-4 space-y-6">
                 <div>
-                    <h1 className="text-4xl lg:text-5xl font-bold">{product.productTitle}</h1>
-                    <p className="mt-2 text-lg text-muted-foreground font-mono">{product.productCode}</p>
+                    <h1 className="text-4xl lg:text-5xl font-bold font-mono">{product.productCode}</h1>
+                    <p className="mt-2 text-lg text-muted-foreground">{product.productTitle}</p>
                 </div>
                 
                 {product.productDescription && (
@@ -267,7 +267,7 @@ function ProductDetailPageContent() {
         {relatedProducts.length > 0 && (
              <div className="mt-16 lg:mt-24">
                 <h2 className="text-2xl font-bold mb-6">Related Items</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
                      {relatedProducts.map(related => (
                         <Link key={related.id} href={`/shop/${related.id}`} className="h-full">
                             <ProductCard product={related} />
@@ -290,5 +290,3 @@ export default function ProductDetailPage() {
         </div>
     )
 }
-
-    
