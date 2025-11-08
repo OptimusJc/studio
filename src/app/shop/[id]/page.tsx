@@ -273,26 +273,7 @@ function ProductDetailPageContent() {
                     </div>
                 )}
 
-                {Object.keys(product.attributes).length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <h2 className="text-md font-semibold mb-3">Details</h2>
-                        <div className="border rounded-lg overflow-hidden">
-                            <div className="grid grid-cols-1 md:grid-cols-2 text-sm">
-                                {Object.entries(product.attributes).map(([key, value], index) => (
-                                    <div key={key} className={`grid grid-cols-2 items-center`}>
-                                        <div className="font-medium capitalize p-3 bg-muted/50 border-r">{key}</div>
-                                        <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                  </>
-                )}
-
-                {specificationItems.length > 0 && (
+{specificationItems.length > 0 && (
                     <div className="space-y-3">
                         <Separator className="!my-6" />
                         <h2 className="text-md font-semibold">Specifications</h2>
@@ -305,6 +286,25 @@ function ProductDetailPageContent() {
                             ))}
                         </div>
                     </div>
+                )}
+                
+                {Object.keys(product.attributes).length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h2 className="text-md font-semibold mb-3">Details</h2>
+                        <div className="border rounded-lg overflow-hidden">
+                            <div className="grid grid-cols-1 md:grid-cols-2 text-sm">
+                                {Object.entries(product.attributes).map(([key, value], index) => (
+                                    <div key={key} className={`grid grid-cols-2 items-center`}>
+                                        <div className="font-medium capitalize p-3 bg-gray-200 border-r">{key}</div>
+                                        <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                  </>
                 )}
                 
                 <div className="pt-4">
