@@ -21,13 +21,13 @@ function ProductDetailSkeleton() {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-                <div className="grid grid-cols-1 md:grid-cols-[80px_1fr] gap-4">
-                    <div className="flex md:flex-col gap-3 order-last md:order-first">
+                <div className="space-y-4">
+                    <Skeleton className="aspect-square w-full rounded-xl" />
+                    <div className="grid grid-cols-5 gap-3">
                         <Skeleton className="aspect-square w-full rounded-lg" />
                         <Skeleton className="aspect-square w-full rounded-lg" />
                         <Skeleton className="aspect-square w-full rounded-lg" />
                     </div>
-                    <Skeleton className="aspect-square w-full rounded-xl" />
                 </div>
                 <div className="space-y-6">
                     <Skeleton className="h-10 w-3/4" />
@@ -189,17 +189,7 @@ function ProductDetailPageContent() {
       <ProductDetailHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
-            <div className="grid grid-cols-1 md:grid-cols-[100px_1fr] gap-4">
-                <div className="flex md:flex-col gap-3 order-last md:order-first">
-                    {allImages.map((img, index) => (
-                        <div key={index} 
-                             className={`aspect-square w-full rounded-lg overflow-hidden border-2 cursor-pointer ${activeImage === img ? 'border-primary' : 'border-transparent'}`}
-                             onClick={() => setActiveImage(img)}
-                        >
-                            <Image src={img} alt={`${product.name} thumbnail ${index + 1}`} width={100} height={100} className="object-cover w-full h-full"/>
-                        </div>
-                    ))}
-                </div>
+            <div className="space-y-4">
                 <div className="aspect-square w-full rounded-xl overflow-hidden bg-muted relative">
                     {activeImage && (
                         <Image 
@@ -211,6 +201,16 @@ function ProductDetailPageContent() {
                             priority 
                         />
                     )}
+                </div>
+                 <div className="grid grid-cols-5 gap-3">
+                    {allImages.map((img, index) => (
+                        <div key={index} 
+                             className={`aspect-square w-full rounded-lg overflow-hidden border-2 cursor-pointer ${activeImage === img ? 'border-primary' : 'border-transparent'}`}
+                             onClick={() => setActiveImage(img)}
+                        >
+                            <Image src={img} alt={`${product.name} thumbnail ${index + 1}`} width={100} height={100} className="object-cover w-full h-full"/>
+                        </div>
+                    ))}
                 </div>
             </div>
 
