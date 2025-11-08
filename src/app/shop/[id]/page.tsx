@@ -282,7 +282,7 @@ function ProductDetailPageContent() {
                             <div className="grid grid-cols-2 text-sm">
                                 {Object.entries(product.attributes).map(([key, value], index) => (
                                     <div key={key} className={`grid grid-cols-2 items-center`}>
-                                        <div className="font-medium capitalize p-3 bg-gray-100 dark:bg-gray-800 border-r">{key}</div>
+                                        <div className="font-medium capitalize p-3 bg-gray-200 dark:bg-gray-700 border-r">{key}</div>
                                         <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
                                     </div>
                                 ))}
