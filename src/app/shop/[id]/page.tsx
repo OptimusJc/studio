@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
