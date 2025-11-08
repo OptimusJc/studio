@@ -163,6 +163,23 @@ function ProductDetailPageContent() {
     if (!product) return [];
     return [...(product.productImages || []), ...(product.additionalImages || [])];
   }, [product]);
+
+  const specificationItems = useMemo(() => {
+    if (!product || !product.specifications) return [];
+    
+    // Example format: "Key1:Value1,Key2:Value with comma,Key3:Value3"
+    // More robustly, we could expect "Key1:Value1;Key2:Value2"
+    const pairs = product.specifications.split(';').map(s => s.trim());
+    
+    return pairs.map(pair => {
+      const parts = pair.split(':');
+      if (parts.length < 2) return null;
+      const key = parts[0].trim();
+      const value = parts.slice(1).join(':').trim();
+      return { key, value };
+    }).filter(item => item !== null) as { key: string, value: string }[];
+
+  }, [product]);
   
   if (isLoading || isLoadingCategories) {
     return <ProductDetailSkeleton />;
@@ -263,13 +280,6 @@ function ProductDetailPageContent() {
                         <p className="mt-1 text-sm text-muted-foreground">{product.productDescription}</p>
                     </div>
                 )}
-
-                 {product.specifications && (
-                    <div>
-                        <h2 className="text-md font-semibold">Specifications</h2>
-                        <p className="mt-1 text-sm text-muted-foreground">{product.specifications}</p>
-                    </div>
-                )}
                 
                 {Object.keys(product.attributes).length > 0 && (
                   <>
@@ -288,6 +298,22 @@ function ProductDetailPageContent() {
                   </>
                 )}
 
+                 {specificationItems.length > 0 && (
+                    <div>
+                        <Separator className="my-6" />
+                        <h2 className="text-2xl font-semibold mb-4">Specifications</h2>
+                        <div className="border border-gray-200 rounded-lg">
+                            <div className="grid grid-cols-1 md:grid-cols-2">
+                                {specificationItems.map((item, index) => (
+                                    <div key={index} className="grid grid-cols-2 items-center p-3 border-b border-gray-200 last:border-b-0 md:border-b-0 md:[&:nth-child(odd)]:border-r">
+                                        <div className="font-medium text-gray-700">{item.key}</div>
+                                        <div className="text-gray-500">{item.value}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="pt-4">
                     <Button asChild size="lg" className="bg-green-500 hover:bg-green-600 rounded-full text-white">
