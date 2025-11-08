@@ -182,8 +182,33 @@ function ProductDetailPageContent() {
     router.push(`/shop?filters=${encodedFilters}`);
   }
 
-  const whatsAppMessage = encodeURIComponent(`Check out this product: ${product.productTitle}\n${window.location.href}`);
-  const whatsAppUrl = `https://wa.me/?text=${whatsAppMessage}`;
+  const generateWhatsAppMessage = () => {
+    let message = `*Product Inquiry*\n\n`;
+    message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
+    message += `*Product Details:*\n`;
+    message += `Code: *${product.productCode}*\n`;
+    message += `Title: ${product.productTitle}\n`;
+
+    if (product.specifications) {
+      message += `Specifications: ${product.specifications}\n`;
+    }
+
+    if (product.attributes && Object.keys(product.attributes).length > 0) {
+      message += `\n*Attributes:*\n`;
+      Object.entries(product.attributes).forEach(([key, value]) => {
+        const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
+        const formattedValue = Array.isArray(value) ? value.join(', ') : value;
+        message += `${formattedKey}: ${formattedValue}\n`;
+      });
+    }
+
+    message += `\nLink: ${window.location.href}`;
+
+    return encodeURIComponent(message);
+  };
+  
+  const whatsAppUrl = `https://wa.me/?text=${generateWhatsAppMessage()}`;
+
 
   return (
     <>
