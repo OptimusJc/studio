@@ -30,7 +30,7 @@ function RowActions({ product }: { product: Product }) {
       category: [product.category],
     };
     const encodedFilters = btoa(JSON.stringify(filters));
-    return `${window.location.origin}/catalog?filters=${encodedFilters}`;
+    return `${window.location.origin}/shop?filters=${encodedFilters}`;
   };
 
   const shareLink = createShareLink();

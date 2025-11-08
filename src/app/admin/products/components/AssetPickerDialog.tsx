@@ -140,7 +140,13 @@ export function AssetPickerDialog({ children, onAssetSelect }: AssetPickerDialog
                                 onClick={() => handleFileClick(item.url!)}
                             >
                                 {item.url && (item.url.includes('.jpg') || item.url.includes('.jpeg') || item.url.includes('.png') || item.url.includes('.gif') || item.url.includes('.webp')) ? (
-                                    <Image src={item.url} alt={item.name} fill className="object-cover" />
+                                    <Image 
+                                        src={item.url} 
+                                        alt={item.name} 
+                                        fill 
+                                        sizes="(max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                                        className="object-cover" 
+                                    />
                                 ) : (
                                     <File className="h-12 w-12 text-muted-foreground" />
                                 )}

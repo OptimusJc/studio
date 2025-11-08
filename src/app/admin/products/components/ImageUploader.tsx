@@ -138,12 +138,22 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
     });
   }
 
+  const sizes = field === 'productImages'
+    ? "(max-width: 1024px) 100vw, 66vw"
+    : "(max-width: 640px) 50vw, 25vw";
+
   return (
     <Card className="border-dashed relative group">
       <CardContent className="p-2">
         {previewUrl ? (
           <div className="relative aspect-square">
-            <Image src={previewUrl} alt="Product image preview" fill className="object-cover rounded-md" />
+            <Image 
+                src={previewUrl} 
+                alt="Product image preview" 
+                fill 
+                sizes={sizes}
+                className="object-cover rounded-md" 
+            />
              <Button 
                 variant="destructive" 
                 size="icon" 

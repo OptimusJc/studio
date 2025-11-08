@@ -143,7 +143,13 @@ export default function AssetsPage() {
                         ) : (
                             <div className="aspect-square w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden border">
                                 {item.url ? (
-                                    <Image src={item.url} alt={item.name} fill className="object-cover" />
+                                    <Image 
+                                        src={item.url} 
+                                        alt={item.name} 
+                                        fill 
+                                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16.6vw"
+                                        className="object-cover" 
+                                    />
                                 ) : (
                                     <File className="h-16 w-16 text-muted-foreground" />
                                 )}

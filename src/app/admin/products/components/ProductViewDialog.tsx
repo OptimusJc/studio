@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Product } from '@/types';
@@ -49,13 +50,13 @@ export function ProductViewDialog({ product }: ProductViewDialogProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pr-6 py-4">
                 <div className="space-y-4">
                     <div className="relative aspect-square rounded-lg overflow-hidden border">
-                         <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                         <Image src={product.imageUrl} alt={product.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                     </div>
                     {product.additionalImages && product.additionalImages.length > 0 && (
                         <div className="grid grid-cols-3 gap-2">
                             {product.additionalImages.map((img, index) => (
                                 <div key={index} className="relative aspect-square rounded-md overflow-hidden border">
-                                    <Image src={img} alt={`${product.name} additional image ${index + 1}`} fill className="object-cover" />
+                                    <Image src={img} alt={`${product.name} additional image ${index + 1}`} fill sizes="(max-width: 768px) 33vw, 16vw" className="object-cover" />
                                 </div>
                             ))}
                         </div>
