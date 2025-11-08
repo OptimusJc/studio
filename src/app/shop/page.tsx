@@ -12,7 +12,7 @@ import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { Filter, Search } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -216,12 +216,23 @@ function CatalogContent() {
                         <div className="relative w-full">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input
-                            type="search"
-                            placeholder="Search by product name, code, or characteristics..."
-                            className="pl-12 pr-4 py-3 h-12 text-base rounded-md shadow-sm"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                              type="search"
+                              placeholder="Search by product name, code, or characteristics..."
+                              className="pl-12 pr-10 py-3 h-12 text-base rounded-md shadow-sm"
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
                             />
+                            {searchTerm && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
+                                onClick={() => setSearchTerm('')}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
                         </div>
                     </div>
                      <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types';
-import { Menu, Search, Filter } from 'lucide-react';
+import { Menu, Search, Filter, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -100,8 +100,8 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
         <div className="lg:hidden flex items-center gap-1">
              <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Search className='h-6 w-6' />
+                    <Button variant="ghost" size="icon" className="p-0">
+                        <Search className='h-8 w-8' />
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md top-[25%]">
@@ -110,24 +110,35 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
                         <Input
                         type="search"
                         placeholder="Search by product name, code, or characteristics..."
-                        className="pl-12 pr-4 py-3 h-12 text-base rounded-md shadow-sm"
+                        className="pl-12 pr-10 py-3 h-12 text-base rounded-md shadow-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={handleSearchKeyDown}
                         />
+                         {searchTerm && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
+                            onClick={() => setSearchTerm('')}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
                     </div>
                 </DialogContent>
              </Dialog>
 
-             <Button variant="ghost" size="icon" onClick={openMobileFilters}>
-                <Filter className="h-6 w-6" />
+             <Button variant="ghost" size="icon" className="p-0" onClick={openMobileFilters}>
+                <Filter className="h-8 w-8" />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <Menu className="h-6 w-6" />
+                        <Button variant="ghost" size="icon" className="p-0">
+                            <Menu className="h-8 w-8" />
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="right" className="w-full max-w-xs">
