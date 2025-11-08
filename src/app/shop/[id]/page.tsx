@@ -275,16 +275,14 @@ function ProductDetailPageContent() {
                     <Separator />
                     <div>
                       <h2 className="text-md font-semibold mb-3">Details</h2>
-                        <table className="w-full text-sm">
-                            <tbody>
-                                {Object.entries(product.attributes).map(([key, value]) => (
-                                    <tr key={key} className="border-b">
-                                        <td className="py-2 font-medium capitalize">{key}</td>
-                                        <td className="py-2 text-right text-muted-foreground">{Array.isArray(value) ? value.join(', ') : value}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                            {Object.entries(product.attributes).map(([key, value]) => (
+                                <React.Fragment key={key}>
+                                    <div className="font-medium capitalize">{key}</div>
+                                    <div className="text-muted-foreground">{Array.isArray(value) ? value.join(', ') : value}</div>
+                                </React.Fragment>
+                            ))}
+                        </div>
                     </div>
                   </>
                 )}
