@@ -275,14 +275,16 @@ function ProductDetailPageContent() {
                     <Separator />
                     <div>
                       <h2 className="text-md font-semibold mb-3">Details</h2>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                        {Object.entries(product.attributes).map(([key, value]) => (
-                          <div key={key}>
-                            <p className="text-sm font-medium capitalize">{key}</p>
-                            <p className="text-sm text-muted-foreground">{Array.isArray(value) ? value.join(', ') : value}</p>
-                          </div>
-                        ))}
-                      </div>
+                        <table className="w-full text-sm">
+                            <tbody>
+                                {Object.entries(product.attributes).map(([key, value]) => (
+                                    <tr key={key} className="border-b">
+                                        <td className="py-2 font-medium capitalize">{key}</td>
+                                        <td className="py-2 text-right text-muted-foreground">{Array.isArray(value) ? value.join(', ') : value}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                   </>
                 )}
