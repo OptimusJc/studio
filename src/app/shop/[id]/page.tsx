@@ -166,7 +166,13 @@ function ProductDetailPageContent() {
 
   const specificationItems = useMemo(() => {
     if (!product || !product.specifications) return [];
-    return product.specifications.split(';').map(s => s.trim()).filter(Boolean);
+    return product.specifications.split(';').map(item => {
+        const parts = item.split(':');
+        if (parts.length === 2) {
+            return { key: parts[0].trim(), value: parts[1].trim() };
+        }
+        return null;
+    }).filter(Boolean);
   }, [product]);
   
   if (isLoading || isLoadingCategories) {
@@ -264,6 +270,21 @@ function ProductDetailPageContent() {
                         <p className="mt-1 text-sm text-muted-foreground">{product.productDescription}</p>
                     </div>
                 )}
+
+                {specificationItems.length > 0 && (
+                    <div className="space-y-3">
+                        <Separator className="!my-6" />
+                        <h2 className="text-md font-semibold">Specifications</h2>
+                        <div className="space-y-1">
+                            {specificationItems.map((item, index) => (
+                                item && <div key={index} className="text-sm">
+                                    <span className="font-medium">{item.key}:</span>
+                                    <span className="text-muted-foreground ml-2">{item.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 
                 {Object.keys(product.attributes).length > 0 && (
                   <>
@@ -272,9 +293,9 @@ function ProductDetailPageContent() {
                       <h2 className="text-md font-semibold mb-3">Details</h2>
                         <div className="border rounded-lg overflow-hidden">
                             <div className="grid grid-cols-1 md:grid-cols-2 text-sm">
-                                {Object.entries(product.attributes).map(([key, value]) => (
-                                    <div key={key} className="grid grid-cols-2 items-center border-b last:border-b-0 md:border-b-0 md:[&:nth-child(odd)]:border-r">
-                                        <div className="font-medium capitalize p-3 bg-muted border-r">{key}</div>
+                                {Object.entries(product.attributes).map(([key, value], index) => (
+                                    <div key={key} className={`grid grid-cols-2 items-center ${(index % 2 === 0 && index < Object.keys(product.attributes).length - 2) ? 'md:border-b-0' : 'border-b'} last:border-b-0 md:border-b`}>
+                                        <div className="font-medium capitalize p-3 bg-muted/50 border-r">{key}</div>
                                         <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
                                     </div>
                                 ))}
@@ -282,18 +303,6 @@ function ProductDetailPageContent() {
                         </div>
                     </div>
                   </>
-                )}
-
-                 {specificationItems.length > 0 && (
-                    <div className="space-y-2">
-                        <Separator className="!my-6" />
-                        <h2 className="text-md font-semibold">Specifications</h2>
-                        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                            {specificationItems.map((item, index) => (
-                                <li key={index}>{item}</li>
-                            ))}
-                        </ul>
-                    </div>
                 )}
 
                 <div className="pt-4">
