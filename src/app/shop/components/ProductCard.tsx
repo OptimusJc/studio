@@ -27,10 +27,10 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           />
           <div className="absolute inset-0 bg-black/40 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <div className="flex flex-col gap-2">
-                  <Link href={`/shop/${product.id}`} legacyBehavior>
-                      <a onClick={(e) => e.stopPropagation()}>
-                          <Button variant="destructive" className="bg-red-600 hover:bg-red-700 w-32">See Preview</Button>
-                      </a>
+                  <Link href={`/shop/${product.id}`} passHref>
+                      <Button asChild variant="destructive" className="bg-red-600 hover:bg-red-700 w-32" onClick={(e) => e.stopPropagation()}>
+                          <a>See Preview</a>
+                      </Button>
                   </Link>
                   <Button variant="secondary" className="w-32" onClick={(e) => { e.preventDefault(); e.stopPropagation(); /* TODO: Implement similar items logic */ }}>Similar Items</Button>
               </div>
