@@ -166,20 +166,7 @@ function ProductDetailPageContent() {
 
   const specificationItems = useMemo(() => {
     if (!product || !product.specifications) return [];
-    
-    // Example format: "Key1:Value1;Key2:Value2"
-    return product.specifications
-      .split(';')
-      .map(s => s.trim())
-      .map(pair => {
-        const parts = pair.split(':');
-        if (parts.length < 2) return null;
-        const key = parts[0].trim();
-        const value = parts.slice(1).join(':').trim();
-        return { key, value };
-      })
-      .filter((item): item is { key: string; value: string } => item !== null);
-
+    return product.specifications.split(';').map(s => s.trim()).filter(Boolean);
   }, [product]);
   
   if (isLoading || isLoadingCategories) {
@@ -285,7 +272,7 @@ function ProductDetailPageContent() {
                       <h2 className="text-md font-semibold mb-3">Details</h2>
                         <div className="border rounded-lg overflow-hidden">
                             <div className="grid grid-cols-1 md:grid-cols-2 text-sm">
-                                {Object.entries(product.attributes).map(([key, value], index) => (
+                                {Object.entries(product.attributes).map(([key, value]) => (
                                     <div key={key} className="grid grid-cols-2 items-center border-b last:border-b-0 md:border-b-0 md:[&:nth-child(odd)]:border-r">
                                         <div className="font-medium capitalize p-3 bg-muted border-r">{key}</div>
                                         <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
@@ -298,19 +285,14 @@ function ProductDetailPageContent() {
                 )}
 
                  {specificationItems.length > 0 && (
-                    <div>
-                        <Separator className="my-6" />
-                        <h2 className="text-2xl font-semibold mb-4">Specifications</h2>
-                        <div className="border border-gray-200 rounded-lg">
-                            <div className="grid grid-cols-1 md:grid-cols-2">
-                                {specificationItems.map((item, index) => (
-                                    <div key={index} className="grid grid-cols-2 items-center p-3 border-b border-gray-200 last:border-b-0 md:border-b-0 md:[&:nth-child(odd)]:border-r">
-                                        <div className="font-medium text-gray-700">{item.key}</div>
-                                        <div className="text-gray-500">{item.value}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                    <div className="space-y-2">
+                        <Separator className="!my-6" />
+                        <h2 className="text-md font-semibold">Specifications</h2>
+                        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                            {specificationItems.map((item, index) => (
+                                <li key={index}>{item}</li>
+                            ))}
+                        </ul>
                     </div>
                 )}
 
