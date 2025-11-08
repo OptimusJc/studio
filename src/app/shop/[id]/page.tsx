@@ -236,7 +236,7 @@ function ProductDetailPageContent() {
         </div>
         <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
             <div className="flex flex-col md:flex-row-reverse gap-4">
-                <div className="aspect-[4/5] w-full rounded-xl overflow-hidden bg-muted relative flex-grow">
+                <div className="aspect-[5/4] w-full rounded-xl overflow-hidden bg-muted relative flex-grow">
                     {activeImage && (
                         <Image 
                             src={activeImage} 
@@ -345,7 +345,3 @@ export default function ProductDetailPage() {
         </div>
     )
 }
-
-    
-
-    
