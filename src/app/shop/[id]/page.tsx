@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { WhatsAppIcon } from '@/components/icons/WhatsappIcon';
 import Link from 'next/link';
 import ProductDetailHeader from '../components/ProductDetailHeader';
+import { Separator } from '@/components/ui/separator';
 
 function ProductDetailSkeleton() {
     return (
@@ -29,27 +30,21 @@ function ProductDetailSkeleton() {
                     <Skeleton className="aspect-square w-full rounded-xl" />
                 </div>
                 <div className="space-y-6">
-                    <Skeleton className="h-10 w-1/3" />
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-6 w-5/6" />
-                    <div className="space-y-2">
+                    <Skeleton className="h-10 w-3/4" />
+                    <Skeleton className="h-6 w-1/3" />
+                    <Skeleton className="h-20 w-full" />
+                    <div className="space-y-4">
                         <Skeleton className="h-5 w-24" />
-                        <Skeleton className="h-12 w-full" />
-                    </div>
-                    <div className="space-y-2">
-                        <Skeleton className="h-5 w-24" />
-                        <div className="flex gap-2">
-                            <Skeleton className="h-10 w-24" />
+                        <div className="flex gap-4">
                             <Skeleton className="h-10 w-24" />
                             <Skeleton className="h-10 w-24" />
                         </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-4">
                         <Skeleton className="h-5 w-24" />
-                        <div className="flex gap-2">
-                            <Skeleton className="h-16 w-16" />
-                            <Skeleton className="h-16 w-16" />
-                            <Skeleton className="h-16 w-16" />
+                         <div className="flex gap-4">
+                            <Skeleton className="h-10 w-24" />
+                            <Skeleton className="h-10 w-24" />
                         </div>
                     </div>
                     <Skeleton className="h-12 w-48" />
@@ -186,6 +181,9 @@ function ProductDetailPageContent() {
     router.push(`/shop?filters=${encodedFilters}`);
   }
 
+  const whatsAppMessage = encodeURIComponent(`Check out this product: ${product.productTitle}\n${window.location.href}`);
+  const whatsAppUrl = `https://wa.me/?text=${whatsAppMessage}`;
+
   return (
     <>
       <ProductDetailHeader />
@@ -216,39 +214,50 @@ function ProductDetailPageContent() {
                 </div>
             </div>
 
-            <div className="py-4">
-                <h1 className="text-4xl lg:text-5xl font-bold">{product.productCode}</h1>
-                <p className="mt-2 text-lg text-muted-foreground">{product.productTitle}</p>
+            <div className="py-4 space-y-6">
+                <div>
+                    <h1 className="text-4xl lg:text-5xl font-bold">{product.productTitle}</h1>
+                    <p className="mt-2 text-lg text-muted-foreground font-mono">{product.productCode}</p>
+                </div>
                 
-                <div className="mt-6">
-                    <h2 className="text-md font-semibold">Description</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{product.specifications}</p>
-                </div>
-
-                 <div className="mt-6">
-                    <h2 className="text-md font-semibold">Dimensions</h2>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        <Button variant="outline" size="sm" className="rounded-full">53cmX20m</Button>
-                        <Button variant="outline" size="sm" className="rounded-full">53cmX1m</Button>
-                        <Button variant="outline" size="sm" className="rounded-full">53cmX5m</Button>
+                {product.productDescription && (
+                    <div>
+                        <h2 className="text-md font-semibold">Description</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">{product.productDescription}</p>
                     </div>
-                </div>
+                )}
 
-                <div className="mt-6">
-                    <h2 className="text-md font-semibold">Color: {product.attributes?.color as string || ''}</h2>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        {allImages.slice(0,4).map((img, index) => (
-                            <div key={index} className={`w-20 h-20 rounded-lg overflow-hidden border-2 ${activeImage === img ? 'border-primary' : 'border-transparent'}`} onClick={() => setActiveImage(img)}>
-                                <Image src={img} alt={`Color variant ${index + 1}`} width={80} height={80} className="object-cover w-full h-full"/>
-                            </div>
+                 {product.specifications && (
+                    <div>
+                        <h2 className="text-md font-semibold">Specifications</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">{product.specifications}</p>
+                    </div>
+                )}
+                
+                {Object.keys(product.attributes).length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h2 className="text-md font-semibold mb-3">Details</h2>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        {Object.entries(product.attributes).map(([key, value]) => (
+                          <div key={key}>
+                            <p className="text-sm font-medium capitalize">{key}</p>
+                            <p className="text-sm text-muted-foreground">{Array.isArray(value) ? value.join(', ') : value}</p>
+                          </div>
                         ))}
+                      </div>
                     </div>
-                </div>
+                  </>
+                )}
 
-                <div className="mt-8">
-                    <Button size="lg" className="bg-green-500 hover:bg-green-600 rounded-full text-white">
-                        <WhatsAppIcon className="mr-2 h-5 w-5"/>
-                        WhatsApp Share
+
+                <div className="pt-4">
+                    <Button asChild size="lg" className="bg-green-500 hover:bg-green-600 rounded-full text-white">
+                        <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
+                          <WhatsAppIcon className="mr-2 h-5 w-5"/>
+                          Share on WhatsApp
+                        </a>
                     </Button>
                 </div>
 
@@ -281,3 +290,5 @@ export default function ProductDetailPage() {
         </div>
     )
 }
+
+    
