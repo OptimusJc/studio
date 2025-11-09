@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ProductPreviewModal } from './ProductPreviewModal';
 
 type ProductCardProps = {
   product: Product;
@@ -43,6 +44,15 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                 />
                 <div className="absolute inset-0 bg-black/40 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="flex flex-col gap-2">
+                        <ProductPreviewModal product={product}>
+                             <Button
+                                variant="secondary"
+                                className="w-32 rounded-lg"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                             >
+                                See Preview
+                             </Button>
+                        </ProductPreviewModal>
                         <Button
                             variant="secondary"
                             className="w-32 rounded-lg"

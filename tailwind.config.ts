@@ -16,6 +16,7 @@ export default {
         code: ['var(--font-source-code-pro)', 'monospace'],
         serif: ['var(--font-playfair-display)', 'serif'],
         logo: ['"Brush Script MT"', 'cursive'],
+        sans: ['var(--font-inter)', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
