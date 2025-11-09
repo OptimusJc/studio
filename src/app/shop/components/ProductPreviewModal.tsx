@@ -64,7 +64,12 @@ export function ProductPreviewModal({ product, children, open, onOpenChange }: P
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {children}
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+      <DialogContent 
+        className="max-w-4xl h-[90vh] flex flex-col p-0"
+        onPointerDownOutside={(e) => {
+            e.preventDefault();
+        }}
+      >
         <ScrollArea className="flex-grow">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
                 <div className="p-6 flex flex-col gap-4">
