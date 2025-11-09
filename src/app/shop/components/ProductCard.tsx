@@ -1,11 +1,13 @@
 
+'use client';
+
 import Image from 'next/image';
 import type { Product } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 type ProductCardProps = {
   product: Product;
@@ -13,11 +15,17 @@ type ProductCardProps = {
 };
 
 export default function ProductCard({ product, priority = false }: ProductCardProps) {
+  const router = useRouter();
+
   const handleSimilarClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // TODO: Implement logic to find and display similar items.
-    alert(`Finding items similar to ${product.name}`);
+    
+    const filters = {
+      category: [product.category],
+    };
+    const encodedFilters = btoa(JSON.stringify(filters));
+    router.push(`/shop?filters=${encodedFilters}`);
   };
 
   return (
