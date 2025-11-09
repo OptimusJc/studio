@@ -242,14 +242,14 @@ function CatalogContent() {
                     </Dialog>
 
                      {isLoading ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-96 w-full rounded-lg" />
                             ))}
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                                 {filteredProducts.map((product, index) => (
                                    <ProductCard key={product.id} product={product} priority={index < 4} />
                                 ))}
@@ -293,7 +293,7 @@ function ShopPageSkeleton() {
                             <Skeleton className="h-12 w-28 lg:hidden" />
                             <Skeleton className="h-12 flex-1" />
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                             {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-80 w-full" />
                             ))}
