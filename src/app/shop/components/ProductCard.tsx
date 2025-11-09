@@ -54,7 +54,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             data-ai-hint={product.imageHint}
             priority={priority}
           />
-          <div className="absolute inset-0 bg-black/50 flex flex-col justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div onClick={(e) => e.stopPropagation()} className="absolute inset-0 bg-black/50 flex flex-col justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <ProductPreviewModal product={product} open={isModalOpen} onOpenChange={setModalOpen}>
               <Button
                 variant="secondary"

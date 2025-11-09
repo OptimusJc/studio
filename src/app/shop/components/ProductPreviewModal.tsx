@@ -68,6 +68,18 @@ export function ProductPreviewModal({ product, children, open, onOpenChange }: P
         className="max-w-4xl h-[90vh] flex flex-col p-0"
         onPointerDownOutside={(e) => {
             e.preventDefault();
+            e.stopPropagation();
+            onOpenChange(false);
+        }}
+        onInteractOutside={(e) => {
+            e.stopPropagation();
+        }}
+        onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }}
+        onEscapeKeyDown={(e) => {
+            e.stopPropagation();
         }}
       >
         <ScrollArea className="flex-grow">
