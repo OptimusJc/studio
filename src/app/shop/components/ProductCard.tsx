@@ -47,7 +47,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                         <ProductPreviewModal product={product}>
                              <Button
                                 variant="secondary"
-                                className="w-32 rounded-lg hover:bg-primary/90 hover:text-primary-foreground"
+                                className="w-32 rounded-3xl hover:bg-red-600 hover:text-primary-foreground"
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                              >
                                 See Preview
@@ -55,7 +55,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                         </ProductPreviewModal>
                         <Button
                             variant="secondary"
-                            className="w-32 rounded-lg hover:bg-primary/90 hover:text-primary-foreground"
+                            className="w-32 rounded-3xl hover:bg-red-600 hover:text-primary-foreground"
                             onClick={handleSimilarClick}
                         >
                             Similar Items
