@@ -42,7 +42,17 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                     data-ai-hint={product.imageHint}
                     priority={priority}
                 />
-                <div className="absolute inset-0 bg-black/40 hidden md:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            </div>
+            <CardContent className="relative p-3 flex-grow flex flex-col bg-white rounded-b-lg">
+                <div className="transition-opacity duration-300 group-hover:opacity-0">
+                    <h3 className="text-base font-bold text-gray-800">{product.productCode}</h3>
+                    <p className="text-sm text-gray-600 flex-grow mt-1">{product.productTitle}</p>
+                    <div className="text-xs text-gray-500 mt-1">Dimensions: {product.specifications || 'N/A'}</div>
+                    <div className="mt-3">
+                        <Badge variant="outline" className="border-gray-300 text-gray-600">Premium Quality</Badge>
+                    </div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="flex flex-col gap-2">
                         <ProductPreviewModal product={product}>
                              <Button
@@ -61,14 +71,6 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                             Similar Items
                         </Button>
                     </div>
-                </div>
-            </div>
-            <CardContent className="p-3 flex-grow flex flex-col bg-white rounded-b-lg">
-                <h3 className="text-base font-bold text-gray-800">{product.productCode}</h3>
-                <p className="text-sm text-gray-600 flex-grow mt-1">{product.productTitle}</p>
-                <div className="text-xs text-gray-500 mt-1">Dimensions: {product.specifications || 'N/A'}</div>
-                <div className="mt-3">
-                    <Badge variant="outline" className="border-gray-300 text-gray-600">Premium Quality</Badge>
                 </div>
             </CardContent>
         </Card>
