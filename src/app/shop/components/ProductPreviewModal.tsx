@@ -6,10 +6,6 @@ import type { Product } from '@/types';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
@@ -19,25 +15,19 @@ import { Button } from '@/components/ui/button';
 
 interface ProductPreviewModalProps {
   product: Product;
-  children: React.ReactNode; // The trigger button
+  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
-    if (!value && value !== 0) return null;
-    return (
-        <div>
-            <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            <div className="text-base">{value}</div>
-        </div>
-    )
-}
-
-export function ProductPreviewModal({ product, children }: ProductPreviewModalProps) {
+export function ProductPreviewModal({ product, children, open, onOpenChange }: ProductPreviewModalProps) {
     const [activeImage, setActiveImage] = React.useState<string>(product.productImages?.[0] || '');
     
     React.useEffect(() => {
-        setActiveImage(product.productImages?.[0] || '');
-    }, [product]);
+        if (open) {
+            setActiveImage(product.productImages?.[0] || '');
+        }
+    }, [open, product.productImages]);
 
     const allImages = React.useMemo(() => {
         if (!product) return [];
@@ -72,8 +62,8 @@ export function ProductPreviewModal({ product, children }: ProductPreviewModalPr
     const whatsAppUrl = `https://wa.me/?text=${generateWhatsAppMessage()}`;
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {children}
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
         <ScrollArea className="flex-grow">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
