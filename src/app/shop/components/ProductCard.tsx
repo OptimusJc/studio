@@ -53,7 +53,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                     </div>
                 </div>
                 <div className="absolute left-0 right-0 -bottom-1 transform translate-y-full w-full bg-white p-3 rounded-b-3xl shadow-lg border-t border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto">
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex justify-center items-center gap-2">
                         <ProductPreviewModal product={product}>
                              <Button
                                 variant="secondary"
