@@ -282,7 +282,7 @@ function ProductDetailPageContent() {
                             <div className="grid grid-cols-2 text-sm">
                                 {Object.entries(product.attributes).map(([key, value], index) => (
                                     <div key={key} className={`grid grid-cols-2 items-center ${index >= 2 ? 'border-t' : ''}`}>
-                                        <div className={`font-medium capitalize p-3 bg-gray-200 dark:bg-gray-700 border-r ${index % 2 === 0 ? 'border-r' : ''}`}>{key}</div>
+                                        <div className={`font-medium capitalize p-3 bg-gray-200 dark:bg-gray-700 ${index % 2 === 0 ? 'border-r' : ''}`}>{key}</div>
                                         <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
                                     </div>
                                 ))}
@@ -324,9 +324,7 @@ function ProductDetailPageContent() {
                 <h2 className="text-2xl font-bold mb-6">Related Items</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
                      {relatedProducts.map(related => (
-                        <Link key={related.id} href={`/shop/${related.id}`} className="h-full">
-                            <ProductCard product={related} />
-                        </Link>
+                        <ProductCard key={related.id} product={related} />
                      ))}
                 </div>
             </div>
