@@ -249,7 +249,7 @@ function CatalogContent() {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                                 {filteredProducts.map((product, index) => (
                                    <ProductCard key={product.id} product={product} priority={index < 4} />
                                 ))}
