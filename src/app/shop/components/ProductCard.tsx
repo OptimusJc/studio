@@ -6,7 +6,6 @@ import type { Product } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ProductPreviewModal } from './ProductPreviewModal';
 import { useState } from 'react';
@@ -20,9 +19,12 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const router = useRouter();
   const [isModalOpen, setModalOpen] = useState(false);
 
+  const handleCardClick = () => {
+    router.push(`/shop/${product.id}`);
+  };
+
   const handleSimilarClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent card's onClick from firing
     
     const filters = {
       category: [product.category],
@@ -32,14 +34,16 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   };
 
   const handlePreviewClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent card's onClick from firing
     setModalOpen(true);
   };
 
   return (
-    <Link href={`/shop/${product.id}`} className="group block h-full" prefetch={false}>
-      <Card className="flex flex-col overflow-hidden h-full bg-white shadow-sm group-hover:shadow-lg transition-shadow duration-300 rounded-3xl border border-gray-200">
+    <div
+      className="group block h-full cursor-pointer"
+      onClick={handleCardClick}
+    >
+      <Card className="flex flex-col overflow-hidden h-full bg-white shadow-sm group-hover:shadow-lg transition-shadow duration-300 rounded-3xl border border-gray-200 relative">
         <div className="aspect-[5/4] relative rounded-t-lg overflow-hidden">
           <Image
             src={product.imageUrl}
@@ -78,6 +82,6 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </div>
         </CardContent>
       </Card>
-    </Link>
+    </div>
   );
 }
