@@ -227,26 +227,28 @@ function ProductDetailPageContent() {
       <ProductDetailHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
-            <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground/50">
                 <Link href="/shop" prefetch={false}>
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Back to Catalog
                 </Link>
             </Button>
         </div>
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
-            <div className="flex flex-col md:flex-row-reverse gap-4">
-                <div className="aspect-[5/4] w-full rounded-xl overflow-hidden bg-muted relative flex-grow">
-                    {activeImage && (
-                        <Image 
-                            src={activeImage} 
-                            alt={product.name} 
-                            fill 
-                            sizes="(max-width: 768px) 100vw, 50vw"
-                            className="object-cover" 
-                            priority 
-                        />
-                    )}
+        <div className="grid md:grid-cols-2 lg:grid-flow-col gap-8 lg:gap-10">
+            <div className="col-span-4 flex flex-col grow md:flex-row-reverse gap-4">
+                <div className="flex-grow bg-gray-100 dark:bg-gray-800/50 rounded-2xl px-4">
+                    <div className="aspect-[5/4] w-full rounded-xl overflow-hidden bg-muted relative">
+                        {activeImage && (
+                            <Image 
+                                src={activeImage} 
+                                alt={product.name} 
+                                fill 
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                className="object-cover" 
+                                priority 
+                            />
+                        )}
+                    </div>
                 </div>
                  <div className="flex flex-row md:flex-col gap-3 md:w-20 flex-shrink-0">
                     {allImages.map((img, index) => (
@@ -322,7 +324,7 @@ function ProductDetailPageContent() {
         {relatedProducts.length > 0 && (
              <div className="mt-16 lg:mt-24">
                 <h2 className="text-2xl font-bold mb-6">Related Items</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                      {relatedProducts.map(related => (
                         <ProductCard key={related.id} product={related} />
                      ))}
