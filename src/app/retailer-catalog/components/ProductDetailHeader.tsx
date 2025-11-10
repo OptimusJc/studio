@@ -6,13 +6,13 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Menu } from 'lucide-react';
 import Link from 'next/link';
+import { Logo } from '@/components/icons/Logo';
 
-function Logo({ basePath }: { basePath: string }) {
+
+function AppLogo({ basePath }: { basePath: string }) {
     return (
         <Link href={basePath} className="flex items-center space-x-2">
-            <span className="font-bold text-2xl font-logo">
-                <span className="text-red-600">Ruby</span> Catalogue
-            </span>
+            <Logo />
         </Link>
     )
 }
@@ -59,7 +59,7 @@ export default function ProductDetailHeader({ basePath = '/' }: { basePath?: str
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <Logo basePath={basePath} />
+        <AppLogo basePath={basePath} />
         
         <div className="hidden lg:flex flex-1 justify-end">
             <CategoryNav basePath={basePath} />
@@ -75,7 +75,7 @@ export default function ProductDetailHeader({ basePath = '/' }: { basePath?: str
                 <SheetContent side="right" className="w-full max-w-xs">
                     <div className="p-4">
                         <div className="mb-8">
-                            <Logo basePath={basePath}/>
+                            <AppLogo basePath={basePath}/>
                         </div>
                         <CategoryNav 
                             className="flex-col items-start gap-4"

@@ -1,21 +1,13 @@
-import type { SVGProps } from 'react';
+import Image from 'next/image';
 
-export function Logo(props: SVGProps<SVGSVGElement>) {
+export function Logo() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72" />
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72" />
-    </svg>
+    <Image
+      src="https://firebasestorage.googleapis.com/v0/b/studio-56609462-aefda.appspot.com/o/assets%2Flogo.png?alt=media&token=8d249539-5586-4531-b856-787c9343e0e7"
+      alt="Ruby Catalogue Logo"
+      width={140}
+      height={32}
+      priority
+    />
   );
 }
