@@ -234,92 +234,119 @@ function ProductDetailPageContent() {
                 </Link>
             </Button>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-flow-col gap-8 lg:gap-10">
-            <div className="col-span-4 flex flex-col grow md:flex-row-reverse gap-4">
-                <div className="flex-grow bg-gray-100 dark:bg-gray-800/50 rounded-2xl px-4">
-                    <div className="aspect-[5/4] w-full rounded-xl overflow-hidden bg-muted relative">
-                        {activeImage && (
-                            <Image 
-                                src={activeImage} 
-                                alt={product.name} 
-                                fill 
-                                sizes="(max-width: 768px) 100vw, 50vw"
-                                className="object-cover" 
-                                priority 
-                            />
-                        )}
-                    </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6 lg:gap-10">
+    {/* Image Section */}
+    <div className="flex flex-col md:flex-row gap-4">
+        {/* Thumbnail Gallery - Left side on desktop, top on mobile */}
+        <div className="flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 md:pb-0 px-1 md:w-24 flex-shrink-0 order-2 md:order-1">
+            {allImages.map((img, index) => (
+                <div 
+                    key={index} 
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${activeImage === img ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}
+                    onClick={() => setActiveImage(img)}
+                >
+                    <Image 
+                        src={img} 
+                        alt={`${product.name} thumbnail ${index + 1}`} 
+                        width={80} 
+                        height={80} 
+                        className="object-cover w-full h-full"
+                    />
                 </div>
-                 <div className="flex flex-row md:flex-col gap-3 md:w-20 flex-shrink-0">
-                    {allImages.map((img, index) => (
-                        <div key={index} 
-                             className={`aspect-square w-full rounded-lg overflow-hidden border-2 cursor-pointer ${activeImage === img ? 'border-primary' : 'border-transparent'}`}
-                             onClick={() => setActiveImage(img)}
-                        >
-                            <Image src={img} alt={`${product.name} thumbnail ${index + 1}`} width={100} height={100} className="object-cover w-full h-full"/>
-                        </div>
-                    ))}
+            ))}
+        </div>
+        
+        {/* Main Image */}
+        <div className="flex-grow order-1 md:order-2">
+            <div className="bg-gray-200 dark:bg-gray-800/50 rounded-2xl py-4 md:p-4 h-full flex items-center justify-center">
+                <div className="aspect-[5/4] w-full max-w-2xl rounded-xl overflow-hidden bg-muted relative">
+                    {activeImage && (
+                        <Image 
+                            src={activeImage} 
+                            alt={product.name} 
+                            fill 
+                            sizes="(max-width: 1024px) 100vw, 50vw"
+                            className="object-cover" 
+                            priority 
+                        />
+                    )}
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div className="py-4 space-y-4">
+    {/* Product Details Section */}
+    <div className="space-y-6">
+        {/* Title and Description */}
+        <div>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-mono">{product.productCode}</h1>
+            <p className="mt-2 text-base sm:text-lg text-muted-foreground">{product.productTitle}</p>
+        </div>
+        
+        {/* Product Description */}
+        {product.productDescription && (
+            <div>
+                <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-2">Description</h2>
+                <p className="text-sm leading-relaxed text-foreground/80">{product.productDescription}</p>
+            </div>
+        )}
+        
+        {/* Attributes/Details */}
+        {Object.keys(product.attributes).length > 0 && (
+            <>
+                <Separator />
                 <div>
-                    <h1 className="text-4xl lg:text-5xl font-bold font-mono">{product.productCode}</h1>
-                    <p className="mt-2 text-lg text-muted-foreground">{product.productTitle}</p>
-                </div>
-                
-                {product.productDescription && (
-                    <div>
-                        <h2 className="text-md font-semibold">Description</h2>
-                        <p className="mt-1 text-sm text-muted-foreground">{product.productDescription}</p>
-                    </div>
-                )}
-                
-                {Object.keys(product.attributes).length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <h2 className="text-md font-semibold mb-3">Details</h2>
-                        <div className="border rounded-lg overflow-hidden">
-                            <div className="grid grid-cols-2 text-sm">
-                                {Object.entries(product.attributes).map(([key, value], index) => (
-                                    <div key={key} className={`grid grid-cols-2 items-center ${index >= 2 ? 'border-t' : ''}`}>
-                                        <div className={`font-medium capitalize p-3 bg-gray-200 dark:bg-gray-700 ${index % 2 === 0 ? 'border-r' : ''}`}>{key}</div>
-                                        <div className="text-muted-foreground p-3">{Array.isArray(value) ? value.join(', ') : value}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                  </>
-                )}
-
-                {specificationItems.length > 0 && (
-                    <div className="space-y-3">
-                        <Separator />
-                        <h2 className="text-md font-semibold">Specifications</h2>
-                        <div className="space-y-1 text-sm">
-                            {specificationItems.map((item, index) => (
-                                item && <div key={index}>
-                                    <span className="font-medium">{item.key}:</span>
-                                    <span className="text-muted-foreground ml-2">{item.value}</span>
+                    <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-3">Details</h2>
+                    <div className="border rounded-lg overflow-hidden">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                            {Object.entries(product.attributes).map(([key, value], index) => (
+                                <div key={key} className="grid grid-cols-2 text-sm border-b last:border-b-0 lg:border-b lg:last:border-b-0 lg:even:border-l">
+                                    <div className="font-medium capitalize p-3 bg-gray-100 dark:bg-gray-800">{key}</div>
+                                    <div className="text-muted-foreground p-3 bg-white dark:bg-gray-900">{Array.isArray(value) ? value.join(', ') : value}</div>
                                 </div>
                             ))}
                         </div>
                     </div>
-                )}
-                
-                <div className="pt-4">
-                    <Button asChild size="lg" className="bg-green-500 hover:bg-green-600 rounded-full text-white">
-                        <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
-                          <WhatsAppIcon className="mr-2 h-5 w-5"/>
-                          Share on WhatsApp
-                        </a>
-                    </Button>
                 </div>
+            </>
+        )}
 
-            </div>
+        {/* Specifications */}
+        {specificationItems.length > 0 && (
+            <>
+                <Separator />
+                <div>
+                    <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-3">Specifications</h2>
+                    <div className="space-y-2 text-sm">
+                        {specificationItems.map((item, index) => (
+                            item && (
+                                <div key={index} className="flex flex-wrap gap-1">
+                                    <span className="font-medium">{item.key}:</span>
+                                    <span className="text-muted-foreground">{item.value}</span>
+                                </div>
+                            )
+                        ))}
+                    </div>
+                </div>
+            </>
+        )}
+        
+        {/* WhatsApp Button */}
+        <div className="pt-4">
+            <Button 
+                asChild 
+                size="lg" 
+                className="w-full sm:w-auto bg-green-500 hover:bg-green-600 rounded-full text-white"
+            >
+                <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
+                    <WhatsAppIcon className="mr-2 h-5 w-5"/>
+                    Share on WhatsApp
+                </a>
+            </Button>
         </div>
+    </div>
+</div>
 
         {relatedProducts.length > 0 && (
              <div className="mt-16 lg:mt-24">
