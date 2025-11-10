@@ -13,14 +13,15 @@ import { useState } from 'react';
 type ProductCardProps = {
   product: Product;
   priority?: boolean;
+  basePath: string;
 };
 
-export default function ProductCard({ product, priority = false }: ProductCardProps) {
+export default function ProductCard({ product, priority = false, basePath }: ProductCardProps) {
   const router = useRouter();
   const [isModalOpen, setModalOpen] = useState(false);
 
   const handleCardClick = () => {
-    router.push(`/retailer-catalog/${product.id}`);
+    router.push(`${basePath}/${product.id}`);
   };
 
   const handleSimilarClick = (e: React.MouseEvent) => {
@@ -30,7 +31,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
       category: [product.category],
     };
     const encodedFilters = btoa(JSON.stringify(filters));
-    router.push(`/retailer-catalog?filters=${encodedFilters}`);
+    router.push(`${basePath}?filters=${encodedFilters}`);
   };
 
   const handlePreviewClick = (e: React.MouseEvent) => {
@@ -55,7 +56,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             priority={priority}
           />
           <div onClick={(e) => e.stopPropagation()} className="absolute inset-0 bg-black/50 flex flex-col justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <ProductPreviewModal product={product} open={isModalOpen} onOpenChange={setModalOpen}>
+            <ProductPreviewModal product={product} open={isModalOpen} onOpenChange={setModalOpen} basePath={basePath}>
               <Button
                 variant="secondary"
                 className="w-32 rounded-3xl hover:bg-red-600 hover:text-white"

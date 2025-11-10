@@ -18,9 +18,10 @@ interface ProductPreviewModalProps {
   children: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  basePath: string;
 }
 
-export function ProductPreviewModal({ product, children, open, onOpenChange }: ProductPreviewModalProps) {
+export function ProductPreviewModal({ product, children, open, onOpenChange, basePath }: ProductPreviewModalProps) {
     const [activeImage, setActiveImage] = React.useState<string>(product.productImages?.[0] || '');
     
     React.useEffect(() => {
@@ -53,7 +54,7 @@ export function ProductPreviewModal({ product, children, open, onOpenChange }: P
         message += `Title: ${product.productTitle}\n`;
         
         if (typeof window !== 'undefined') {
-          message += `\nLink: ${window.location.origin}/retailer-catalog/${product.id}`;
+          message += `\nLink: ${window.location.origin}${basePath}/${product.id}`;
         }
     
         return encodeURIComponent(message);

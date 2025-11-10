@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 type HeaderProps = {
+  basePath: string;
   categories?: Category[];
   appliedFilters?: Record<string, any[]>;
   onFilterChange?: (filters: Record<string, any[]>) => void;
@@ -20,9 +21,9 @@ type HeaderProps = {
   openMobileFilters: () => void;
 };
 
-function Logo() {
+function Logo({ basePath }: { basePath: string }) {
     return (
-        <Link href="/retailer-catalog" className="flex items-center space-x-2">
+        <Link href={basePath} className="flex items-center space-x-2">
             <span className="font-bold text-2xl font-logo">
                 <span className="text-red-600">Ruby</span> Catalogue
             </span>
@@ -76,7 +77,7 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
 }
 
 
-export default function Header({ categories, appliedFilters, onFilterChange, searchTerm, setSearchTerm, openMobileFilters }: HeaderProps) {
+export default function Header({ basePath, categories, appliedFilters, onFilterChange, searchTerm, setSearchTerm, openMobileFilters }: HeaderProps) {
   const hasNav = !!(categories && appliedFilters && onFilterChange);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
@@ -89,7 +90,7 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <Logo />
+        <Logo basePath={basePath} />
         
         {hasNav && (
             <div className="hidden lg:flex flex-1 justify-end">
@@ -144,7 +145,7 @@ export default function Header({ categories, appliedFilters, onFilterChange, sea
                     <SheetContent side="right" className="w-full max-w-xs">
                         <div className="p-4">
                             <div className="mb-8">
-                                <Logo />
+                                <Logo basePath={basePath} />
                             </div>
                             <CategoryNav 
                                 categories={categories} 

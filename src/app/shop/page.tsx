@@ -200,7 +200,8 @@ function CatalogContent() {
 
   return (
     <div className="bg-muted/40 min-h-screen">
-      <Header 
+      <Header
+        basePath="/shop"
         categories={memoizedCategories} 
         appliedFilters={filters}
         onFilterChange={setFilters}
@@ -245,16 +246,16 @@ function CatalogContent() {
                     </Dialog>
 
                      {isLoading ? (
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-96 w-full rounded-lg" />
                             ))}
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 {filteredProducts.map((product, index) => (
-                                   <ProductCard key={product.id} product={product} priority={index < 4} />
+                                   <ProductCard key={product.id} product={product} priority={index < 4} basePath="/shop" />
                                 ))}
                             </div>
                             {filteredProducts.length === 0 && (
