@@ -6,6 +6,8 @@ import type { Product } from '@/types';
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
@@ -83,6 +85,9 @@ export function ProductPreviewModal({ product, children, open, onOpenChange, bas
             e.stopPropagation();
         }}
       >
+        <DialogHeader className="sr-only">
+          <DialogTitle>Product Preview: {product.name}</DialogTitle>
+        </DialogHeader>
         <ScrollArea className="flex-grow">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
                 <div className="p-6 flex flex-col gap-4">
