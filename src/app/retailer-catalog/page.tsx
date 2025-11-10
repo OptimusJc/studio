@@ -201,6 +201,7 @@ function CatalogContent() {
   return (
     <div className="bg-muted/40 min-h-screen">
       <Header 
+        basePath="/retailer-catalog"
         categories={memoizedCategories} 
         appliedFilters={filters}
         onFilterChange={setFilters}
@@ -254,7 +255,7 @@ function CatalogContent() {
                         <>
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                                 {filteredProducts.map((product, index) => (
-                                   <ProductCard key={product.id} product={product} priority={index < 4} />
+                                   <ProductCard key={product.id} product={product} priority={index < 4} basePath="/retailer-catalog" />
                                 ))}
                             </div>
                             {filteredProducts.length === 0 && (
