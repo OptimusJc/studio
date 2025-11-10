@@ -115,7 +115,7 @@ export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminS
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <Logo />
+          <Logo className="dark:invert" />
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
