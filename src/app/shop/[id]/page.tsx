@@ -259,7 +259,7 @@ function ProductDetailPageContent() {
         
         {/* Main Image */}
         <div className="flex-grow order-1 md:order-2">
-            <div className="bg-gray-100 dark:bg-gray-800/50 rounded-2xl py-4 md:p-4 h-full flex items-center justify-center">
+            <div className="bg-gray-200 dark:bg-gray-800/50 rounded-2xl py-4 md:p-4 h-full flex items-center justify-center">
                 <div className="aspect-[5/4] w-full max-w-2xl rounded-xl overflow-hidden bg-muted relative">
                     {activeImage && (
                         <Image 
