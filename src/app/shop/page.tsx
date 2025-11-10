@@ -6,9 +6,9 @@ import { useSearchParams } from 'next/navigation';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, getDocs, DocumentData, where } from 'firebase/firestore';
 import type { Product, Category, Attribute } from '@/types';
-import Header from '../catalog/components/Header';
-import FacetedSearch from '../catalog/components/FacetedSearch';
-import ProductCard from '../catalog/components/ProductCard';
+import Header from '@/app/retailer-catalog/components/Header';
+import FacetedSearch from '@/app/retailer-catalog/components/FacetedSearch';
+import ProductCard from '@/app/retailer-catalog/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Search, X } from 'lucide-react';
@@ -245,14 +245,14 @@ function CatalogContent() {
                     </Dialog>
 
                      {isLoading ? (
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                             {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-96 w-full rounded-lg" />
                             ))}
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                                 {filteredProducts.map((product, index) => (
                                    <ProductCard key={product.id} product={product} priority={index < 4} />
                                 ))}
@@ -296,7 +296,7 @@ function ShopPageSkeleton() {
                             <Skeleton className="h-12 w-28 lg:hidden" />
                             <Skeleton className="h-12 flex-1" />
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                             {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-80 w-full" />
                             ))}

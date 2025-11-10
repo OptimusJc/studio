@@ -7,13 +7,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, getDocs, where, limit, DocumentData, doc, getDoc } from 'firebase/firestore';
 import type { Product, Category } from '@/types';
-import ProductCard from '../../catalog/components/ProductCard';
+import ProductCard from '@/app/retailer-catalog/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { WhatsAppIcon } from '@/components/icons/WhatsappIcon';
 import Link from 'next/link';
-import ProductDetailHeader from '../../catalog/components/ProductDetailHeader';
+import ProductDetailHeader from '@/app/retailer-catalog/components/ProductDetailHeader';
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft } from 'lucide-react';
 
@@ -224,7 +224,7 @@ function ProductDetailPageContent() {
 
   return (
     <>
-      <ProductDetailHeader />
+      <ProductDetailHeader basePath="/shop"/>
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
             <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground/50">
