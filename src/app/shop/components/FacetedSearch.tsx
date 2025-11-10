@@ -1,24 +1,27 @@
 
 'use client';
 
-import type { Attribute } from '@/types';
+import type { Category, Attribute } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { X } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { useState, useEffect } from 'react';
 
 type FacetedSearchProps = {
+  categories: Category[];
   attributes: Attribute[];
   appliedFilters: Record<string, any[]>;
   onFilterChange: (filters: Record<string, any[]>) => void;
-  isMobile?: boolean;
-  onClose?: () => void;
 };
 
-export default function FacetedSearch({ attributes, appliedFilters, onFilterChange, isMobile, onClose }: FacetedSearchProps) {
+export default function FacetedSearch({ categories, attributes, appliedFilters, onFilterChange }: FacetedSearchProps) {
+  const [priceRange, setPriceRange] = useState(appliedFilters.price || [0, 1000]);
+
+  useEffect(() => {
+    setPriceRange(appliedFilters.price || [0, 1000]);
+  }, [appliedFilters.price]);
+
 
   const handleCheckedChange = (filterKey: string, value: string, checked: boolean) => {
     const newFilters = { ...appliedFilters };
@@ -30,102 +33,91 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
       newFilters[filterKey] = currentValues.filter((v) => v !== value);
     }
     
-    if (newFilters[filterKey].length === 0) {
-      delete newFilters[filterKey];
-    }
-    
     onFilterChange(newFilters);
   };
   
-  const handleResetFilters = () => {
-    onFilterChange({});
+  const handlePriceChange = (newRange: number[]) => {
+      setPriceRange(newRange);
   }
 
-  if (isMobile) {
-    return (
-      <div className="flex flex-col h-full bg-background">
-        <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
-          <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-8 w-8" />
-          </Button>
-          <h3 className="text-lg font-semibold">Filters</h3>
-          <Button variant="link" className="p-0 h-auto text-sm" onClick={handleResetFilters}>
-              Reset All
-          </Button>
-        </div>
-
-        <ScrollArea className="flex-1">
-            <div className="p-4">
-                <Accordion type="multiple" className="w-full">
-                    {attributes.map((attribute) => (
-                    <AccordionItem key={attribute.id} value={attribute.id}>
-                        <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
-                        <AccordionContent className="pt-2">
-                        <div className="grid gap-y-3">
-                            {attribute.values.map((value) => (
-                            <div key={value} className="flex items-center space-x-2">
-                                <Checkbox
-                                id={`attr-${attribute.id}-${value}-mobile`}
-                                checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value) || false}
-                                onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
-                                />
-                                <Label
-                                htmlFor={`attr-${attribute.id}-${value}-mobile`}
-                                className="font-normal text-gray-700 leading-tight"
-                                >
-                                {value}
-                                </Label>
-                            </div>
-                            ))}
-                        </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                    ))}
-                </Accordion>
-            </div>
-        </ScrollArea>
-        
-        <div className="p-4 border-t sticky bottom-0 bg-background z-10">
-            <Button className="w-full" size="lg" onClick={onClose}>Apply Filters</Button>
-        </div>
-      </div>
-    );
+  const handlePriceCommit = (newRange: number[]) => {
+    onFilterChange({ ...appliedFilters, price: newRange });
   }
 
   return (
-    <div className="w-full bg-white p-6 rounded-lg shadow-sm">
-       <div className="flex items-center justify-between border-b pb-4 mb-4">
-        <h3 className="text-lg font-semibold">Filters</h3>
-        <Button variant="link" className="p-0 h-auto text-sm" onClick={handleResetFilters}>
-            Reset All
-        </Button>
-      </div>
-      <Accordion type="multiple" className="w-full">
-        {attributes.map((attribute) => (
-          <AccordionItem key={attribute.id} value={attribute.id}>
-            <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
-            <AccordionContent className="pt-2">
-              <div className="grid gap-y-3">
-                {attribute.values.map((value) => (
-                  <div key={value} className="flex items-center space-x-2">
+    <Card className="sticky top-20">
+      <CardHeader>
+        <CardTitle>Filter Products</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Accordion type="multiple" defaultValue={['category', 'price', ...attributes.map(a => a.id)]} className="w-full">
+          <AccordionItem value="category">
+            <AccordionTrigger>Category</AccordionTrigger>
+            <AccordionContent>
+              <div className="grid gap-2">
+                {categories.map((category) => (
+                  <div key={category.id} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`attr-${attribute.id}-${value}`}
-                      checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value) || false}
-                      onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
+                      id={`cat-${category.id}`}
+                      checked={appliedFilters.category?.includes(category.name)}
+                      onCheckedChange={(checked) => handleCheckedChange('category', category.name, !!checked)}
                     />
-                    <Label
-                      htmlFor={`attr-${attribute.id}-${value}`}
-                      className="font-normal text-gray-700 leading-tight"
+                    <label
+                      htmlFor={`cat-${category.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      {value}
-                    </Label>
+                      {category.name}
+                    </label>
                   </div>
                 ))}
               </div>
             </AccordionContent>
           </AccordionItem>
-        ))}
-      </Accordion>
-    </div>
+          <AccordionItem value="price">
+            <AccordionTrigger>Price Range</AccordionTrigger>
+            <AccordionContent>
+              <div className="p-2">
+                <Slider
+                  min={0}
+                  max={1000}
+                  step={10}
+                  value={priceRange}
+                  onValueChange={handlePriceChange}
+                  onValueCommit={handlePriceCommit}
+                />
+                <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                  <span>${priceRange[0]}</span>
+                  <span>${priceRange[1]}</span>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          {attributes.map((attribute) => (
+            <AccordionItem key={attribute.id} value={attribute.id}>
+              <AccordionTrigger>{attribute.name}</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-2">
+                  {attribute.values.map((value) => (
+                    <div key={value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`attr-${attribute.id}-${value}`}
+                        checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value)}
+                        onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
+                      />
+                      <label
+                        htmlFor={`attr-${attribute.id}-${value}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {value}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </CardContent>
+    </Card>
   );
 }

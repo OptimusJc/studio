@@ -30,7 +30,7 @@ function RowActions({ product }: { product: Product }) {
       category: [product.category],
     };
     const encodedFilters = btoa(JSON.stringify(filters));
-    const basePath = product.db === 'retailers' ? '/retailer-catalog' : '/shop';
+    const basePath = product.db === 'retailers' ? '/catalog' : '/shop';
     return `${window.location.origin}${basePath}?filters=${encodedFilters}`;
   };
 
