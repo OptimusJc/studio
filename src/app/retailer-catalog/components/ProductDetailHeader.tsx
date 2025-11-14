@@ -6,25 +6,32 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Menu } from 'lucide-react';
 import Link from 'next/link';
+import { Logo } from '@/components/icons/Logo';
 
-function Logo() {
+
+function AppLogo({ basePath }: { basePath: string }) {
     return (
-        <Link href="/shop" className="flex items-center space-x-2">
-            <span className="font-bold text-2xl font-logo">
-                <span className="text-red-600">Ruby</span> Catalogue
-            </span>
+        <Link href={basePath || '/'} className="flex items-center space-x-2">
+            <Logo />
         </Link>
     )
 }
 
-function CategoryNav({ className }: { className?: string }) {
+function CategoryNav({ className, basePath }: { className?: string, basePath: string }) {
+    
+    const getCategoryFilterUrl = (categoryName: string) => {
+        const filters = { category: [categoryName] };
+        const encodedFilters = btoa(JSON.stringify(filters));
+        return `${basePath}?filters=${encodedFilters}`;
+    }
+
     const displayCategories = [
-        { id: 'all', name: 'All Categories', href: '/shop' },
-        { id: 'cat_01', name: 'Wallpapers', href: '/shop?filters=eyJjYXRlZ29yeSI6WyJXYWxscGFwZXJzIl19' },
-        { id: 'cat_03', name: 'Wall Murals', href: '/shop?filters=eyJjYXRlZ29yeSI6WyJXYWxsIE11cmFscyJdfQ%3D%3D' },
-        { id: 'cat_02', name: 'Window Blinds', href: '/shop?filters=eyJjYXRlZ29yeSI6WyJXaW5kb3cgQmxpbmRzIl19' },
-        { id: 'cat_05', name: 'Window Films', href: '/shop?filters=eyJjYXRlZ29yeSI6WyJXaW5kb3cgRmlsbXMiXX0%3D' },
-        { id: 'cat_04', name: 'Carpets', href: '/shop?filters=eyJjYXRlZ29yeSI6WyJDYXJwZXRzIl19' },
+        { id: 'all', name: 'All Categories', href: basePath },
+        { id: 'cat_01', name: 'Wallpapers', href: getCategoryFilterUrl('Wallpapers') },
+        { id: 'cat_03', name: 'Wall Murals', href: getCategoryFilterUrl('Wall Murals') },
+        { id: 'cat_02', name: 'Window Blinds', href: getCategoryFilterUrl('Window Blinds') },
+        { id: 'cat_05', name: 'Window Films', href: getCategoryFilterUrl('Window Films') },
+        { id: 'cat_04', name: 'Carpets', href: getCategoryFilterUrl('Carpets') },
     ];
 
     return (
@@ -48,14 +55,14 @@ function CategoryNav({ className }: { className?: string }) {
 }
 
 
-export default function ProductDetailHeader() {
+export default function ProductDetailHeader({ basePath = '/' }: { basePath?: string }) {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <Logo />
+        <AppLogo basePath={basePath} />
         
         <div className="hidden lg:flex flex-1 justify-end">
-            <CategoryNav />
+            <CategoryNav basePath={basePath} />
         </div>
 
         <div className="lg:hidden flex items-center gap-1">
@@ -68,10 +75,11 @@ export default function ProductDetailHeader() {
                 <SheetContent side="right" className="w-full max-w-xs">
                     <div className="p-4">
                         <div className="mb-8">
-                            <Logo />
+                            <AppLogo basePath={basePath}/>
                         </div>
                         <CategoryNav 
                             className="flex-col items-start gap-4"
+                            basePath={basePath}
                         />
                     </div>
                 </SheetContent>

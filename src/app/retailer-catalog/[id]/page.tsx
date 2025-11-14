@@ -7,13 +7,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, getDocs, where, limit, DocumentData, doc, getDoc } from 'firebase/firestore';
 import type { Product, Category } from '@/types';
-import ProductCard from '@/app/retailer-catalog/components/ProductCard';
+import ProductCard from '../components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { WhatsAppIcon } from '@/components/icons/WhatsappIcon';
 import Link from 'next/link';
-import ProductDetailHeader from '@/app/retailer-catalog/components/ProductDetailHeader';
+import ProductDetailHeader from '../components/ProductDetailHeader';
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft } from 'lucide-react';
 
@@ -90,7 +90,7 @@ function ProductDetailPageContent() {
         
         for (const cat of categoriesData) {
             const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
-            const liveCollectionPath = `buyers/${categorySlug}/products`;
+            const liveCollectionPath = `retailers/${categorySlug}/products`;
             try {
                 const productRef = doc(firestore, liveCollectionPath, productId);
                 const productSnap = await getDoc(productRef);
@@ -104,7 +104,7 @@ function ProductDetailPageContent() {
                             name: data.productTitle,
                             imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
                             category: cat.name,
-                            db: 'buyers',
+                            db: 'retailers',
                         } as Product;
                         productCategoryName = cat.name;
                         break; // Found the product, no need to search further
@@ -122,7 +122,7 @@ function ProductDetailPageContent() {
             // Fetch related products
             if (productCategoryName) {
                  const categorySlug = productCategoryName.toLowerCase().replace(/\s+/g, '-');
-                 const relatedCollectionPath = `buyers/${categorySlug}/products`;
+                 const relatedCollectionPath = `retailers/${categorySlug}/products`;
                  const q = query(
                      collection(firestore, relatedCollectionPath), 
                      where("status", "==", "Published"),
@@ -139,7 +139,7 @@ function ProductDetailPageContent() {
                             name: data.productTitle,
                             imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
                             category: productCategoryName,
-                            db: 'buyers',
+                            db: 'retailers',
                         } as Product)
                      }
                  });
@@ -147,7 +147,7 @@ function ProductDetailPageContent() {
             }
 
         } else {
-            console.warn(`Published product with ID ${productId} not found in 'buyers' database.`);
+            console.warn(`Published product with ID ${productId} not found in 'retailers' database.`);
         }
         setIsLoading(false);
     };
@@ -182,14 +182,14 @@ function ProductDetailPageContent() {
         <div className="flex flex-col items-center justify-center h-[60vh] bg-background">
             <h2 className="text-2xl font-semibold text-muted-foreground">Product Not Found</h2>
             <p className="text-muted-foreground mt-2">The product you are looking for does not exist or is not available.</p>
-            <Button onClick={() => router.push('/shop')} className="mt-6">Back to Shop</Button>
+            <Button onClick={() => router.push('/retailer-catalog')} className="mt-6">Back to Catalog</Button>
         </div>
     );
   }
 
   const handleFilterChange = (filters: Record<string, any[]>) => {
     const encodedFilters = btoa(JSON.stringify(filters));
-    router.push(`/shop?filters=${encodedFilters}`);
+    router.push(`/retailer-catalog?filters=${encodedFilters}`);
   }
 
   const generateWhatsAppMessage = () => {
@@ -224,13 +224,13 @@ function ProductDetailPageContent() {
 
   return (
     <>
-      <ProductDetailHeader basePath="/shop"/>
+      <ProductDetailHeader basePath="/retailer-catalog"/>
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
             <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground/50">
-                <Link href="/shop" prefetch={false}>
+                <Link href="/retailer-catalog" prefetch={false}>
                     <ChevronLeft className="mr-2 h-4 w-4" />
-                    Back to Shop
+                    Back to Catalog
                 </Link>
             </Button>
         </div>
@@ -353,7 +353,7 @@ function ProductDetailPageContent() {
                 <h2 className="text-2xl font-bold mb-6">Related Items</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                      {relatedProducts.map(related => (
-                        <ProductCard key={related.id} product={related} basePath="/shop" />
+                        <ProductCard key={related.id} product={related} basePath="/retailer-catalog" />
                      ))}
                 </div>
             </div>

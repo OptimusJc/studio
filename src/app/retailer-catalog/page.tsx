@@ -6,15 +6,15 @@ import { useSearchParams } from 'next/navigation';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, getDocs, DocumentData, where } from 'firebase/firestore';
 import type { Product, Category, Attribute } from '@/types';
-import Header from '@/app/retailer-catalog/components/Header';
-import FacetedSearch from '@/app/retailer-catalog/components/FacetedSearch';
-import ProductCard from '@/app/retailer-catalog/components/ProductCard';
+import Header from './components/Header';
+import FacetedSearch from './components/FacetedSearch';
+import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Search, X } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
 
 
 function CatalogContent() {
@@ -54,8 +54,8 @@ function CatalogContent() {
           name: c.name
       }));
 
-      // We only care about published products in the buyers's database for the shop
-      const db = 'buyers';
+      // We only care about published products in the retailer's database for the catalog
+      const db = 'retailers';
 
       for (const cat of productCategories) {
         const collectionPath = `${db}/${cat.slug}/products`;
@@ -200,8 +200,8 @@ function CatalogContent() {
 
   return (
     <div className="bg-muted/40 min-h-screen">
-      <Header
-        basePath="/shop"
+      <Header 
+        basePath="/retailer-catalog"
         categories={memoizedCategories} 
         appliedFilters={filters}
         onFilterChange={setFilters}
@@ -246,16 +246,16 @@ function CatalogContent() {
                     </Dialog>
 
                      {isLoading ? (
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                             {[...Array(12)].map((_, i) => (
                                 <Skeleton key={i} className="h-96 w-full rounded-lg" />
                             ))}
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                                 {filteredProducts.map((product, index) => (
-                                   <ProductCard key={product.id} product={product} priority={index < 4} basePath="/shop" />
+                                   <ProductCard key={product.id} product={product} priority={index < 4} basePath="/retailer-catalog" />
                                 ))}
                             </div>
                             {filteredProducts.length === 0 && (
@@ -309,7 +309,7 @@ function ShopPageSkeleton() {
     )
 }
 
-export default function ShopPage() {
+export default function RetailerCatalogPage() {
     return (
         <Suspense fallback={<ShopPageSkeleton />}>
             <CatalogContent />

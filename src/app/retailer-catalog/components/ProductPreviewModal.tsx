@@ -6,6 +6,8 @@ import type { Product } from '@/types';
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
@@ -18,9 +20,10 @@ interface ProductPreviewModalProps {
   children: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  basePath: string;
 }
 
-export function ProductPreviewModal({ product, children, open, onOpenChange }: ProductPreviewModalProps) {
+export function ProductPreviewModal({ product, children, open, onOpenChange, basePath }: ProductPreviewModalProps) {
     const [activeImage, setActiveImage] = React.useState<string>(product.productImages?.[0] || '');
     
     React.useEffect(() => {
@@ -53,7 +56,7 @@ export function ProductPreviewModal({ product, children, open, onOpenChange }: P
         message += `Title: ${product.productTitle}\n`;
         
         if (typeof window !== 'undefined') {
-          message += `\nLink: ${window.location.origin}/shop/${product.id}`;
+          message += `\nLink: ${window.location.origin}${basePath}/${product.id}`;
         }
     
         return encodeURIComponent(message);
@@ -82,6 +85,9 @@ export function ProductPreviewModal({ product, children, open, onOpenChange }: P
             e.stopPropagation();
         }}
       >
+        <DialogHeader className="sr-only">
+          <DialogTitle>Product Preview: {product.name}</DialogTitle>
+        </DialogHeader>
         <ScrollArea className="flex-grow">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
                 <div className="p-6 flex flex-col gap-4">
