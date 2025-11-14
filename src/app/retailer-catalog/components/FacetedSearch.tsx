@@ -71,7 +71,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
                                 />
                                 <Label
                                 htmlFor={`attr-${attribute.id}-${value}-mobile`}
-                                className="font-normal text-gray-700 leading-tight"
+                                className="font-normal text-card-foreground leading-tight"
                                 >
                                 {value}
                                 </Label>
@@ -93,7 +93,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
   }
 
   return (
-    <div className="w-full bg-white p-6 rounded-lg shadow-sm">
+    <div className="w-full bg-card text-card-foreground p-6 rounded-lg shadow-sm">
        <div className="flex items-center justify-between border-b pb-4 mb-4">
         <h3 className="text-lg font-semibold">Filters</h3>
         <Button variant="link" className="p-0 h-auto text-sm" onClick={handleResetFilters}>
@@ -115,7 +115,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
                     />
                     <Label
                       htmlFor={`attr-${attribute.id}-${value}`}
-                      className="font-normal text-gray-700 leading-tight"
+                      className="font-normal text-card-foreground leading-tight"
                     >
                       {value}
                     </Label>
