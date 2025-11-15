@@ -36,6 +36,7 @@ function DashboardContent() {
     return collection(firestore, 'users');
   }, [firestore]);
   const { data: usersData, isLoading: isLoadingUsers } = useCollection<User>(usersCollection);
+  console.log("Data: ", usersData)
 
   const [stats, setStats] = useState({
     totalProducts: 0,
