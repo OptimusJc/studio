@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -30,6 +31,7 @@ import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
+import { manageUserRole } from '@/ai/flows/manage-user-roles-flow';
 
 interface EditUserDialogProps {
   user: User;
@@ -45,6 +47,7 @@ type UserFormValues = z.infer<typeof userSchema>;
 
 export function EditUserDialog({ user }: EditUserDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -59,17 +62,34 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
 
   const onSubmit = async (data: UserFormValues) => {
     if (!firestore) return;
+    setIsSubmitting(true);
 
-    const docRef = doc(firestore, 'users', user.id);
-    
-    setDocumentNonBlocking(docRef, data, { merge: true });
+    try {
+        // Step 1: Update custom claims if the role has changed.
+        if (data.role !== user.role) {
+            await manageUserRole({ uid: user.id, role: data.role });
+        }
+        
+        // Step 2: Update the user profile document in Firestore.
+        const docRef = doc(firestore, 'users', user.id);
+        setDocumentNonBlocking(docRef, data, { merge: true });
 
-    toast({
-      title: 'User Updated',
-      description: `The user "${data.name}" has been successfully updated.`,
-    });
-    
-    setIsOpen(false);
+        toast({
+            title: 'User Updated',
+            description: `The user "${data.name}" has been successfully updated.`,
+        });
+        
+        setIsOpen(false);
+    } catch (error) {
+        console.error("Error updating user:", error);
+        toast({
+            variant: "destructive",
+            title: 'Failed to Update User',
+            description: (error as Error).message,
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
   const handleOpenChange = (open: boolean) => {
@@ -119,7 +139,7 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="e.g. john.doe@example.com" {...field} />
+                    <Input type="email" placeholder="e.g. john.doe@example.com" {...field} disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,7 +167,9 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
               )}
             />
             <DialogFooter>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </Button>
             </DialogFooter>
           </form>
         </Form>

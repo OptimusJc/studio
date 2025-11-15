@@ -25,13 +25,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFirestore, useAuth } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { manageUserRole } from '@/ai/flows/manage-user-roles-flow';
 
 const userSchema = z.object({
   name: z.string().min(1, 'User name is required.'),
@@ -80,6 +79,10 @@ export function AddUserDialog() {
         const userCredential = await createUserWithEmailAndPassword(secondaryAuth, data.email, data.password);
         const newUser = userCredential.user;
 
+        // Step 1: Set custom claims for the new user
+        await manageUserRole({ uid: newUser.uid, role: data.role });
+
+        // Step 2: Create the user profile document in Firestore
         const userDocRef = doc(firestore, 'users', newUser.uid);
         const newUserProfile = {
             name: data.name,
@@ -93,7 +96,7 @@ export function AddUserDialog() {
 
         toast({
             title: 'User Created Successfully',
-            description: `The profile for "${data.name}" has been created with their login credentials.`,
+            description: `The profile for "${data.name}" has been created with their login credentials and role.`,
         });
 
         setIsOpen(false);
