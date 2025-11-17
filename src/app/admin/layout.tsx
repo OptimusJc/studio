@@ -60,8 +60,9 @@ export function useAppUser() {
                     const userData = userDocSnap.data() as AppUser;
                     
                     let role: 'Admin' | 'Editor' = userData.role;
+                    // Custom claims are the source of truth for permissions.
                     if (isAdmin) {
-                        role = 'Admin'; // Custom claim is the source of truth
+                        role = 'Admin';
                     } else if (isEditor) {
                         role = 'Editor';
                     }
