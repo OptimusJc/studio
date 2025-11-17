@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState, useEffect, Suspense, ReactNode } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, query, where, getDocs, doc, getDoc, DocumentData } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { User as AppUser } from '@/types';
 
@@ -51,7 +51,18 @@ export function useAppUser() {
             try {
                 const userDocSnap = await getDoc(userDocRef);
                 if (userDocSnap.exists()) {
-                    setAppUser({ id: userDocSnap.id, ...userDocSnap.data() } as AppUser);
+                    const userData = userDocSnap.data() as AppUser;
+                    
+                    // Check for admin role in roles_admin collection
+                    const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
+                    const adminRoleSnap = await getDoc(adminRoleRef);
+                    
+                    let role = userData.role;
+                    if (adminRoleSnap.exists()) {
+                        role = 'Admin'; // Override with definitive admin role
+                    }
+
+                    setAppUser({ ...userData, id: userDocSnap.id, role });
                 } else {
                     console.warn(`No user profile found in Firestore for UID: ${user.uid}`);
                     setAppUser(null);

@@ -26,11 +26,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirestore } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { manageUserRole } from '@/ai/flows/manage-user-roles-flow';
 
 const userSchema = z.object({
   name: z.string().min(1, 'User name is required.'),
@@ -79,10 +78,7 @@ export function AddUserDialog() {
         const userCredential = await createUserWithEmailAndPassword(secondaryAuth, data.email, data.password);
         const newUser = userCredential.user;
 
-        // Step 1: Set custom claims for the new user
-        await manageUserRole({ uid: newUser.uid, role: data.role });
-
-        // Step 2: Create the user profile document in Firestore
+        // Step 1: Create the user profile document in Firestore
         const userDocRef = doc(firestore, 'users', newUser.uid);
         const newUserProfile = {
             name: data.name,
@@ -91,8 +87,13 @@ export function AddUserDialog() {
             createdAt: new Date().toISOString(),
             lastLogin: null,
         };
-
         await setDoc(userDocRef, newUserProfile);
+
+        // Step 2: If user is an Admin, add them to the roles_admin collection
+        if (data.role === 'Admin') {
+            const adminRoleRef = doc(firestore, 'roles_admin', newUser.uid);
+            await setDoc(adminRoleRef, { role: 'Admin' });
+        }
 
         toast({
             title: 'User Created Successfully',

@@ -26,12 +26,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
-import { manageUserRole } from '@/ai/flows/manage-user-roles-flow';
 
 interface EditUserDialogProps {
   user: User;
@@ -65,21 +64,25 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
     setIsSubmitting(true);
 
     try {
-        // Step 1: Update custom claims if the role has changed.
-        if (data.role !== user.role) {
-            await manageUserRole({ uid: user.id, role: data.role });
-        }
-        
-        // Step 2: Update the user profile document in Firestore.
-        const docRef = doc(firestore, 'users', user.id);
-        setDocumentNonBlocking(docRef, data, { merge: true });
+      // Update the user profile document in Firestore.
+      const docRef = doc(firestore, 'users', user.id);
+      setDocumentNonBlocking(docRef, { name: data.name, role: data.role }, { merge: true });
 
-        toast({
-            title: 'User Updated',
-            description: `The user "${data.name}" has been successfully updated.`,
-        });
-        
-        setIsOpen(false);
+      // Update the roles_admin collection
+      const adminRoleRef = doc(firestore, 'roles_admin', user.id);
+      if (data.role === 'Admin') {
+        setDocumentNonBlocking(adminRoleRef, { role: 'Admin' }, { merge: true });
+      } else {
+        // If the user is no longer an admin, remove them from the collection
+        deleteDocumentNonBlocking(adminRoleRef);
+      }
+
+      toast({
+          title: 'User Updated',
+          description: `The user "${data.name}" has been successfully updated.`,
+      });
+      
+      setIsOpen(false);
     } catch (error) {
         console.error("Error updating user:", error);
         toast({
