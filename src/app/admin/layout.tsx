@@ -9,6 +9,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { User as AppUser } from '@/types';
+import { getIdTokenResult } from 'firebase/auth';
 
 function AdminLayoutSkeleton() {
   return (
@@ -49,17 +50,20 @@ export function useAppUser() {
             const userDocRef = doc(firestore, 'users', user.uid);
             
             try {
+                // Force a token refresh to get the latest custom claims.
+                const idTokenResult = await getIdTokenResult(user, true);
+                const isAdmin = idTokenResult.claims.admin === true;
+                const isEditor = idTokenResult.claims.editor === true;
+
                 const userDocSnap = await getDoc(userDocRef);
                 if (userDocSnap.exists()) {
                     const userData = userDocSnap.data() as AppUser;
                     
-                    // Check for admin role in roles_admin collection
-                    const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
-                    const adminRoleSnap = await getDoc(adminRoleRef);
-                    
-                    let role = userData.role;
-                    if (adminRoleSnap.exists()) {
-                        role = 'Admin'; // Override with definitive admin role
+                    let role: 'Admin' | 'Editor' = userData.role;
+                    if (isAdmin) {
+                        role = 'Admin'; // Custom claim is the source of truth
+                    } else if (isEditor) {
+                        role = 'Editor';
                     }
 
                     setAppUser({ ...userData, id: userDocSnap.id, role });
@@ -68,7 +72,7 @@ export function useAppUser() {
                     setAppUser(null);
                 }
             } catch (error) {
-                console.error("Error fetching app user from Firestore:", error);
+                console.error("Error fetching app user or custom claims:", error);
                 setAppUser(null);
             } finally {
                 setIsAppUserLoading(false);

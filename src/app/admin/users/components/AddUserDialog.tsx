@@ -26,10 +26,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirestore } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { manageUserRole } from '@/ai/flows/manage-user-roles-flow';
 
 const userSchema = z.object({
   name: z.string().min(1, 'User name is required.'),
@@ -89,11 +90,8 @@ export function AddUserDialog() {
         };
         await setDoc(userDocRef, newUserProfile);
 
-        // Step 2: If user is an Admin, add them to the roles_admin collection
-        if (data.role === 'Admin') {
-            const adminRoleRef = doc(firestore, 'roles_admin', newUser.uid);
-            await setDoc(adminRoleRef, { role: 'Admin' });
-        }
+        // Step 2: Set custom claims for the new user
+        await manageUserRole({ uid: newUser.uid, role: data.role });
 
         toast({
             title: 'User Created Successfully',

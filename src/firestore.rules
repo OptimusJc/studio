@@ -14,7 +14,7 @@
  * - Categories, Attributes, and AttributeValues are also stored in top-level
  *   collections.
  * - User profiles are stored under `/users/{userId}`.
- * - Admin users are identified by the existence of a document in the `roles_admin/{userId}` collection.
+ * - Admin users are identified by a custom claim `admin: true` on their auth token.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -47,115 +47,21 @@ service cloud.firestore {
     }
 
     /**
-     * @description Checks if the authenticated user has admin rights by checking for a document in the roles_admin collection.
-     * @returns {boolean} True if the user has admin rights, false otherwise.
+     * @description Checks if the authenticated user has admin rights via a custom claim.
+     * @returns {boolean} True if the user has the 'admin' custom claim set to true.
      */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return request.auth.token.admin == true;
     }
     
     /**
-     * @description Rules for the 'wallpapers' collection.
-     * @path /databases/{database}/documents/wallpapers/{productId}
+     * @description Rules for all product collections under 'buyers' and 'retailers'.
      */
-    match /wallpapers/{productId} {
+    match /{db}/{category}/products/{productId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
-    match /buyers/wallpapers/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /retailers/wallpapers/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Rules for the 'window-blinds' collection.
-     * @path /databases/{database}/documents/window-blinds/{productId}
-     */
-    match /window-blinds/{productId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-     match /buyers/window-blinds/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /retailers/window-blinds/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Rules for the 'wall-murals' collection.
-     * @path /databases/{database}/documents/wall-murals/{productId}
-     */
-    match /wall-murals/{productId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-     match /buyers/wall-murals/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /retailers/wall-murals/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Rules for the 'carpets' collection.
-     * @path /databases/{database}/documents/carpets/{productId}
-     */
-    match /carpets/{productId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-     match /buyers/carpets/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /retailers/carpets/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Rules for the 'window-films' collection.
-     * @path /databases/{database}/documents/window-films/{productId}
-     */
-    match /window-films/{productId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-     match /buyers/window-films/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /retailers/window-films/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Rules for the 'fluted-panels' collection.
-     * @path /databases/{database}/documents/fluted-panels/{productId}
-     */
-    match /fluted-panels/{productId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-     match /buyers/fluted-panels/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /retailers/fluted-panels/{collectionId}/{document=**} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
+    
     /**
      * @description Rules for the drafts collection.
      * @path /databases/{database}/documents/drafts/{draftId}
@@ -196,14 +102,6 @@ service cloud.firestore {
     match /settings/{settingId} {
         allow get: if isSignedIn();
         allow write: if isAdmin();
-    }
-    
-    /**
-     * @description Rules for the admin roles collection.
-     */
-    match /roles_admin/{userId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
     }
   }
 }

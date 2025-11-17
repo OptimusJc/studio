@@ -26,11 +26,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirestore } from '@/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
+import { manageUserRole } from '@/ai/flows/manage-user-roles-flow';
+import { useRouter } from 'next/navigation';
 
 interface EditUserDialogProps {
   user: User;
@@ -49,6 +51,7 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
@@ -64,18 +67,12 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
     setIsSubmitting(true);
 
     try {
-      // Update the user profile document in Firestore.
+      // Step 1: Update the user profile document in Firestore.
       const docRef = doc(firestore, 'users', user.id);
       setDocumentNonBlocking(docRef, { name: data.name, role: data.role }, { merge: true });
 
-      // Update the roles_admin collection
-      const adminRoleRef = doc(firestore, 'roles_admin', user.id);
-      if (data.role === 'Admin') {
-        setDocumentNonBlocking(adminRoleRef, { role: 'Admin' }, { merge: true });
-      } else {
-        // If the user is no longer an admin, remove them from the collection
-        deleteDocumentNonBlocking(adminRoleRef);
-      }
+      // Step 2: Set the custom claims for the user.
+      await manageUserRole({ uid: user.id, role: data.role });
 
       toast({
           title: 'User Updated',
@@ -83,6 +80,7 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
       });
       
       setIsOpen(false);
+      router.refresh();
     } catch (error) {
         console.error("Error updating user:", error);
         toast({
