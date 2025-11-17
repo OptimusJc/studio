@@ -26,12 +26,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
-import { manageUserRole } from '@/ai/flows/manage-user-roles-flow';
 import { useRouter } from 'next/navigation';
 
 interface EditUserDialogProps {
@@ -67,12 +65,21 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Update the user profile document in Firestore.
-      const docRef = doc(firestore, 'users', user.id);
-      setDocumentNonBlocking(docRef, { name: data.name, role: data.role }, { merge: true });
+      const batch = writeBatch(firestore);
 
-      // Step 2: Set the custom claims for the user.
-      await manageUserRole({ uid: user.id, role: data.role });
+      // Step 1: Update the user profile document in Firestore.
+      const userDocRef = doc(firestore, 'users', user.id);
+      batch.update(userDocRef, { name: data.name, role: data.role });
+
+      // Step 2: Update the roles_admin collection.
+      const adminRoleRef = doc(firestore, 'roles_admin', user.id);
+      if (data.role === 'Admin') {
+        batch.set(adminRoleRef, { role: 'Admin' });
+      } else {
+        batch.delete(adminRoleRef);
+      }
+
+      await batch.commit();
 
       toast({
           title: 'User Updated',

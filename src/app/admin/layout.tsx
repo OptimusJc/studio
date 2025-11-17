@@ -9,7 +9,6 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { User as AppUser } from '@/types';
-import { getIdTokenResult } from 'firebase/auth';
 
 function AdminLayoutSkeleton() {
   return (
@@ -50,30 +49,16 @@ export function useAppUser() {
             const userDocRef = doc(firestore, 'users', user.uid);
             
             try {
-                // Force a token refresh to get the latest custom claims.
-                const idTokenResult = await getIdTokenResult(user, true);
-                const isAdmin = idTokenResult.claims.admin === true;
-                const isEditor = idTokenResult.claims.editor === true;
-
                 const userDocSnap = await getDoc(userDocRef);
                 if (userDocSnap.exists()) {
                     const userData = userDocSnap.data() as AppUser;
-                    
-                    let role: 'Admin' | 'Editor' = userData.role;
-                    // Custom claims are the source of truth for permissions.
-                    if (isAdmin) {
-                        role = 'Admin';
-                    } else if (isEditor) {
-                        role = 'Editor';
-                    }
-
-                    setAppUser({ ...userData, id: userDocSnap.id, role });
+                    setAppUser({ ...userData, id: userDocSnap.id });
                 } else {
                     console.warn(`No user profile found in Firestore for UID: ${user.uid}`);
                     setAppUser(null);
                 }
             } catch (error) {
-                console.error("Error fetching app user or custom claims:", error);
+                console.error("Error fetching app user:", error);
                 setAppUser(null);
             } finally {
                 setIsAppUserLoading(false);
