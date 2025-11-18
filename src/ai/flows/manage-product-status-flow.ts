@@ -4,9 +4,20 @@
  * @fileOverview Manages the publishing and unpublishing of products.
  */
 import { ai } from '@/ai/genkit';
-import { getDoc, setDoc, deleteDoc, doc } from 'firebase/firestore';
-import { getSdks, initializeFirebase } from '@/firebase/server-init';
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { initializeApp as initializeAdminApp, getApps as getAdminApps, getApp as getAdminApp } from 'firebase-admin/app';
 import { z } from 'zod';
+
+// Server-side initialization with Firebase Admin SDK
+function initializeAdminFirebase() {
+  if (!getAdminApps().length) {
+    // This will automatically use GOOGLE_APPLICATION_CREDENTIALS in a deployed environment.
+    initializeAdminApp();
+  }
+  return { firestore: getAdminFirestore(getAdminApp()) };
+}
+
+const { firestore } = initializeAdminFirebase();
 
 // Define schemas directly in the flow file to avoid import issues.
 const ManageProductStatusInputSchema = z.object({
@@ -23,20 +34,17 @@ const ManageProductStatusOutputSchema = z.object({
 });
 export type ManageProductStatusOutput = z.infer<typeof ManageProductStatusOutputSchema>;
 
-// Initialize Firebase at module level - get the firestore instance directly
-const { firebaseApp } = initializeFirebase();
-const { firestore } = getSdks(firebaseApp);
 
 // Private function containing the core logic for publishing/unpublishing
 async function _manageProductStatusLogic(input: ManageProductStatusInput): Promise<ManageProductStatusOutput> {
   const { action, productId } = input;
 
-  const draftRef = doc(firestore, 'drafts', productId);
+  const draftRef = firestore.doc(`drafts/${productId}`);
 
   try {
     if (action === 'publish') {
-      const draftDoc = await getDoc(draftRef);
-      if (!draftDoc.exists()) {
+      const draftDoc = await draftRef.get();
+      if (!draftDoc.exists) {
         throw new Error(`Draft with ID ${productId} not found.`);
       }
       const productData = draftDoc.data()!;
@@ -46,16 +54,17 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
         throw new Error('Product data is missing required fields: db or category');
       }
 
-      const liveCollectionPath = `${productData.db}/${productData.category}/products`;
-      const liveDocRef = doc(firestore, liveCollectionPath, productId);
+      const categorySlug = productData.category.toLowerCase().replace(/\s+/g, '-');
+      const liveCollectionPath = `${productData.db}/${categorySlug}/products`;
+      const liveDocRef = firestore.doc(`${liveCollectionPath}/${productId}`);
 
       // Write first, then delete (prevents data loss if write fails)
-      await setDoc(liveDocRef, { 
+      await liveDocRef.set({ 
         ...productData, 
         status: 'Published',
         publishedAt: new Date().toISOString() 
       });
-      await deleteDoc(draftRef);
+      await draftRef.delete();
 
       return {
         success: true,
@@ -67,21 +76,21 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
       }
 
       const liveCollectionPath = `${input.db}/${input.category}/products`;
-      const liveDocRef = doc(firestore, liveCollectionPath, productId);
+      const liveDocRef = firestore.doc(`${liveCollectionPath}/${productId}`);
 
-      const liveDoc = await getDoc(liveDocRef);
-      if (!liveDoc.exists()) {
+      const liveDoc = await liveDocRef.get();
+      if (!liveDoc.exists) {
         throw new Error(`Published product with ID ${productId} not found in ${liveCollectionPath}.`);
       }
       const productData = liveDoc.data()!;
 
       // Write first, then delete (prevents data loss if write fails)
-      await setDoc(draftRef, { 
+      await draftRef.set({ 
         ...productData, 
         status: 'Draft',
         unpublishedAt: new Date().toISOString() 
       });
-      await deleteDoc(liveDocRef);
+      await liveDocRef.delete();
 
       return {
         success: true,

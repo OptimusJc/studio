@@ -1,10 +1,10 @@
 
 'use client';
 
-import { initializeFirebase } from './server-init';
+import { initializeFirebase } from './client-init'; // Updated import
 
 // IMPORTANT: DO NOT MODIFY THIS FILE beyond what is necessary to make it work.
-// The initializeFirebase function is now in server-init.ts to allow server-side usage.
+// The initializeFirebase function is now in client-init.ts.
 
 export * from './provider';
 export * from './client-provider';
@@ -16,4 +16,4 @@ export * from './errors';
 export * from './error-emitter';
 
 // We still export initializeFirebase for client-side use, but it's defined elsewhere.
-export { initializeFirebase, getSdks } from './server-init';
+export { initializeFirebase, getSdks } from './client-init';
