@@ -54,7 +54,8 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
         throw new Error('Product data is missing required fields: db or category');
       }
 
-      const categorySlug = productData.category.toLowerCase().replace(/\s+/g, '-');
+      // The 'category' field from the draft is already the correct slug.
+      const categorySlug = productData.category;
       const liveCollectionPath = `${productData.db}/${categorySlug}/products`;
       const liveDocRef = firestore.doc(`${liveCollectionPath}/${productId}`);
 
@@ -100,8 +101,8 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
 
     return { success: false, message: 'Invalid action.' };
   } catch (error) {
-    console.error(`Flow failed for product ${productId}:`, error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Flow failed for product ${productId} with action ${action}. Input: ${JSON.stringify(input)}. Error: ${errorMessage}`);
     throw new Error(`Failed to ${action} product: ${errorMessage}`);
   }
 }
