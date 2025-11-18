@@ -47,10 +47,10 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
       if (!draftDoc.exists) {
         throw new Error(`Draft with ID ${productId} not found.`);
       }
-      const productData = draftDoc.data()!;
+      const productData = draftDoc.data();
       
       // Validate required fields exist
-      if (!productData.db || !productData.category) {
+      if (!productData || !productData.db || !productData.category) {
         throw new Error('Product data is missing required fields: db or category');
       }
 
@@ -75,15 +75,22 @@ async function _manageProductStatusLogic(input: ManageProductStatusInput): Promi
       if (!input.db || !input.category) {
         throw new Error("Database and category are required for unpublishing.");
       }
+      
+      // Convert category name to slug, just like the frontend does.
+      const categorySlug = input.category.toLowerCase().replace(/\s+/g, '-');
 
-      const liveCollectionPath = `${input.db}/${input.category}/products`;
+      const liveCollectionPath = `${input.db}/${categorySlug}/products`;
       const liveDocRef = firestore.doc(`${liveCollectionPath}/${productId}`);
 
       const liveDoc = await liveDocRef.get();
       if (!liveDoc.exists) {
         throw new Error(`Published product with ID ${productId} not found in ${liveCollectionPath}.`);
       }
-      const productData = liveDoc.data()!;
+      const productData = liveDoc.data();
+      
+      if (!productData) {
+         throw new Error(`Product data for ${productId} is empty or invalid.`);
+      }
 
       // Write first, then delete (prevents data loss if write fails)
       await draftRef.set({ 
