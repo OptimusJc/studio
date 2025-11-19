@@ -334,7 +334,7 @@ function ProductDetailPageContent() {
                      <div className="flex flex-wrap gap-2">
                         {specificationItems.map((item, index) => (
                             item && (
-                                <Badge key={index} variant="secondary" className="text-sm">
+                                <Badge key={index} variant="secondary" className="text-sm bg-gray-200">
                                   <span className="font-medium">{item.key}</span>
                                   {item.value && <span className="text-muted-foreground ml-1.5">{item.value}</span>}
                                 </Badge>
