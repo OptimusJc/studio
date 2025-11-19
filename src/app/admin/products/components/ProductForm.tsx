@@ -306,7 +306,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                         <FormLabel>Specifications</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="e.g., Roll: 0.53m x 10m"
+                            placeholder="e.g., Roll: 0.53m x 10m, Material: Vinyl, Repeat: 26.5cm"
                             {...field}
                             rows={4}
                           />

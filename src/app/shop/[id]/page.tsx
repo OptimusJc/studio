@@ -166,13 +166,13 @@ function ProductDetailPageContent() {
 
   const specificationItems = useMemo(() => {
     if (!product || !product.specifications) return [];
-    return product.specifications.split(';').map(item => {
+    return product.specifications.split(',').map(item => {
         const parts = item.split(':');
         if (parts.length === 2) {
             return { key: parts[0].trim(), value: parts[1].trim() };
         }
-        return null;
-    }).filter(Boolean);
+        return { key: item.trim(), value: '' }; // Handle items without a colon
+    }).filter(item => item.key);
   }, [product]);
   
   if (isLoading || isLoadingCategories) {
@@ -331,13 +331,13 @@ function ProductDetailPageContent() {
                 <Separator />
                 <div>
                     <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-3">Specifications</h2>
-                    <div className="space-y-2 text-sm">
+                     <div className="flex flex-wrap gap-2">
                         {specificationItems.map((item, index) => (
                             item && (
-                                <div key={index} className="flex flex-wrap gap-1">
-                                    <span className="font-medium">{item.key}:</span>
-                                    <span className="text-muted-foreground">{item.value}</span>
-                                </div>
+                                <Badge key={index} variant="secondary" className="text-sm bg-gray-200">
+                                  <span className="font-medium">{item.key}</span>
+                                  {item.value && <span className="text-muted-foreground ml-1.5">{item.value}</span>}
+                                </Badge>
                             )
                         ))}
                     </div>
