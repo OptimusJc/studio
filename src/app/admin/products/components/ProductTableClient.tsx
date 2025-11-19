@@ -150,7 +150,6 @@ export function ProductTableClient({ products }: { products: Product[] }) {
           <TableHead>Publish Status</TableHead>
           <TableHead>Stock Status</TableHead>
           <TableHead>Category</TableHead>
-          <TableHead>Brand</TableHead>
           <TableHead className="text-right">Price</TableHead>
           <TableHead className="w-[40px]"></TableHead>
         </TableRow>
@@ -184,7 +183,6 @@ export function ProductTableClient({ products }: { products: Product[] }) {
               </Badge>
             </TableCell>
             <TableCell>{product.category}</TableCell>
-            <TableCell>{product.attributes.brand as string}</TableCell>
             <TableCell className="text-right">Ksh{(product.price ?? 0).toFixed(2)}</TableCell>
             <TableCell>
               <RowActions product={product} />
