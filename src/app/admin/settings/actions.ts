@@ -20,8 +20,7 @@ const companyProfileSchema = z.object({
 type CompanyProfileFormValues = z.infer<typeof companyProfileSchema>;
 
 export async function updateTheme(data: ThemeFormValues) {
-  const { firebaseApp } = initializeFirebase();
-  const { firestore } = getSdks(firebaseApp);
+  const { firestore } = initializeFirebase();
   const cssFilePath = path.join(process.cwd(), 'src', 'app', 'globals.css');
   const selectedTheme = themes[data.theme];
 
@@ -95,8 +94,7 @@ export async function updateTheme(data: ThemeFormValues) {
 }
 
 export async function updateCompanyProfile(data: CompanyProfileFormValues) {
-    const { firebaseApp } = initializeFirebase();
-    const { firestore } = getSdks(firebaseApp);
+    const { firestore } = initializeFirebase();
 
     const validatedData = companyProfileSchema.safeParse(data);
     if (!validatedData.success) {
