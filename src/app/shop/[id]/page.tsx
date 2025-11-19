@@ -201,10 +201,6 @@ function ProductDetailPageContent() {
     message += `Code: *${product.productCode}*\n`;
     message += `Title: ${product.productTitle}\n`;
     
-    if (product.productImages && product.productImages.length > 0) {
-      message += `Image: ${product.productImages[0]}\n`;
-    }
-
     if (product.attributes && Object.keys(product.attributes).length > 0) {
       message += `\n*Attributes:*\n`;
       Object.entries(product.attributes).forEach(([key, value]) => {
