@@ -67,7 +67,7 @@ export function ProductViewDialog({ product }: ProductViewDialogProps) {
                     <DetailItem label="Description" value={product.productDescription} />
                     <Separator />
                     <div className="grid grid-cols-2 gap-4">
-                        <DetailItem label="Price" value={product.price ? `$${(product.price).toFixed(2)}` : 'N/A'} />
+                        <DetailItem label="Price" value={product.price ? `Ksh ${(product.price).toFixed(2)}` : 'N/A'} />
                         <DetailItem label="Stock" value={<Badge variant={product.stockStatus === 'Out of Stock' ? 'destructive' : 'outline'}
                className={cn(product.stockStatus === 'In Stock' && "text-green-600 border-green-600/40")}>{product.stockStatus}</Badge>} />
                         <DetailItem label="Category" value={<Badge variant="outline">{product.category}</Badge>} />

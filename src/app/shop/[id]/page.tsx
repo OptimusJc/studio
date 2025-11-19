@@ -16,6 +16,8 @@ import Link from 'next/link';
 import ProductDetailHeader from '@/app/retailer-catalog/components/ProductDetailHeader';
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 function ProductDetailSkeleton() {
     return (
@@ -282,11 +284,17 @@ function ProductDetailPageContent() {
         <div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-mono">{product.productCode}</h1>
             <p className="mt-2 text-base sm:text-lg text-muted-foreground">{product.productTitle}</p>
-             {product.price ? (
-                <p className="text-2xl font-bold text-primary mt-4">Ksh {product.price.toFixed(2)}</p>
-            ) : (
-                <p className="text-lg font-semibold text-muted-foreground mt-4">Price on inquiry</p>
-            )}
+             <div className="flex items-baseline gap-4 mt-4">
+              {product.price ? (
+                  <p className="text-2xl font-bold text-primary">Ksh {product.price.toFixed(2)}</p>
+              ) : (
+                  <p className="text-lg font-semibold text-muted-foreground">Price on inquiry</p>
+              )}
+               <Badge variant={product.stockStatus === 'Out of Stock' ? 'destructive' : 'outline'}
+               className={cn('text-sm', product.stockStatus === 'In Stock' && "text-green-600 border-green-600/40")}>
+                {product.stockStatus}
+              </Badge>
+            </div>
         </div>
         
         {/* Product Description */}
@@ -343,6 +351,7 @@ function ProductDetailPageContent() {
                 asChild 
                 size="lg" 
                 className="w-full sm:w-auto bg-green-500 hover:bg-green-600 rounded-full text-white"
+                disabled={product.stockStatus === 'Out of Stock'}
             >
                 <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
                     <WhatsAppIcon className="mr-2 h-5 w-5"/>
