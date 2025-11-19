@@ -10,11 +10,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { updateTheme, updateCompanyProfile } from './actions';
+import { updateCompanyProfile } from './actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -196,13 +196,52 @@ function AppearanceSettings() {
 
 
     const onSubmit = async (data: ThemeFormValues) => {
+        if (!firestore) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Firestore is not available.',
+            });
+            return;
+        }
+
+        const selectedTheme = themes[data.theme];
+        if (!selectedTheme) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Invalid theme selected.' });
+            return;
+        }
+
         try {
-            await updateTheme(data);
+            // Apply CSS variables
+            const root = document.documentElement;
+            const themeConfig = activeMode === 'dark' ? selectedTheme.dark : selectedTheme.light;
+            const sidebarConfig = activeMode === 'dark' ? selectedTheme.sidebar.dark : selectedTheme.sidebar.light;
+            
+            root.style.setProperty('--background', `${themeConfig.background.h} ${themeConfig.background.s}% ${themeConfig.background.l}%`);
+            root.style.setProperty('--primary', `${themeConfig.primary.h} ${themeConfig.primary.s}% ${themeConfig.primary.l}%`);
+            root.style.setProperty('--accent', `${themeConfig.accent.h} ${themeConfig.accent.s}% ${themeConfig.accent.l}%`);
+
+            // Sidebar colors
+            root.style.setProperty('--sidebar-background', `${sidebarConfig.background.h} ${sidebarConfig.background.s}% ${sidebarConfig.background.l}%`);
+            root.style.setProperty('--sidebar-foreground', `${sidebarConfig.foreground.h} ${sidebarConfig.foreground.s}% ${sidebarConfig.foreground.l}%`);
+            root.style.setProperty('--sidebar-primary', `${sidebarConfig.primary.h} ${sidebarConfig.primary.s}% ${sidebarConfig.primary.l}%`);
+            root.style.setProperty('--sidebar-primary-foreground', `${sidebarConfig['primary-foreground'].h} ${sidebarConfig['primary-foreground'].s}% ${sidebarConfig['primary-foreground'].l}%`);
+            root.style.setProperty('--sidebar-accent', `${sidebarConfig.accent.h} ${sidebarConfig.accent.s}% ${sidebarConfig.accent.l}%`);
+            root.style.setProperty('--sidebar-accent-foreground', `${sidebarConfig['accent-foreground'].h} ${sidebarConfig['accent-foreground'].s}% ${sidebarConfig['accent-foreground'].l}%`);
+
+
+            // Save theme name to Firestore
+            const themeDocRef = doc(firestore, 'settings', 'activeTheme');
+            await setDoc(themeDocRef, { name: data.theme });
+            
             toast({
                 title: "Theme Updated",
-                description: "Your new theme has been applied.",
+                description: "Your new theme has been applied. Refreshing...",
             });
+
+            // Reload to make sure CSS from server is fully applied
             setTimeout(() => window.location.reload(), 500);
+
         } catch (error) {
             toast({
                 variant: "destructive",
