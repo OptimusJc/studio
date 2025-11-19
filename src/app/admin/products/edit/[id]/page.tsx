@@ -138,6 +138,9 @@ export default function EditProductPage() {
     return null;
   }, [productData, categoryNameFromProduct, dbFromUrl]);
 
+  const memoizedAttributes = useMemo(() => attributes || [], [attributes]);
+  const memoizedCategories = useMemo(() => categories || [], [categories]);
+
 
   return (
     <div className="p-4 md:p-8">
