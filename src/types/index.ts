@@ -9,7 +9,7 @@ export type Product = {
   price?: number;
   stock: number;
   stockStatus: 'In Stock' | 'Out of Stock';
-  sku: string; // This seems to be a generated placeholder, maybe I should use productCode here?
+  sku: string;
   status: 'Published' | 'Draft';
   attributes: { [key: string]: string | string[] };
   imageUrl: string;

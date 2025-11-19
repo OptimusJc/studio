@@ -74,7 +74,6 @@ export default function ProductCard({ product, priority = false, basePath }: Pro
                       variant="secondary"
                       className="w-32 rounded-3xl hover:bg-red-600 hover:text-white"
                       onClick={handlePreviewClick}
-                      disabled={isOutOfStock}
                   >
                       See Preview
                   </Button>
@@ -83,7 +82,6 @@ export default function ProductCard({ product, priority = false, basePath }: Pro
                 variant="secondary"
                 className="w-32 rounded-3xl hover:bg-red-600 hover:text-white"
                 onClick={handleSimilarClick}
-                disabled={isOutOfStock}
                 >
                 Similar Items
                 </Button>
