@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -25,11 +26,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
+import { useRouter } from 'next/navigation';
 
 interface EditUserDialogProps {
   user: User;
@@ -45,8 +46,10 @@ type UserFormValues = z.infer<typeof userSchema>;
 
 export function EditUserDialog({ user }: EditUserDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
@@ -59,17 +62,42 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
 
   const onSubmit = async (data: UserFormValues) => {
     if (!firestore) return;
+    setIsSubmitting(true);
 
-    const docRef = doc(firestore, 'users', user.id);
-    
-    setDocumentNonBlocking(docRef, data, { merge: true });
+    try {
+      const batch = writeBatch(firestore);
 
-    toast({
-      title: 'User Updated',
-      description: `The user "${data.name}" has been successfully updated.`,
-    });
-    
-    setIsOpen(false);
+      // Step 1: Update the user profile document in Firestore.
+      const userDocRef = doc(firestore, 'users', user.id);
+      batch.update(userDocRef, { name: data.name, role: data.role });
+
+      // Step 2: Update the roles_admin collection.
+      const adminRoleRef = doc(firestore, 'roles_admin', user.id);
+      if (data.role === 'Admin') {
+        batch.set(adminRoleRef, { role: 'Admin' });
+      } else {
+        batch.delete(adminRoleRef);
+      }
+
+      await batch.commit();
+
+      toast({
+          title: 'User Updated',
+          description: `The user "${data.name}" has been successfully updated.`,
+      });
+      
+      setIsOpen(false);
+      router.refresh();
+    } catch (error) {
+        console.error("Error updating user:", error);
+        toast({
+            variant: "destructive",
+            title: 'Failed to Update User',
+            description: (error as Error).message,
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
   const handleOpenChange = (open: boolean) => {
@@ -119,7 +147,7 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="e.g. john.doe@example.com" {...field} />
+                    <Input type="email" placeholder="e.g. john.doe@example.com" {...field} disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,7 +175,9 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
               )}
             />
             <DialogFooter>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </Button>
             </DialogFooter>
           </form>
         </Form>

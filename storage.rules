@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow listing the contents of the bucket, and reading/writing any file.
+    // This is a permissive rule suitable for development or for apps where
+    // all authenticated users are considered trusted (e.g., admin panels).
+    match /{allPaths=**} {
+      allow list, read, write: if request.auth != null;
+    }
+  }
+}

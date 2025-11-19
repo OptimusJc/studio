@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState, useEffect, Suspense, ReactNode } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, query, where, getDocs, doc, getDoc, DocumentData } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { User as AppUser } from '@/types';
 
@@ -51,13 +51,14 @@ export function useAppUser() {
             try {
                 const userDocSnap = await getDoc(userDocRef);
                 if (userDocSnap.exists()) {
-                    setAppUser({ id: userDocSnap.id, ...userDocSnap.data() } as AppUser);
+                    const userData = userDocSnap.data() as AppUser;
+                    setAppUser({ ...userData, id: userDocSnap.id });
                 } else {
                     console.warn(`No user profile found in Firestore for UID: ${user.uid}`);
                     setAppUser(null);
                 }
             } catch (error) {
-                console.error("Error fetching app user from Firestore:", error);
+                console.error("Error fetching app user:", error);
                 setAppUser(null);
             } finally {
                 setIsAppUserLoading(false);

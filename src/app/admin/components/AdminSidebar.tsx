@@ -112,7 +112,7 @@ export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminS
 }
 
   return (
-    <Sidebar>
+    <Sidebar className="group/sidebar">
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <Logo />
@@ -279,3 +279,5 @@ export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminS
     </Sidebar>
   );
 }
+
+    

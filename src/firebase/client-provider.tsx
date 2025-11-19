@@ -3,7 +3,7 @@
 
 import React, { useMemo, type ReactNode, useEffect } from 'react';
 import { FirebaseProvider, useFirebase } from '@/firebase/provider';
-import { initializeFirebase } from '@/firebase/server-init';
+import { initializeFirebase } from '@/firebase/client-init'; // Updated import
 
 function AuthRedirect({ children }: { children: ReactNode }) {
   // This component doesn't need to do anything with auth itself.

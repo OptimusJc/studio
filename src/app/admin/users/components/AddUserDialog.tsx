@@ -25,12 +25,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFirestore, useAuth } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, doc, setDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const userSchema = z.object({
@@ -80,6 +78,9 @@ export function AddUserDialog() {
         const userCredential = await createUserWithEmailAndPassword(secondaryAuth, data.email, data.password);
         const newUser = userCredential.user;
 
+        const batch = writeBatch(firestore);
+
+        // Step 1: Create the user profile document in Firestore
         const userDocRef = doc(firestore, 'users', newUser.uid);
         const newUserProfile = {
             name: data.name,
@@ -88,12 +89,19 @@ export function AddUserDialog() {
             createdAt: new Date().toISOString(),
             lastLogin: null,
         };
+        batch.set(userDocRef, newUserProfile);
 
-        await setDoc(userDocRef, newUserProfile);
+        // Step 2: If user is an Admin, add them to the roles_admin collection
+        if (data.role === 'Admin') {
+            const adminRoleRef = doc(firestore, 'roles_admin', newUser.uid);
+            batch.set(adminRoleRef, { role: 'Admin' });
+        }
+
+        await batch.commit();
 
         toast({
             title: 'User Created Successfully',
-            description: `The profile for "${data.name}" has been created with their login credentials.`,
+            description: `The profile for "${data.name}" has been created with their login credentials and role.`,
         });
 
         setIsOpen(false);
