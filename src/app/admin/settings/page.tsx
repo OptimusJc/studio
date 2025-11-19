@@ -194,6 +194,30 @@ function AppearanceSettings() {
         }
     }, [activeTheme, form]);
 
+    const applyTheme = (themeName: ThemeName, mode: 'light' | 'dark') => {
+        const selectedTheme = themes[themeName];
+        if (!selectedTheme) return;
+
+        const root = document.documentElement;
+        const themeConfig = mode === 'dark' ? selectedTheme.dark : selectedTheme.light;
+        const sidebarConfig = mode === 'dark' ? selectedTheme.sidebar.dark : selectedTheme.sidebar.light;
+
+        Object.entries(themeConfig).forEach(([key, color]) => {
+            root.style.setProperty(`--${key}`, `${color.h} ${color.s}% ${color.l}%`);
+        });
+
+        Object.entries(sidebarConfig).forEach(([key, color]) => {
+            root.style.setProperty(`--sidebar-${key}`, `${color.h} ${color.s}% ${color.l}%`);
+        });
+    }
+    
+    useEffect(() => {
+        if (activeTheme?.name) {
+            applyTheme(activeTheme.name, activeMode as 'light' | 'dark' || 'light');
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTheme, activeMode]);
+
 
     const onSubmit = async (data: ThemeFormValues) => {
         if (!firestore) {
@@ -205,30 +229,8 @@ function AppearanceSettings() {
             return;
         }
 
-        const selectedTheme = themes[data.theme];
-        if (!selectedTheme) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Invalid theme selected.' });
-            return;
-        }
-
         try {
-            // Apply CSS variables
-            const root = document.documentElement;
-            const themeConfig = activeMode === 'dark' ? selectedTheme.dark : selectedTheme.light;
-            const sidebarConfig = activeMode === 'dark' ? selectedTheme.sidebar.dark : selectedTheme.sidebar.light;
-            
-            root.style.setProperty('--background', `${themeConfig.background.h} ${themeConfig.background.s}% ${themeConfig.background.l}%`);
-            root.style.setProperty('--primary', `${themeConfig.primary.h} ${themeConfig.primary.s}% ${themeConfig.primary.l}%`);
-            root.style.setProperty('--accent', `${themeConfig.accent.h} ${themeConfig.accent.s}% ${themeConfig.accent.l}%`);
-
-            // Sidebar colors
-            root.style.setProperty('--sidebar-background', `${sidebarConfig.background.h} ${sidebarConfig.background.s}% ${sidebarConfig.background.l}%`);
-            root.style.setProperty('--sidebar-foreground', `${sidebarConfig.foreground.h} ${sidebarConfig.foreground.s}% ${sidebarConfig.foreground.l}%`);
-            root.style.setProperty('--sidebar-primary', `${sidebarConfig.primary.h} ${sidebarConfig.primary.s}% ${sidebarConfig.primary.l}%`);
-            root.style.setProperty('--sidebar-primary-foreground', `${sidebarConfig['primary-foreground'].h} ${sidebarConfig['primary-foreground'].s}% ${sidebarConfig['primary-foreground'].l}%`);
-            root.style.setProperty('--sidebar-accent', `${sidebarConfig.accent.h} ${sidebarConfig.accent.s}% ${sidebarConfig.accent.l}%`);
-            root.style.setProperty('--sidebar-accent-foreground', `${sidebarConfig['accent-foreground'].h} ${sidebarConfig['accent-foreground'].s}% ${sidebarConfig['accent-foreground'].l}%`);
-
+            applyTheme(data.theme, activeMode as 'light' | 'dark' || 'light');
 
             // Save theme name to Firestore
             const themeDocRef = doc(firestore, 'settings', 'activeTheme');
@@ -236,11 +238,8 @@ function AppearanceSettings() {
             
             toast({
                 title: "Theme Updated",
-                description: "Your new theme has been applied. Refreshing...",
+                description: "Your new theme has been applied.",
             });
-
-            // Reload to make sure CSS from server is fully applied
-            setTimeout(() => window.location.reload(), 500);
 
         } catch (error) {
             toast({
