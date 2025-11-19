@@ -4,54 +4,10 @@
  * @fileOverview Manages the publishing and unpublishing of products.
  */
 import { ai } from "@/ai/genkit";
-import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
-import {
-  initializeApp as initializeAdminApp,
-  getApps as getAdminApps,
-  getApp as getAdminApp,
-  cert,
-  AppOptions,
-} from "firebase-admin/app";
-import { firebaseConfig } from "@/firebase/config";
+import { initializeFirebase } from '@/firebase/server-init';
 import { z } from "zod";
 
-// Server-side initialization with Firebase Admin SDK
-function initializeAdminFirebase() {
-  if (getAdminApps().length > 0) {
-    return { firestore: getAdminFirestore(getAdminApp()) };
-  }
-
-  try {
-    const appOptions: AppOptions = {
-      projectId: firebaseConfig.projectId,
-    };
-
-    // Option 1: Use service account JSON from environment variable (production)
-    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-      const serviceAccount = JSON.parse(
-        process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
-      );
-      appOptions.credential = cert(serviceAccount);
-    }
-    // Option 2: Use service account file (local development)
-    else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      // The cert function can take the file path directly
-      appOptions.credential = cert(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-    }
-    // Option 3: Auto-detect in Google Cloud environments
-    // If no credential is provided, initializeApp will look for default credentials.
-
-    const app = initializeAdminApp(appOptions);
-    return { firestore: getAdminFirestore(app) };
-
-  } catch (error) {
-    console.error("Failed to initialize Firebase Admin:", error);
-    throw error;
-  }
-}
-
-
-const { firestore } = initializeAdminFirebase();
+const { firestore } = initializeFirebase();
 
 // Define schemas directly in the flow file to avoid import issues.
 const ManageProductStatusInputSchema = z.object({

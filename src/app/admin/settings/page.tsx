@@ -10,11 +10,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { updateTheme, updateCompanyProfile } from './actions';
+import { updateCompanyProfile } from './actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -194,15 +194,53 @@ function AppearanceSettings() {
         }
     }, [activeTheme, form]);
 
+    const applyTheme = (themeName: ThemeName, mode: 'light' | 'dark') => {
+        const selectedTheme = themes[themeName];
+        if (!selectedTheme) return;
+
+        const root = document.documentElement;
+        const themeConfig = mode === 'dark' ? selectedTheme.dark : selectedTheme.light;
+        const sidebarConfig = mode === 'dark' ? selectedTheme.sidebar.dark : selectedTheme.sidebar.light;
+
+        Object.entries(themeConfig).forEach(([key, color]) => {
+            root.style.setProperty(`--${key}`, `${color.h} ${color.s}% ${color.l}%`);
+        });
+
+        Object.entries(sidebarConfig).forEach(([key, color]) => {
+            root.style.setProperty(`--sidebar-${key}`, `${color.h} ${color.s}% ${color.l}%`);
+        });
+    }
+    
+    useEffect(() => {
+        if (activeTheme?.name) {
+            applyTheme(activeTheme.name, activeMode as 'light' | 'dark' || 'light');
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTheme, activeMode]);
+
 
     const onSubmit = async (data: ThemeFormValues) => {
+        if (!firestore) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Firestore is not available.',
+            });
+            return;
+        }
+
         try {
-            await updateTheme(data);
+            applyTheme(data.theme, activeMode as 'light' | 'dark' || 'light');
+
+            // Save theme name to Firestore
+            const themeDocRef = doc(firestore, 'settings', 'activeTheme');
+            await setDoc(themeDocRef, { name: data.theme });
+            
             toast({
                 title: "Theme Updated",
                 description: "Your new theme has been applied.",
             });
-            setTimeout(() => window.location.reload(), 500);
+
         } catch (error) {
             toast({
                 variant: "destructive",
