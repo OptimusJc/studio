@@ -76,7 +76,13 @@ export default function ProductCard({ product, priority = false, basePath }: Pro
         </div>
         <CardContent className="p-3 flex-grow flex flex-col">
           <h3 className="text-base font-bold text-gray-800">{product.productCode}</h3>
-          <p className="text-sm text-gray-600 flex-grow mt-1">{product.productTitle}</p>
+          <p className="text-sm text-gray-600 mt-1">{product.productTitle}</p>
+            {product.price ? (
+                <p className="text-sm font-semibold text-primary mt-1">Ksh {product.price.toFixed(2)}</p>
+            ) : (
+                <p className="text-xs text-muted-foreground mt-1">Price on inquiry</p>
+            )}
+          <div className="flex-grow"></div>
           <div className="text-xs text-gray-500 mt-1">Dimensions: {product.specifications || 'N/A'}</div>
           <div className="mt-3">
             <Badge variant="outline" className="border-gray-300 text-gray-600">Premium Quality</Badge>
