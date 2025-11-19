@@ -44,4 +44,4 @@ next-env.d.ts
 firebase-debug.log
 firestore-debug.log
 
-studio-56609462-aefda-firebase-adminsdk-fbsvc-16da18a405.json
+serviceAccountKey.json
