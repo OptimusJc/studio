@@ -278,10 +278,15 @@ function ProductDetailPageContent() {
 
     {/* Product Details Section */}
     <div className="space-y-6">
-        {/* Title and Description */}
+        {/* Title and Price */}
         <div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-mono">{product.productCode}</h1>
             <p className="mt-2 text-base sm:text-lg text-muted-foreground">{product.productTitle}</p>
+             {product.price ? (
+                <p className="text-2xl font-bold text-primary mt-4">Ksh {product.price.toFixed(2)}</p>
+            ) : (
+                <p className="text-lg font-semibold text-muted-foreground mt-4">Price on inquiry</p>
+            )}
         </div>
         
         {/* Product Description */}
