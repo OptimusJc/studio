@@ -1,3 +1,4 @@
+
 "use server";
 /**
  * @fileOverview Manages the publishing and unpublishing of products.
@@ -9,45 +10,46 @@ import {
   getApps as getAdminApps,
   getApp as getAdminApp,
   cert,
+  AppOptions,
 } from "firebase-admin/app";
 import { firebaseConfig } from "@/firebase/config";
 import { z } from "zod";
 
 // Server-side initialization with Firebase Admin SDK
 function initializeAdminFirebase() {
-  if (!getAdminApps().length) {
-    try {
-      let credential;
-
-      // Option 1: Use service account JSON from environment variable (production)
-      if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-        const serviceAccount = JSON.parse(
-          process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
-        );
-        credential = cert(serviceAccount);
-      }
-      // Option 2: Use service account file (local development)
-      else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-        credential = cert(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-      }
-      // Option 3: Auto-detect in Google Cloud environments
-      else {
-        credential = undefined;
-      }
-
-      const app = initializeAdminApp({
-        credential: credential,
-        projectId: firebaseConfig.projectId,
-      });
-
-      return { firestore: getAdminFirestore(app) };
-    } catch (error) {
-      console.error("Failed to initialize Firebase Admin:", error);
-      throw error;
-    }
+  if (getAdminApps().length > 0) {
+    return { firestore: getAdminFirestore(getAdminApp()) };
   }
-  return { firestore: getAdminFirestore(getAdminApp()) };
+
+  try {
+    const appOptions: AppOptions = {
+      projectId: firebaseConfig.projectId,
+    };
+
+    // Option 1: Use service account JSON from environment variable (production)
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      const serviceAccount = JSON.parse(
+        process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
+      );
+      appOptions.credential = cert(serviceAccount);
+    }
+    // Option 2: Use service account file (local development)
+    else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      // The cert function can take the file path directly
+      appOptions.credential = cert(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+    }
+    // Option 3: Auto-detect in Google Cloud environments
+    // If no credential is provided, initializeApp will look for default credentials.
+
+    const app = initializeAdminApp(appOptions);
+    return { firestore: getAdminFirestore(app) };
+
+  } catch (error) {
+    console.error("Failed to initialize Firebase Admin:", error);
+    throw error;
+  }
 }
+
 
 const { firestore } = initializeAdminFirebase();
 
@@ -56,7 +58,7 @@ const ManageProductStatusInputSchema = z.object({
   action: z.enum(["publish", "unpublish"]),
   productId: z
     .string()
-    .describe("The ID of the product in the drafts collection."),
+    .describe("The ID of the product in the drafts or live collection."),
   db: z
     .string()
     .optional()
@@ -64,7 +66,7 @@ const ManageProductStatusInputSchema = z.object({
   category: z
     .string()
     .optional()
-    .describe("The product category. Required for unpublish."),
+    .describe("The product category slug. Required for unpublish."),
 });
 export type ManageProductStatusInput = z.infer<
   typeof ManageProductStatusInputSchema
@@ -103,12 +105,13 @@ async function _manageProductStatusLogic(
           `Draft data for '${productId}' is missing required fields: db or category.`,
         );
       }
-
+      
       const categorySlug = productData.category;
       const liveCollectionPath = `${productData.db}/${categorySlug}/products`;
       const liveDocRef = firestore.doc(`${liveCollectionPath}/${productId}`);
+      
+      console.log(`Publishing '${productId}' to '${liveCollectionPath}'`);
 
-      // Write first, then delete (prevents data loss if write fails)
       await liveDocRef.set({
         ...productData,
         status: "Published",
@@ -126,9 +129,11 @@ async function _manageProductStatusLogic(
         throw new Error("Database and category are required for unpublishing.");
       }
 
-      const categorySlug = input.category;
+      const categorySlug = input.category.toLowerCase().replace(/\s+/g, '-');
       const liveCollectionPath = `${input.db}/${categorySlug}/products`;
       const liveDocRef = firestore.doc(`${liveCollectionPath}/${productId}`);
+
+      console.log(`Unpublishing '${productId}' from '${liveCollectionPath}'`);
 
       const liveDoc = await liveDocRef.get();
 
@@ -144,7 +149,6 @@ async function _manageProductStatusLogic(
         throw new Error(`Product data for ${productId} is empty or invalid.`);
       }
 
-      // Write first, then delete (prevents data loss if write fails)
       await draftRef.set({
         ...productData,
         status: "Draft",
@@ -189,4 +193,3 @@ export async function manageProductStatus(
   // Execute the defined flow
   return manageProductStatusFlow(input);
 }
-

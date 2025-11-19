@@ -103,9 +103,6 @@ export default function EditProductPage() {
   }, [categories, productData]);
 
 
-  const memoizedAttributes = useMemo(() => attributes || [], [attributes]);
-  const memoizedCategories = useMemo(() => categories || [], [categories]);
-
   const transformedProductData: Product | null = useMemo(() => {
     // This check is now robust for both draft and published products
     if (productData && categoryNameFromProduct) {
@@ -115,6 +112,7 @@ export default function EditProductPage() {
         category: categoryNameFromProduct,
         price: productData.price,
         stock: 100, // Placeholder
+        stockStatus: productData.stockStatus || 'In Stock',
         sku: `SKU-${productData.id.substring(0, 6)}`, // Placeholder
         status: productData.status || 'Draft',
         attributes: productData.attributes,
@@ -139,6 +137,9 @@ export default function EditProductPage() {
     }
     return null;
   }, [productData, categoryNameFromProduct, dbFromUrl]);
+
+  const memoizedAttributes = useMemo(() => attributes || [], [attributes]);
+  const memoizedCategories = useMemo(() => categories || [], [categories]);
 
 
   return (

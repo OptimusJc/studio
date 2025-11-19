@@ -6,7 +6,7 @@ import { collection, query, getDocs, DocumentData } from 'firebase/firestore';
 import { useEffect, useState, Suspense } from 'react';
 import { PageHeader } from './components/PageHeader';
 import { StatCard } from './components/StatCard';
-import { ShoppingBasket, Users, LayoutGrid, Rocket } from 'lucide-react';
+import { ShoppingBasket, Users, LayoutGrid, Rocket, ArchiveX } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +42,7 @@ function DashboardContent() {
     totalCategories: 0,
     totalUsers: 0,
     publishedProducts: 0,
+    outOfStockProducts: 0,
   });
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,12 +130,14 @@ function DashboardContent() {
         allProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         
         const publishedCount = allProducts.filter(p => p.status === 'Published').length;
+        const outOfStockCount = allProducts.filter(p => p.stockStatus === 'Out of Stock').length;
         
         setRecentProducts(allProducts.slice(0, 5));
         setStats(prev => ({ 
             ...prev, 
             totalProducts: allProducts.length,
             publishedProducts: publishedCount,
+            outOfStockProducts: outOfStockCount,
         }));
 
       } catch (error) {
@@ -150,7 +153,7 @@ function DashboardContent() {
         } else {
             setIsLoading(false);
             setRecentProducts([]);
-            setStats(prev => ({ ...prev, totalProducts: 0, publishedProducts: 0 }));
+            setStats(prev => ({ ...prev, totalProducts: 0, publishedProducts: 0, outOfStockProducts: 0 }));
         }
     }
   }, [firestore, categoriesData, isLoadingCategories]);
@@ -164,9 +167,10 @@ function DashboardContent() {
         title="Dashboard"
         description="Here's a quick overview of your catalog."
       />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {isOverallLoading ? (
             <>
+                <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-28 w-full" />
@@ -197,6 +201,12 @@ function DashboardContent() {
                 value={stats.publishedProducts.toString()}
                 icon={Rocket}
                 description="Products currently live in catalogs."
+                />
+                <StatCard 
+                title="Out of Stock"
+                value={stats.outOfStockProducts.toString()}
+                icon={ArchiveX}
+                description="Products marked as out of stock."
                 />
             </>
         )}
