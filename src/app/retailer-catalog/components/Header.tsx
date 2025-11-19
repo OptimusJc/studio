@@ -25,7 +25,7 @@ type HeaderProps = {
 function AppLogo({ basePath }: { basePath: string }) {
     return (
         <Link href={basePath || '/'} className="flex items-center space-x-2">
-            <Logo />
+            <Logo className="text-foreground" />
         </Link>
     )
 }

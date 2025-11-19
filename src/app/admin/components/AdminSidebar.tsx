@@ -114,7 +114,7 @@ export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminS
   return (
     <Sidebar className="group/sidebar">
       <SidebarHeader>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 px-4 border-2 border-gray-200">
           <Logo />
         </div>
       </SidebarHeader>

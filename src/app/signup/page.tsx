@@ -95,7 +95,7 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
         <div className="absolute top-8 left-8 flex items-center space-x-2">
-            <Logo />
+            <Logo className="text-foreground" />
         </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
