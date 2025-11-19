@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { ProductViewDialog } from './ProductViewDialog';
+import { cn } from '@/lib/utils';
 
 function RowActions({ product }: { product: Product }) {
   const { toast } = useToast();
@@ -146,7 +147,8 @@ export function ProductTableClient({ products }: { products: Product[] }) {
           </TableHead>
           <TableHead className="w-[80px]">Image</TableHead>
           <TableHead>Name</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>Publish Status</TableHead>
+          <TableHead>Stock Status</TableHead>
           <TableHead>Category</TableHead>
           <TableHead>Brand</TableHead>
           <TableHead className="text-right">Price</TableHead>
@@ -173,6 +175,12 @@ export function ProductTableClient({ products }: { products: Product[] }) {
              <TableCell>
               <Badge variant={product.status === 'Published' ? 'secondary' : 'outline'}>
                 {product.status}
+              </Badge>
+            </TableCell>
+             <TableCell>
+              <Badge variant={product.stockStatus === 'Out of Stock' ? 'destructive' : 'outline'}
+               className={cn(product.stockStatus === 'In Stock' && "text-green-600 border-green-600/40")}>
+                {product.stockStatus}
               </Badge>
             </TableCell>
             <TableCell>{product.category}</TableCell>

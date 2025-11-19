@@ -40,6 +40,7 @@ export default function ProductsPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [stockStatusFilter, setStockStatusFilter] = useState('All');
 
   const categoriesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -136,9 +137,14 @@ export default function ProductsPage() {
     if (statusFilter !== 'All') {
       products = products.filter(p => p.status === statusFilter);
     }
+    
+    // Apply stock status filter
+    if (stockStatusFilter !== 'All') {
+      products = products.filter(p => p.stockStatus === stockStatusFilter);
+    }
 
     setFilteredProducts(products);
-  }, [searchTerm, statusFilter, allProducts]);
+  }, [searchTerm, statusFilter, stockStatusFilter, allProducts]);
 
 
   const newProductUrl = category 
@@ -167,7 +173,7 @@ export default function ProductsPage() {
           <CardDescription>A list of all products including their status and stock levels.</CardDescription>
         </CardHeader>
         <CardContent>
-           <div className="flex items-center gap-4 mb-6 px-1">
+           <div className="flex flex-wrap items-center gap-4 mb-6 px-1">
               <div className="relative w-full max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -183,9 +189,21 @@ export default function ProductsPage() {
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="All">All Publish Statuses</SelectItem>
                     <SelectItem value="Published">Published</SelectItem>
                     <SelectItem value="Draft">Draft</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-48">
+                <Select value={stockStatusFilter} onValueChange={setStockStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by stock status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Stock Statuses</SelectItem>
+                    <SelectItem value="In Stock">In Stock</SelectItem>
+                    <SelectItem value="Out of Stock">Out of Stock</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

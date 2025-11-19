@@ -27,6 +27,7 @@ import { useEffect, useMemo } from 'react';
 import { manageProductStatus } from '@/ai/flows/manage-product-status-flow';
 import { Badge } from '@/components/ui/badge';
 import { ImageUploader } from './ImageUploader';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const productSchema = z.object({
   productTitle: z.string().min(1, 'Product title is required.'),
@@ -40,6 +41,7 @@ const productSchema = z.object({
   additionalImages: z.array(z.string()).default([]),
   db: z.enum(['retailers', 'buyers']),
   status: z.enum(['Published', 'Draft']),
+  stockStatus: z.enum(['In Stock', 'Out of Stock']).default('In Stock'),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -77,6 +79,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       additionalImages: initialData?.additionalImages || [],
       db: initialData?.db || initialDb,
       status: initialData?.status || 'Draft',
+      stockStatus: initialData?.stockStatus || 'In Stock',
     }
   });
 
@@ -106,6 +109,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       specifications: data.specifications,
       attributes: data.attributes || {},
       status: data.status,
+      stockStatus: data.stockStatus,
       category: data.category,
       db: data.db,
       createdAt: (isEditMode && initialData?.createdAt) ? initialData.createdAt : new Date().toISOString(),
@@ -381,6 +385,40 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                             ))}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="stockStatus"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>Stock Status</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-1"
+                          >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="In Stock" />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                In Stock
+                              </FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="Out of Stock" />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                Out of Stock
+                              </FormLabel>
+                            </FormItem>
+                          </RadioGroup>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
