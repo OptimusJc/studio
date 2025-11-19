@@ -61,7 +61,7 @@ export default function ProductCard({ product, priority = false, basePath }: Pro
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={cn(
-              "object-cover",
+              "object-cover transition-transform duration-300 group-hover:scale-105",
               isOutOfStock && "grayscale"
             )}
             data-ai-hint={product.imageHint}
@@ -70,14 +70,14 @@ export default function ProductCard({ product, priority = false, basePath }: Pro
            {!isOutOfStock && (
             <div onClick={(e) => e.stopPropagation()} className="absolute inset-0 bg-black/50 flex flex-col justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <ProductPreviewModal product={product} open={isModalOpen} onOpenChange={setModalOpen} basePath={basePath}>
-                <Button
-                    variant="secondary"
-                    className="w-32 rounded-3xl hover:bg-red-600 hover:text-white"
-                    onClick={handlePreviewClick}
-                    disabled={isOutOfStock}
-                >
-                    See Preview
-                </Button>
+                  <Button
+                      variant="secondary"
+                      className="w-32 rounded-3xl hover:bg-red-600 hover:text-white"
+                      onClick={handlePreviewClick}
+                      disabled={isOutOfStock}
+                  >
+                      See Preview
+                  </Button>
                 </ProductPreviewModal>
                 <Button
                 variant="secondary"
@@ -116,4 +116,3 @@ export default function ProductCard({ product, priority = false, basePath }: Pro
     </div>
   );
 }
-
