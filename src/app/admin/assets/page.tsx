@@ -4,20 +4,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import { useStorage } from '@/firebase';
-import { ref, listAll, getDownloadURL, StorageReference, ListResult } from 'firebase/storage';
+import { ref, listAll, getDownloadURL, deleteObject, StorageReference, ListResult } from 'firebase/storage';
 import { AssetUploader } from './components/AssetUploader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Folder, File, Copy } from 'lucide-react';
+import { Folder, File, Copy, Trash2, MoreVertical, X } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { CreateFolderDialog } from './components/CreateFolderDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 interface StorageItem {
   name: string;
   path: string;
   type: 'folder' | 'file';
   url?: string;
+  ref: StorageReference;
 }
 
 function AssetGridSkeleton() {
@@ -37,10 +43,12 @@ export default function AssetsPage() {
   const [currentPath, setCurrentPath] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   const fetchItems = useCallback(async () => {
     if (!storage) return;
     setIsLoading(true);
+    setSelectedItems(new Set()); // Clear selection on path change
 
     const listRef = ref(storage, currentPath);
     try {
@@ -53,17 +61,22 @@ export default function AssetsPage() {
           name: folderRef.name,
           path: folderRef.fullPath,
           type: 'folder',
+          ref: folderRef,
         });
       });
 
       // Add files
       for (const itemRef of res.items) {
+        // Skip placeholder files used to create folders
+        if (itemRef.name === '.gitkeep') continue;
+        
         const url = await getDownloadURL(itemRef);
         fetchedItems.push({
           name: itemRef.name,
           path: itemRef.fullPath,
           type: 'file',
           url: url,
+          ref: itemRef,
         });
       }
 
@@ -79,6 +92,27 @@ export default function AssetsPage() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems, refreshKey]);
+  
+  const handleSelectItem = (path: string) => {
+    setSelectedItems(prev => {
+        const newSelection = new Set(prev);
+        if (newSelection.has(path)) {
+            newSelection.delete(path);
+        } else {
+            newSelection.add(path);
+        }
+        return newSelection;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+        setSelectedItems(new Set(items.map(item => item.path)));
+    } else {
+        setSelectedItems(new Set());
+    }
+  }
+
 
   const handleFolderClick = (path: string) => {
     setCurrentPath(path);
@@ -101,14 +135,65 @@ export default function AssetsPage() {
     setRefreshKey(prev => prev + 1); // Trigger a refresh
   }
 
+  const deleteItems = async (itemsToDelete: StorageItem[]) => {
+     if (!storage || itemsToDelete.length === 0) return;
+
+    let deletedCount = 0;
+    let errorCount = 0;
+
+    for (const item of itemsToDelete) {
+        try {
+            if (item.type === 'file') {
+                await deleteObject(item.ref);
+            } else if (item.type === 'folder') {
+                const deleteFolderContents = async (path: string) => {
+                    const listRef = ref(storage, path);
+                    const res = await listAll(listRef);
+                    await Promise.all(res.items.map(itemRef => deleteObject(itemRef)));
+                    await Promise.all(res.prefixes.map(folderRef => deleteFolderContents(folderRef.fullPath)));
+                };
+                await deleteFolderContents(item.path);
+            }
+            deletedCount++;
+        } catch (error) {
+            errorCount++;
+            console.error(`Error deleting item ${item.path}:`, error);
+        }
+    }
+
+    if (deletedCount > 0) {
+        toast({ title: "Deletion Successful", description: `${deletedCount} item(s) have been deleted.`});
+    }
+    if (errorCount > 0) {
+        toast({ variant: "destructive", title: "Deletion Failed", description: `${errorCount} item(s) could not be deleted.` });
+    }
+
+    setRefreshKey(prev => prev + 1); // Refresh the list
+    setSelectedItems(new Set());
+  }
+
+  const handleDeleteItem = async (item: StorageItem) => {
+    await deleteItems([item]);
+  }
+
+  const handleDeleteSelected = async () => {
+    const itemsToDelete = items.filter(item => selectedItems.has(item.path));
+    await deleteItems(itemsToDelete);
+  }
+
   const breadcrumbs = currentPath.split('/').filter(p => p);
+  
+  const isAllSelected = selectedItems.size > 0 && selectedItems.size === items.length;
+  const isIndeterminate = selectedItems.size > 0 && selectedItems.size < items.length;
 
   return (
     <div className="p-4 md:p-8 space-y-8">
       <PageHeader
         title="Asset Manager"
         description="Upload and manage your images and other files."
-      />
+      >
+        <CreateFolderDialog currentPath={currentPath} onFolderCreated={() => setRefreshKey(prev => prev + 1)} />
+      </PageHeader>
 
       <AssetUploader onUploadComplete={handleUploadComplete} />
 
@@ -128,10 +213,57 @@ export default function AssetsPage() {
             </div>
         </CardHeader>
         <CardContent>
+            {selectedItems.size > 0 && (
+                <div className="mb-4 flex items-center gap-4 p-2 rounded-lg border bg-secondary">
+                    <p className="text-sm font-medium flex-grow">
+                        {selectedItems.size} item(s) selected
+                    </p>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Selected
+                            </Button>
+                        </AlertDialogTrigger>
+                         <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the {selectedItems.size} selected item(s). This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90">
+                                    Delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedItems(new Set())}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
+            <div className="flex items-center gap-2 mb-4">
+                <Checkbox
+                    id="select-all"
+                    checked={isAllSelected || isIndeterminate}
+                    onCheckedChange={handleSelectAll}
+                />
+                <label htmlFor="select-all" className="text-sm font-medium">Select All</label>
+            </div>
           {isLoading ? <AssetGridSkeleton /> : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {items.map(item => (
-                    <div key={item.path} className="group relative">
+                    <div key={item.path} className={cn("group relative rounded-lg", selectedItems.has(item.path) && "ring-2 ring-primary ring-offset-2")}>
+                         <div className="absolute top-2 left-2 z-10">
+                            <Checkbox
+                                className="bg-background/50 hover:bg-background/80 border-slate-500"
+                                checked={selectedItems.has(item.path)}
+                                onCheckedChange={() => handleSelectItem(item.path)}
+                            />
+                        </div>
                         {item.type === 'folder' ? (
                             <div 
                                 className="aspect-square w-full bg-muted rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-muted-foreground/20"
@@ -155,12 +287,49 @@ export default function AssetsPage() {
                                 )}
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
                                     <p className="text-white text-xs text-center font-semibold break-all">{item.name}</p>
-                                    <Button size="icon" variant="secondary" className="mt-2 h-8 w-8" onClick={() => copyUrl(item.url!, item.name)}>
-                                        <Copy className="h-4 w-4" />
-                                    </Button>
                                 </div>
                             </div>
                         )}
+                         <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <AlertDialog>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="secondary" size="icon" className="h-7 w-7">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {item.type === 'file' && (
+                                            <DropdownMenuItem onSelect={() => copyUrl(item.url!, item.name)}>
+                                                <Copy className="mr-2 h-4 w-4" />
+                                                Copy URL
+                                            </DropdownMenuItem>
+                                        )}
+                                        <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the {item.type} &quot;{item.name}&quot;
+                                            {item.type === 'folder' && ' and all of its contents'}.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteItem(item)} className="bg-destructive hover:bg-destructive/90">
+                                            Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </div>
                 ))}
                 {items.length === 0 && !isLoading && (
