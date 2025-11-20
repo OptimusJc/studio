@@ -118,29 +118,43 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     return productData;
   }
 
-  const handleSaveDraft = async (data: ProductFormValues) => {
+  const handleSave = async (data: ProductFormValues) => {
     if (!firestore) return;
-    const productData = getProductDataFromForm(data);
     
-    if (currentProductId) {
-      const docRef = doc(firestore, 'drafts', currentProductId);
-      setDocumentNonBlocking(docRef, productData, { merge: true });
-      toast({
-          title: "Draft Updated!",
-          description: `${data.productTitle} has been updated.`,
-      });
-    } else {
-        addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
-        .then(newDocRef => {
-            toast({
-                title: "Draft Saved!",
-                description: `${data.productTitle} has been saved.`,
-            });
-            if (newDocRef) {
-                const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
-                router.replace(newPath, { scroll: false });
-            }
+    const productData = getProductDataFromForm(data);
+
+    if (currentStatus === 'Published' && currentProductId) {
+        // Update a published product
+        const collectionPath = `${data.db}/${data.category}/products`;
+        const docRef = doc(firestore, collectionPath, currentProductId);
+        setDocumentNonBlocking(docRef, productData, { merge: true });
+        toast({
+            title: "Product Updated!",
+            description: `${data.productTitle} has been updated live.`,
         });
+
+    } else if (currentStatus === 'Draft') {
+        // Save or update a draft
+        if (currentProductId) {
+            const docRef = doc(firestore, 'drafts', currentProductId);
+            setDocumentNonBlocking(docRef, productData, { merge: true });
+            toast({
+                title: "Draft Updated!",
+                description: `${data.productTitle} has been updated.`,
+            });
+        } else {
+            addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
+            .then(newDocRef => {
+                toast({
+                    title: "Draft Saved!",
+                    description: `${data.productTitle} has been saved.`,
+                });
+                if (newDocRef) {
+                    const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
+                    router.replace(newPath, { scroll: false });
+                }
+            });
+        }
     }
   };
 
@@ -193,8 +207,9 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         <form className="space-y-8">
            <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/95 py-4 backdrop-blur-sm px-4 md:px-8 -mx-4 md:-mx-8">
               <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
-              <Button type="button" variant="secondary" onClick={form.handleSubmit(handleSaveDraft)}>
-                <Save className="mr-2 h-4 w-4" /> Save Draft
+              <Button type="button" variant="secondary" onClick={form.handleSubmit(handleSave)}>
+                <Save className="mr-2 h-4 w-4" /> 
+                {currentStatus === 'Published' ? 'Save Changes' : 'Save Draft'}
               </Button>
               {isEditMode && currentStatus === 'Published' && (
                 <Button type="button" variant="destructive" onClick={form.handleSubmit(handleUnpublish)}>
@@ -306,7 +321,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                         <FormLabel>Specifications</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="e.g., Roll: 0.53m x 10m, Material: Vinyl, Repeat: 26.5cm"
+                            placeholder="Separate multiple values with a comma. e.g., Roll: 0.53m x 10m, Material: Vinyl, Repeat: 26.5cm"
                             {...field}
                             rows={4}
                           />
