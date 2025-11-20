@@ -53,34 +53,31 @@ export default function AssetsPage() {
     const listRef = ref(storage, currentPath);
     try {
       const res: ListResult = await listAll(listRef);
-      const fetchedItems: StorageItem[] = [];
-
-      // Add folders
-      res.prefixes.forEach(folderRef => {
-        fetchedItems.push({
+      const folderItems: StorageItem[] = res.prefixes.map(folderRef => ({
           name: folderRef.name,
           path: folderRef.fullPath,
           type: 'folder',
           ref: folderRef,
-        });
-      });
+      }));
 
-      // Add files
-      for (const itemRef of res.items) {
-        // Skip placeholder files used to create folders
-        if (itemRef.name === '.gitkeep') continue;
-        
-        const url = await getDownloadURL(itemRef);
-        fetchedItems.push({
-          name: itemRef.name,
-          path: itemRef.fullPath,
-          type: 'file',
-          url: url,
-          ref: itemRef,
+      // Create an array of promises for getting download URLs
+      const filePromises = res.items
+        .filter(itemRef => itemRef.name !== '.gitkeep')
+        .map(async (itemRef) => {
+          const url = await getDownloadURL(itemRef);
+          return {
+            name: itemRef.name,
+            path: itemRef.fullPath,
+            type: 'file',
+            url: url,
+            ref: itemRef,
+          };
         });
-      }
 
-      setItems(fetchedItems);
+      // Await all promises in parallel
+      const fileItems = await Promise.all(filePromises);
+
+      setItems([...folderItems, ...fileItems]);
     } catch (error) {
       console.error("Error listing storage items:", error);
       toast({ variant: "destructive", title: "Could not load assets", description: (error as Error).message });
@@ -135,8 +132,8 @@ export default function AssetsPage() {
     setRefreshKey(prev => prev + 1); // Trigger a refresh
   }
 
-  const deleteItems = async (itemsToDelete: StorageItem[]) => {
-     if (!storage || itemsToDelete.length === 0) return;
+  const deleteItemsInBackground = async (itemsToDelete: StorageItem[]) => {
+    if (!storage || itemsToDelete.length === 0) return;
 
     let deletedCount = 0;
     let errorCount = 0;
@@ -167,23 +164,35 @@ export default function AssetsPage() {
     if (errorCount > 0) {
         toast({ variant: "destructive", title: "Deletion Failed", description: `${errorCount} item(s) could not be deleted.` });
     }
-
-    setRefreshKey(prev => prev + 1); // Refresh the list
-    setSelectedItems(new Set());
   }
 
-  const handleDeleteItem = async (item: StorageItem) => {
-    await deleteItems([item]);
+  const handleDeleteItem = (itemToDelete: StorageItem) => {
+    // Optimistically remove the item from the UI
+    setItems(prevItems => prevItems.filter(item => item.path !== itemToDelete.path));
+    setSelectedItems(prev => {
+        const newSelection = new Set(prev);
+        newSelection.delete(itemToDelete.path);
+        return newSelection;
+    });
+
+    // Perform the actual deletion in the background
+    deleteItemsInBackground([itemToDelete]);
   }
 
-  const handleDeleteSelected = async () => {
+  const handleDeleteSelected = () => {
     const itemsToDelete = items.filter(item => selectedItems.has(item.path));
-    await deleteItems(itemsToDelete);
+    
+    // Optimistically remove the items from the UI
+    setItems(prevItems => prevItems.filter(item => !selectedItems.has(item.path)));
+    setSelectedItems(new Set());
+    
+    // Perform the actual deletion in the background
+    deleteItemsInBackground(itemsToDelete);
   }
 
   const breadcrumbs = currentPath.split('/').filter(p => p);
   
-  const isAllSelected = selectedItems.size > 0 && selectedItems.size === items.length;
+  const isAllSelected = items.length > 0 && selectedItems.size === items.length;
   const isIndeterminate = selectedItems.size > 0 && selectedItems.size < items.length;
 
   return (
@@ -248,7 +257,7 @@ export default function AssetsPage() {
             <div className="flex items-center gap-2 mb-4">
                 <Checkbox
                     id="select-all"
-                    checked={isAllSelected || isIndeterminate}
+                    checked={isAllSelected}
                     onCheckedChange={handleSelectAll}
                 />
                 <label htmlFor="select-all" className="text-sm font-medium">Select All</label>
