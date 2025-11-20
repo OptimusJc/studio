@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -7,14 +8,15 @@ import { ref, listAll, getDownloadURL, deleteObject, StorageReference, ListResul
 import { AssetUploader } from './components/AssetUploader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Folder, File, Copy, Trash2, MoreVertical } from 'lucide-react';
+import { Folder, File, Copy, Trash2, MoreVertical, X } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { CreateFolderDialog } from './components/CreateFolderDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 interface StorageItem {
   name: string;
@@ -41,10 +43,12 @@ export default function AssetsPage() {
   const [currentPath, setCurrentPath] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   const fetchItems = useCallback(async () => {
     if (!storage) return;
     setIsLoading(true);
+    setSelectedItems(new Set()); // Clear selection on path change
 
     const listRef = ref(storage, currentPath);
     try {
@@ -88,6 +92,27 @@ export default function AssetsPage() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems, refreshKey]);
+  
+  const handleSelectItem = (path: string) => {
+    setSelectedItems(prev => {
+        const newSelection = new Set(prev);
+        if (newSelection.has(path)) {
+            newSelection.delete(path);
+        } else {
+            newSelection.add(path);
+        }
+        return newSelection;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+        setSelectedItems(new Set(items.map(item => item.path)));
+    } else {
+        setSelectedItems(new Set());
+    }
+  }
+
 
   const handleFolderClick = (path: string) => {
     setCurrentPath(path);
@@ -110,34 +135,56 @@ export default function AssetsPage() {
     setRefreshKey(prev => prev + 1); // Trigger a refresh
   }
 
-  const handleDeleteItem = async (item: StorageItem) => {
-    if (!storage) return;
+  const deleteItems = async (itemsToDelete: StorageItem[]) => {
+     if (!storage || itemsToDelete.length === 0) return;
 
-    try {
-        if (item.type === 'file') {
-            await deleteObject(item.ref);
-            toast({ title: "File Deleted", description: `"${item.name}" has been deleted.`});
-        } else if (item.type === 'folder') {
-            // Recursively delete all items in the folder
-            const deleteFolderContents = async (path: string) => {
-                const listRef = ref(storage, path);
-                const res = await listAll(listRef);
-                // Delete all files
-                await Promise.all(res.items.map(itemRef => deleteObject(itemRef)));
-                // Recursively delete all subfolders
-                await Promise.all(res.prefixes.map(folderRef => deleteFolderContents(folderRef.fullPath)));
+    let deletedCount = 0;
+    let errorCount = 0;
+
+    for (const item of itemsToDelete) {
+        try {
+            if (item.type === 'file') {
+                await deleteObject(item.ref);
+            } else if (item.type === 'folder') {
+                const deleteFolderContents = async (path: string) => {
+                    const listRef = ref(storage, path);
+                    const res = await listAll(listRef);
+                    await Promise.all(res.items.map(itemRef => deleteObject(itemRef)));
+                    await Promise.all(res.prefixes.map(folderRef => deleteFolderContents(folderRef.fullPath)));
+                };
+                await deleteFolderContents(item.path);
             }
-            await deleteFolderContents(item.path);
-            toast({ title: "Folder Deleted", description: `"${item.name}" and all its contents have been deleted.`});
+            deletedCount++;
+        } catch (error) {
+            errorCount++;
+            console.error(`Error deleting item ${item.path}:`, error);
         }
-        setRefreshKey(prev => prev + 1); // Refresh the list
-    } catch (error) {
-        console.error("Error deleting item:", error);
-        toast({ variant: "destructive", title: "Deletion Failed", description: (error as Error).message });
     }
+
+    if (deletedCount > 0) {
+        toast({ title: "Deletion Successful", description: `${deletedCount} item(s) have been deleted.`});
+    }
+    if (errorCount > 0) {
+        toast({ variant: "destructive", title: "Deletion Failed", description: `${errorCount} item(s) could not be deleted.` });
+    }
+
+    setRefreshKey(prev => prev + 1); // Refresh the list
+    setSelectedItems(new Set());
+  }
+
+  const handleDeleteItem = async (item: StorageItem) => {
+    await deleteItems([item]);
+  }
+
+  const handleDeleteSelected = async () => {
+    const itemsToDelete = items.filter(item => selectedItems.has(item.path));
+    await deleteItems(itemsToDelete);
   }
 
   const breadcrumbs = currentPath.split('/').filter(p => p);
+  
+  const isAllSelected = selectedItems.size > 0 && selectedItems.size === items.length;
+  const isIndeterminate = selectedItems.size > 0 && selectedItems.size < items.length;
 
   return (
     <div className="p-4 md:p-8 space-y-8">
@@ -166,10 +213,57 @@ export default function AssetsPage() {
             </div>
         </CardHeader>
         <CardContent>
+            {selectedItems.size > 0 && (
+                <div className="mb-4 flex items-center gap-4 p-2 rounded-lg border bg-secondary">
+                    <p className="text-sm font-medium flex-grow">
+                        {selectedItems.size} item(s) selected
+                    </p>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Selected
+                            </Button>
+                        </AlertDialogTrigger>
+                         <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the {selectedItems.size} selected item(s). This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90">
+                                    Delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedItems(new Set())}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
+            <div className="flex items-center gap-2 mb-4">
+                <Checkbox
+                    id="select-all"
+                    checked={isAllSelected || isIndeterminate}
+                    onCheckedChange={handleSelectAll}
+                />
+                <label htmlFor="select-all" className="text-sm font-medium">Select All</label>
+            </div>
           {isLoading ? <AssetGridSkeleton /> : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {items.map(item => (
-                    <div key={item.path} className="group relative">
+                    <div key={item.path} className={cn("group relative rounded-lg", selectedItems.has(item.path) && "ring-2 ring-primary ring-offset-2")}>
+                         <div className="absolute top-2 left-2 z-10">
+                            <Checkbox
+                                className="bg-background/50 hover:bg-background/80 border-slate-500"
+                                checked={selectedItems.has(item.path)}
+                                onCheckedChange={() => handleSelectItem(item.path)}
+                            />
+                        </div>
                         {item.type === 'folder' ? (
                             <div 
                                 className="aspect-square w-full bg-muted rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-muted-foreground/20"
