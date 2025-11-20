@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useStorage } from '@/firebase';
-import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import { ref, listAll, getDownloadURL, ListResult } from 'firebase/storage';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Folder, File } from 'lucide-react';
 import Image from 'next/image';
@@ -53,27 +53,28 @@ export function AssetPickerDialog({ children, onAssetSelect }: AssetPickerDialog
 
     const listRef = ref(storage, currentPath);
     try {
-      const res = await listAll(listRef);
-      const fetchedItems: StorageItem[] = [];
+      const res: ListResult = await listAll(listRef);
+      const folderItems: StorageItem[] = res.prefixes.map(folderRef => ({
+        name: folderRef.name,
+        path: folderRef.fullPath,
+        type: 'folder',
+      }));
 
-      res.prefixes.forEach(folderRef => {
-        fetchedItems.push({
-          name: folderRef.name,
-          path: folderRef.fullPath,
-          type: 'folder',
-        });
+      const filePromises = res.items
+        .filter(itemRef => itemRef.name !== '.gitkeep')
+        .map(async (itemRef) => {
+          const url = await getDownloadURL(itemRef);
+          return {
+            name: itemRef.name,
+            path: itemRef.fullPath,
+            type: 'file',
+            url: url,
+          };
       });
+      
+      const fileItems = await Promise.all(filePromises);
 
-      for (const itemRef of res.items) {
-        const url = await getDownloadURL(itemRef);
-        fetchedItems.push({
-          name: itemRef.name,
-          path: itemRef.fullPath,
-          type: 'file',
-          url: url,
-        });
-      }
-      setItems(fetchedItems);
+      setItems([...folderItems, ...fileItems]);
     } catch (error) {
       console.error("Error listing storage items:", error);
       toast({ variant: "destructive", title: "Could not load assets", description: (error as Error).message });

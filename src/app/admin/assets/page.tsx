@@ -53,34 +53,31 @@ export default function AssetsPage() {
     const listRef = ref(storage, currentPath);
     try {
       const res: ListResult = await listAll(listRef);
-      const fetchedItems: StorageItem[] = [];
-
-      // Add folders
-      res.prefixes.forEach(folderRef => {
-        fetchedItems.push({
+      const folderItems: StorageItem[] = res.prefixes.map(folderRef => ({
           name: folderRef.name,
           path: folderRef.fullPath,
           type: 'folder',
           ref: folderRef,
-        });
-      });
+      }));
 
-      // Add files
-      for (const itemRef of res.items) {
-        // Skip placeholder files used to create folders
-        if (itemRef.name === '.gitkeep') continue;
-        
-        const url = await getDownloadURL(itemRef);
-        fetchedItems.push({
-          name: itemRef.name,
-          path: itemRef.fullPath,
-          type: 'file',
-          url: url,
-          ref: itemRef,
+      // Create an array of promises for getting download URLs
+      const filePromises = res.items
+        .filter(itemRef => itemRef.name !== '.gitkeep')
+        .map(async (itemRef) => {
+          const url = await getDownloadURL(itemRef);
+          return {
+            name: itemRef.name,
+            path: itemRef.fullPath,
+            type: 'file',
+            url: url,
+            ref: itemRef,
+          };
         });
-      }
 
-      setItems(fetchedItems);
+      // Await all promises in parallel
+      const fileItems = await Promise.all(filePromises);
+
+      setItems([...folderItems, ...fileItems]);
     } catch (error) {
       console.error("Error listing storage items:", error);
       toast({ variant: "destructive", title: "Could not load assets", description: (error as Error).message });
