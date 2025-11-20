@@ -1,23 +1,27 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import { useStorage } from '@/firebase';
-import { ref, listAll, getDownloadURL, StorageReference, ListResult } from 'firebase/storage';
+import { ref, listAll, getDownloadURL, deleteObject, StorageReference, ListResult } from 'firebase/storage';
 import { AssetUploader } from './components/AssetUploader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Folder, File, Copy } from 'lucide-react';
+import { Folder, File, Copy, Trash2, MoreVertical } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { CreateFolderDialog } from './components/CreateFolderDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
 
 interface StorageItem {
   name: string;
   path: string;
   type: 'folder' | 'file';
   url?: string;
+  ref: StorageReference;
 }
 
 function AssetGridSkeleton() {
@@ -53,17 +57,22 @@ export default function AssetsPage() {
           name: folderRef.name,
           path: folderRef.fullPath,
           type: 'folder',
+          ref: folderRef,
         });
       });
 
       // Add files
       for (const itemRef of res.items) {
+        // Skip placeholder files used to create folders
+        if (itemRef.name === '.gitkeep') continue;
+        
         const url = await getDownloadURL(itemRef);
         fetchedItems.push({
           name: itemRef.name,
           path: itemRef.fullPath,
           type: 'file',
           url: url,
+          ref: itemRef,
         });
       }
 
@@ -101,6 +110,33 @@ export default function AssetsPage() {
     setRefreshKey(prev => prev + 1); // Trigger a refresh
   }
 
+  const handleDeleteItem = async (item: StorageItem) => {
+    if (!storage) return;
+
+    try {
+        if (item.type === 'file') {
+            await deleteObject(item.ref);
+            toast({ title: "File Deleted", description: `"${item.name}" has been deleted.`});
+        } else if (item.type === 'folder') {
+            // Recursively delete all items in the folder
+            const deleteFolderContents = async (path: string) => {
+                const listRef = ref(storage, path);
+                const res = await listAll(listRef);
+                // Delete all files
+                await Promise.all(res.items.map(itemRef => deleteObject(itemRef)));
+                // Recursively delete all subfolders
+                await Promise.all(res.prefixes.map(folderRef => deleteFolderContents(folderRef.fullPath)));
+            }
+            await deleteFolderContents(item.path);
+            toast({ title: "Folder Deleted", description: `"${item.name}" and all its contents have been deleted.`});
+        }
+        setRefreshKey(prev => prev + 1); // Refresh the list
+    } catch (error) {
+        console.error("Error deleting item:", error);
+        toast({ variant: "destructive", title: "Deletion Failed", description: (error as Error).message });
+    }
+  }
+
   const breadcrumbs = currentPath.split('/').filter(p => p);
 
   return (
@@ -108,7 +144,9 @@ export default function AssetsPage() {
       <PageHeader
         title="Asset Manager"
         description="Upload and manage your images and other files."
-      />
+      >
+        <CreateFolderDialog currentPath={currentPath} onFolderCreated={() => setRefreshKey(prev => prev + 1)} />
+      </PageHeader>
 
       <AssetUploader onUploadComplete={handleUploadComplete} />
 
@@ -155,12 +193,49 @@ export default function AssetsPage() {
                                 )}
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
                                     <p className="text-white text-xs text-center font-semibold break-all">{item.name}</p>
-                                    <Button size="icon" variant="secondary" className="mt-2 h-8 w-8" onClick={() => copyUrl(item.url!, item.name)}>
-                                        <Copy className="h-4 w-4" />
-                                    </Button>
                                 </div>
                             </div>
                         )}
+                         <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <AlertDialog>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="secondary" size="icon" className="h-7 w-7">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {item.type === 'file' && (
+                                            <DropdownMenuItem onSelect={() => copyUrl(item.url!, item.name)}>
+                                                <Copy className="mr-2 h-4 w-4" />
+                                                Copy URL
+                                            </DropdownMenuItem>
+                                        )}
+                                        <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the {item.type} &quot;{item.name}&quot;
+                                            {item.type === 'folder' && ' and all of its contents'}.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteItem(item)} className="bg-destructive hover:bg-destructive/90">
+                                            Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </div>
                 ))}
                 {items.length === 0 && !isLoading && (
