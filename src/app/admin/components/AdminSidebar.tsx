@@ -269,7 +269,7 @@ export default function AdminSidebar({ selectedDb, setSelectedDb, user }: AdminS
           </Avatar>
           <div className="flex flex-col">
             <span className="font-semibold text-sm">{user?.name}</span>
-            <span className="text-xs text-muted-foreground">{user?.email}</span>
+            <span className="text-xs text-muted-foreground w-32 truncate text-red-500">{user?.email}</span>
           </div>
           <SidebarMenuButton variant="ghost" className="ml-auto" size="sm" tooltip="Log Out" onClick={handleLogout}>
             <LogOut />
