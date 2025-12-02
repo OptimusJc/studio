@@ -52,7 +52,7 @@ export default function ProductDetailPageClient() {
 
   React.useEffect(() => {
     const findProduct = async () => {
-        if (!firestore || !productId || !categoriesData) return;
+        if (!firestore || !productId || isLoadingCategories) return;
         setIsLoading(true);
 
         let foundProduct: Product | null = null;
@@ -122,9 +122,7 @@ export default function ProductDetailPageClient() {
         setIsLoading(false);
     };
 
-    if (!isLoadingCategories && categoriesData) {
-        findProduct();
-    }
+    findProduct();
   }, [firestore, productId, categoriesData, isLoadingCategories]);
 
   const allImages = React.useMemo(() => {
