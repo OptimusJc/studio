@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -21,7 +22,7 @@ import { WhatsAppPreview } from '@/app/retailer-catalog/components/WhatsAppPrevi
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 export default function ProductDetailPageClient({ params }: { params: { id: string } }) {
-  const { firestore } = useFirestore();
+  const firestore = useFirestore();
   const router = useRouter();
 
   const productId = params.id as string;
@@ -39,74 +40,75 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
 
       const categoriesSnapshot = await getDocs(collection(firestore, 'categories'));
       if (categoriesSnapshot.empty) {
-        console.warn("No categories found. Cannot locate product.");
+        console.warn("No categories found.");
         setIsLoading(false);
         return;
       }
-      
+
       const categoriesData = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
 
-      let foundProduct: Product | null = null;
-      let productCategoryName: string | null = null;
+      const fetchPromises = categoriesData.map(cat => {
+        const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
+        const liveCollectionPath = `buyers/${categorySlug}/products`;
+        const productRef = doc(firestore, liveCollectionPath, productId);
+        return getDoc(productRef).then(snapshot => ({ snapshot, category: cat.name }));
+      });
       
-      for (const cat of categoriesData) {
-          const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
-          const liveCollectionPath = `buyers/${categorySlug}/products`;
-          try {
-              const productRef = doc(firestore, liveCollectionPath, productId);
-              const productSnap = await getDoc(productRef);
-              
-              if (productSnap.exists()) {
-                  const data = productSnap.data() as DocumentData;
-                   if (data.status === 'Published') {
-                      foundProduct = {
-                          id: productSnap.id,
-                          ...data,
-                          name: data.productTitle,
-                          imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                          category: cat.name,
-                          db: 'buyers',
-                      } as Product;
-                      productCategoryName = cat.name;
-                      break; 
-                  }
-              }
-          } catch(e) {
-            // Collection might not exist, which is fine.
+      const results = await Promise.allSettled(fetchPromises);
+      
+      let foundProduct: Product | null = null;
+      
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value.snapshot.exists()) {
+          const snapshot = result.value.snapshot;
+          const categoryName = result.value.category;
+          const data = snapshot.data() as DocumentData;
+
+          if (data.status === 'Published') {
+            foundProduct = {
+                id: snapshot.id,
+                ...data,
+                name: data.productTitle,
+                imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                category: categoryName,
+                db: 'buyers',
+            } as Product;
+            break;
           }
+        }
       }
 
       if (foundProduct) {
-          setProduct(foundProduct);
-          setActiveImage(foundProduct.productImages?.[0] || '');
-          
-          if (productCategoryName) {
-               const categorySlug = productCategoryName.toLowerCase().replace(/\s+/g, '-');
-               const relatedCollectionPath = `buyers/${categorySlug}/products`;
-               const q = query(
-                   collection(firestore, relatedCollectionPath), 
-                   where("status", "==", "Published"),
-                   limit(7)
-               );
-               const querySnapshot = await getDocs(q);
-               const fetchedRelated: Product[] = [];
-               querySnapshot.forEach((doc) => {
-                   if (doc.id !== productId) { 
-                      const data = doc.data() as DocumentData;
-                      fetchedRelated.push({
-                          id: doc.id,
-                          ...data,
-                          name: data.productTitle,
-                          imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                          category: productCategoryName,
-                          db: 'buyers',
-                      } as Product)
-                   }
-               });
-               setRelatedProducts(fetchedRelated.slice(0, 6));
-          }
+        setProduct(foundProduct);
+        setActiveImage(foundProduct.productImages?.[0] || '');
+        
+        // Fetch related products
+        const categorySlug = foundProduct.category.toLowerCase().replace(/\s+/g, '-');
+        const relatedCollectionPath = `buyers/${categorySlug}/products`;
+        const q = query(
+            collection(firestore, relatedCollectionPath), 
+            where("status", "==", "Published"),
+            limit(7)
+        );
+        const querySnapshot = await getDocs(q);
+        const fetchedRelated: Product[] = [];
+        querySnapshot.forEach((doc) => {
+            if (doc.id !== productId) { 
+               const data = doc.data() as DocumentData;
+               fetchedRelated.push({
+                   id: doc.id,
+                   ...data,
+                   name: data.productTitle,
+                   imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                   category: foundProduct!.category,
+                   db: 'buyers',
+               } as Product)
+            }
+        });
+        setRelatedProducts(fetchedRelated.slice(0, 6));
+
       } else {
-          console.warn(`Published product with ID ${productId} not found in 'buyers' database.`);
+        console.warn(`Published product with ID ${productId} not found in 'buyers' database.`);
       }
       setIsLoading(false);
     };
