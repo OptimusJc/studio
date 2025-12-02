@@ -34,85 +34,86 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
 
   React.useEffect(() => {
     if (!firestore || !productId) return;
-
+  
     const findAndFetchProduct = async () => {
       setIsLoading(true);
-
-      const categoriesSnapshot = await getDocs(collection(firestore, 'categories'));
-      if (categoriesSnapshot.empty) {
-        console.warn("No categories found.");
-        setIsLoading(false);
-        return;
-      }
-
-      const categoriesData = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
-
-      const fetchPromises = categoriesData.map(cat => {
-        const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
-        const liveCollectionPath = `buyers/${categorySlug}/products`;
-        const productRef = doc(firestore, liveCollectionPath, productId);
-        return getDoc(productRef).then(snapshot => ({ snapshot, category: cat.name }));
-      });
-      
-      const results = await Promise.allSettled(fetchPromises);
-      
-      let foundProduct: Product | null = null;
-      
-      for (const result of results) {
-        if (result.status === 'fulfilled' && result.value.snapshot.exists()) {
-          const snapshot = result.value.snapshot;
-          const categoryName = result.value.category;
-          const data = snapshot.data() as DocumentData;
-
-          if (data.status === 'Published') {
-            foundProduct = {
+      try {
+        const categoriesSnapshot = await getDocs(collection(firestore, 'categories'));
+        if (categoriesSnapshot.empty) {
+          console.warn("No categories found.");
+          setIsLoading(false);
+          return;
+        }
+  
+        const categoriesData = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+  
+        const fetchPromises = categoriesData.map(cat => {
+          const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
+          const liveCollectionPath = `buyers/${categorySlug}/products`;
+          const productRef = doc(firestore, liveCollectionPath, productId);
+          return getDoc(productRef).then(snapshot => ({ snapshot, category: cat.name }));
+        });
+  
+        const results = await Promise.allSettled(fetchPromises);
+        let foundProductData: Product | null = null;
+  
+        for (const result of results) {
+          if (result.status === 'fulfilled' && result.value.snapshot.exists()) {
+            const snapshot = result.value.snapshot;
+            const data = snapshot.data() as DocumentData;
+  
+            if (data.status === 'Published') {
+                foundProductData = {
                 id: snapshot.id,
                 ...data,
                 name: data.productTitle,
                 imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                category: categoryName,
+                category: result.value.category,
                 db: 'buyers',
-            } as Product;
-            break;
+              } as Product;
+              break; 
+            }
           }
         }
-      }
-
-      if (foundProduct) {
-        setProduct(foundProduct);
-        setActiveImage(foundProduct.productImages?.[0] || '');
-        
-        // Fetch related products
-        const categorySlug = foundProduct.category.toLowerCase().replace(/\s+/g, '-');
-        const relatedCollectionPath = `buyers/${categorySlug}/products`;
-        const q = query(
-            collection(firestore, relatedCollectionPath), 
+  
+        if (foundProductData) {
+          setProduct(foundProductData);
+          setActiveImage(foundProductData.productImages?.[0] || '');
+  
+          // Fetch related products
+          const categorySlug = foundProductData.category.toLowerCase().replace(/\s+/g, '-');
+          const relatedCollectionPath = `buyers/${categorySlug}/products`;
+          const q = query(
+            collection(firestore, relatedCollectionPath),
             where("status", "==", "Published"),
             limit(7)
-        );
-        const querySnapshot = await getDocs(q);
-        const fetchedRelated: Product[] = [];
-        querySnapshot.forEach((doc) => {
-            if (doc.id !== productId) { 
-               const data = doc.data() as DocumentData;
-               fetchedRelated.push({
-                   id: doc.id,
-                   ...data,
-                   name: data.productTitle,
-                   imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                   category: foundProduct!.category,
-                   db: 'buyers',
-               } as Product)
+          );
+          const querySnapshot = await getDocs(q);
+          const fetchedRelated: Product[] = [];
+          querySnapshot.forEach((doc) => {
+            if (doc.id !== productId) {
+              const data = doc.data() as DocumentData;
+              fetchedRelated.push({
+                id: doc.id,
+                ...data,
+                name: data.productTitle,
+                imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                category: foundProductData!.category,
+                db: 'buyers',
+              } as Product);
             }
-        });
-        setRelatedProducts(fetchedRelated.slice(0, 6));
-
-      } else {
-        console.warn(`Published product with ID ${productId} not found in 'buyers' database.`);
+          });
+          setRelatedProducts(fetchedRelated.slice(0, 6));
+        } else {
+          console.warn(`Published product with ID ${productId} not found.`);
+        }
+      } catch (error) {
+        console.error("Error fetching product details:", error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
-
+  
     findAndFetchProduct();
   }, [firestore, productId]);
 
@@ -149,6 +150,12 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
   const generateWhatsAppMessage = () => {
     let message = `*Product Inquiry*\n\n`;
     message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
+    
+    // Add image URL first for preview
+    if (product.productImages && product.productImages[0]) {
+      message += `${product.productImages[0]}\n\n`;
+    }
+    
     message += `*Product Details:*\n`;
     message += `Code: *${product.productCode}*\n`;
     message += `Title: ${product.productTitle}\n`;

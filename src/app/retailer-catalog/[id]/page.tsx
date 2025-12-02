@@ -5,7 +5,7 @@ import { generateMetadata as generateMetadataUtil } from '@/lib/metadata';
 import ProductDetailClient from '../components/ProductDetailClient';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   return generateMetadataUtil({ params, db: 'retailers' });
 }
 
@@ -55,11 +55,13 @@ function ProductDetailSkeleton() {
 }
 
 
-export default async function ProductDetailPage({ params }: { params: { id: string } }) {
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = await params;
+
     return (
         <div className="bg-muted/40 min-h-screen">
              <Suspense fallback={<ProductDetailSkeleton />}>
-                <ProductDetailClient params={params} />
+                <ProductDetailClient params={resolvedParams} />
             </Suspense>
         </div>
     )

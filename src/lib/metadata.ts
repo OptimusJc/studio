@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import type { Product } from '@/types';
 
 type GenerateMetadataProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   db: 'retailers' | 'buyers';
 };
 
@@ -13,7 +13,7 @@ type GenerateMetadataProps = {
  * Fetches product data to populate title, description, and openGraph images.
  */
 export async function generateMetadata({ params, db }: GenerateMetadataProps): Promise<Metadata> {
-  const { id } = params;
+  const { id } = await params;
   const { firestore } = initializeFirebase();
 
   try {

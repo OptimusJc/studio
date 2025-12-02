@@ -65,6 +65,12 @@ export function ProductPreviewModal({
   const generateWhatsAppMessage = () => {
     let message = `*Product Inquiry*\n\n`;
     message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
+    
+    // Add image URL first for preview
+    if (product.productImages && product.productImages[0]) {
+      message += `${product.productImages[0]}\n\n`;
+    }
+    
     message += `*Product Details:*\n`;
     message += `Code: *${product.productCode}*\n`;
     message += `Title: ${product.productTitle}\n`;
