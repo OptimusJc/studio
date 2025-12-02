@@ -37,7 +37,7 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
       const productDocRef = firestore.collection(`${db}/${categorySlug}/products`).doc(id);
       const productDoc = await productDocRef.get();
 
-      if (productDoc.exists()) {
+      if (productDoc.exists) { // Corrected: .exists is a property on the server
         productData = productDoc.data() as Product;
         productCategory = category.name;
         break; // Found it
@@ -48,7 +48,7 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
     if (!productData) {
         const draftDocRef = firestore.collection('drafts').doc(id);
         const draftDoc = await draftDocRef.get();
-         if (draftDoc.exists()) {
+         if (draftDoc.exists) { // Corrected: .exists is a property on the server
             productData = draftDoc.data() as Product;
          }
     }
