@@ -55,11 +55,11 @@ function ProductDetailSkeleton() {
 }
 
 
-export default function ProductDetailPage() {
+export default async function ProductDetailPage({ params }: { params: { id: string } }) {
     return (
         <div className="bg-muted/40 min-h-screen">
              <Suspense fallback={<ProductDetailSkeleton />}>
-                <ProductDetailClient />
+                <ProductDetailClient params={params} />
             </Suspense>
         </div>
     )

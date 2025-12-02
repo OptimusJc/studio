@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useFirestore } from '@/firebase';
 import { collection, query, getDocs, where, limit, DocumentData, doc, getDoc } from 'firebase/firestore';
 import type { Product, Category } from '@/types';
@@ -20,8 +20,7 @@ import { cn } from '@/lib/utils';
 import { WhatsAppPreview } from '@/app/retailer-catalog/components/WhatsAppPreview';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
-export default function ProductDetailPageClient() {
-  const params = useParams();
+export default function ProductDetailPageClient({ params }: { params: { id: string } }) {
   const { firestore } = useFirestore();
   const router = useRouter();
 
