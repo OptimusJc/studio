@@ -4,20 +4,22 @@
 import * as React from 'react';
 import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection } from '@/firebase';
 import { collection, query, getDocs, where, limit, DocumentData, doc, getDoc } from 'firebase/firestore';
 import type { Product, Category } from '@/types';
 import ProductCard from '../components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { WhatsAppIcon } from '@/components/icons/WhatsappIcon';
+import { WhatsAppIcon, Eye } from 'lucide-react';
 import Link from 'next/link';
 import ProductDetailHeader from '../components/ProductDetailHeader';
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { WhatsAppPreview } from '../components/WhatsAppPreview';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 function ProductDetailSkeleton() {
     return (
@@ -66,7 +68,7 @@ function ProductDetailSkeleton() {
 
 function ProductDetailPageContent() {
   const params = useParams();
-  const firestore = useFirestore();
+  const { firestore } = useFirestore();
   const router = useRouter();
 
   const productId = params.id as string;
@@ -76,11 +78,10 @@ function ProductDetailPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string>('');
 
-  const categoriesCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'categories');
-  }, [firestore]);
-  const { data: categoriesData, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
+  const { data: categoriesData, isLoading: isLoadingCategories } = useCollection<Category>(
+    () => firestore ? collection(firestore, 'categories') : null,
+    []
+  );
 
   useEffect(() => {
     const findProduct = async () => {
@@ -341,12 +342,12 @@ function ProductDetailPageContent() {
             </>
         )}
         
-        {/* WhatsApp Button */}
-        <div className="pt-4">
+        {/* Action Buttons */}
+        <div className="pt-4 flex items-center gap-2">
             <Button 
                 asChild 
                 size="lg" 
-                className="w-full sm:w-auto bg-green-500 hover:bg-green-600 rounded-full text-white"
+                className="flex-1 sm:flex-none bg-green-500 hover:bg-green-600 rounded-full text-white"
                 disabled={product.stockStatus === 'Out of Stock'}
             >
                 <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
@@ -354,6 +355,22 @@ function ProductDetailPageContent() {
                     Share on WhatsApp
                 </a>
             </Button>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button
+                        size="lg"
+                        variant="outline"
+                        className="flex-1 sm:flex-none rounded-full"
+                        disabled={product.stockStatus === 'Out of Stock'}
+                    >
+                        <Eye className="mr-2 h-5 w-5"/>
+                        Preview
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                     <WhatsAppPreview product={product} />
+                </DialogContent>
+            </Dialog>
         </div>
     </div>
 </div>
