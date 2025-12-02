@@ -31,98 +31,88 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
   const [isLoading, setIsLoading] = React.useState(true);
   const [activeImage, setActiveImage] = React.useState<string>('');
 
-  const [categoriesData, setCategoriesData] = React.useState<Category[]>([]);
-  const [isLoadingCategories, setIsLoadingCategories] = React.useState(true);
-
   React.useEffect(() => {
-    async function fetchCategories() {
-      if (!firestore) return;
-      setIsLoadingCategories(true);
-      const catQuery = query(collection(firestore, 'categories'));
-      const catSnapshot = await getDocs(catQuery);
-      const cats: Category[] = [];
-      catSnapshot.forEach(doc => cats.push({ id: doc.id, ...doc.data() } as Category));
-      setCategoriesData(cats);
-      setIsLoadingCategories(false);
-    }
-    fetchCategories();
-  }, [firestore]);
+    if (!firestore || !productId) return;
 
+    const findAndFetchProduct = async () => {
+      setIsLoading(true);
 
-  React.useEffect(() => {
-    const findProduct = async () => {
-        if (!firestore || !productId || isLoadingCategories) return;
-        setIsLoading(true);
-
-        let foundProduct: Product | null = null;
-        let productCategoryName: string | null = null;
-        
-        for (const cat of categoriesData) {
-            const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
-            const liveCollectionPath = `retailers/${categorySlug}/products`;
-            try {
-                const productRef = doc(firestore, liveCollectionPath, productId);
-                const productSnap = await getDoc(productRef);
-                
-                if (productSnap.exists()) {
-                    const data = productSnap.data() as DocumentData;
-                     if (data.status === 'Published') {
-                        foundProduct = {
-                            id: productSnap.id,
-                            ...data,
-                            name: data.productTitle,
-                            imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                            category: cat.name,
-                            db: 'retailers',
-                        } as Product;
-                        productCategoryName = cat.name;
-                        break; // Found the product, no need to search further
-                    }
-                }
-            } catch(e) {
-                // Collection might not exist, which is fine.
-            }
-        }
-
-        if (foundProduct) {
-            setProduct(foundProduct);
-            setActiveImage(foundProduct.productImages?.[0] || '');
-            
-            // Fetch related products
-            if (productCategoryName) {
-                 const categorySlug = productCategoryName.toLowerCase().replace(/\s+/g, '-');
-                 const relatedCollectionPath = `retailers/${categorySlug}/products`;
-                 const q = query(
-                     collection(firestore, relatedCollectionPath), 
-                     where("status", "==", "Published"),
-                     limit(7)
-                 );
-                 const querySnapshot = await getDocs(q);
-                 const fetchedRelated: Product[] = [];
-                 querySnapshot.forEach((doc) => {
-                     if (doc.id !== productId) { // Exclude the current product
-                        const data = doc.data() as DocumentData;
-                        fetchedRelated.push({
-                            id: doc.id,
-                            ...data,
-                            name: data.productTitle,
-                            imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                            category: productCategoryName,
-                            db: 'retailers',
-                        } as Product)
-                     }
-                 });
-                 setRelatedProducts(fetchedRelated.slice(0, 6));
-            }
-
-        } else {
-            console.warn(`Published product with ID ${productId} not found in 'retailers' database.`);
-        }
+      const categoriesSnapshot = await getDocs(collection(firestore, 'categories'));
+      if (categoriesSnapshot.empty) {
+        console.warn("No categories found. Cannot locate product.");
         setIsLoading(false);
+        return;
+      }
+      
+      const categoriesData = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+
+      let foundProduct: Product | null = null;
+      let productCategoryName: string | null = null;
+      
+      for (const cat of categoriesData) {
+          const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
+          const liveCollectionPath = `retailers/${categorySlug}/products`;
+          try {
+              const productRef = doc(firestore, liveCollectionPath, productId);
+              const productSnap = await getDoc(productRef);
+              
+              if (productSnap.exists()) {
+                  const data = productSnap.data() as DocumentData;
+                   if (data.status === 'Published') {
+                      foundProduct = {
+                          id: productSnap.id,
+                          ...data,
+                          name: data.productTitle,
+                          imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                          category: cat.name,
+                          db: 'retailers',
+                      } as Product;
+                      productCategoryName = cat.name;
+                      break; 
+                  }
+              }
+          } catch(e) {
+            // Collection might not exist, which is fine.
+          }
+      }
+
+      if (foundProduct) {
+          setProduct(foundProduct);
+          setActiveImage(foundProduct.productImages?.[0] || '');
+          
+          if (productCategoryName) {
+               const categorySlug = productCategoryName.toLowerCase().replace(/\s+/g, '-');
+               const relatedCollectionPath = `retailers/${categorySlug}/products`;
+               const q = query(
+                   collection(firestore, relatedCollectionPath), 
+                   where("status", "==", "Published"),
+                   limit(7)
+               );
+               const querySnapshot = await getDocs(q);
+               const fetchedRelated: Product[] = [];
+               querySnapshot.forEach((doc) => {
+                   if (doc.id !== productId) { 
+                      const data = doc.data() as DocumentData;
+                      fetchedRelated.push({
+                          id: doc.id,
+                          ...data,
+                          name: data.productTitle,
+                          imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                          category: productCategoryName,
+                          db: 'retailers',
+                      } as Product)
+                   }
+               });
+               setRelatedProducts(fetchedRelated.slice(0, 6));
+          }
+      } else {
+          console.warn(`Published product with ID ${productId} not found in 'retailers' database.`);
+      }
+      setIsLoading(false);
     };
 
-    findProduct();
-  }, [firestore, productId, categoriesData, isLoadingCategories]);
+    findAndFetchProduct();
+  }, [firestore, productId]);
 
   const allImages = React.useMemo(() => {
     if (!product) return [];
@@ -140,8 +130,7 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
     }).filter(item => item.key);
   }, [product]);
   
-  if (isLoading || isLoadingCategories) {
-    // A simplified skeleton for the client component
+  if (isLoading) {
     return <div className="container mx-auto px-4 py-8"><p>Loading product...</p></div>;
   }
 
@@ -349,3 +338,5 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
     </>
   );
 }
+
+    
