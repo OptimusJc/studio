@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -19,13 +20,19 @@ import ProductCard from "@/app/retailer-catalog/components/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { WhatsAppIcon } from "@/components/icons/WhatsappIcon";
+import { WhatsAppIcon, Eye } from "@/components/icons/WhatsappIcon";
 import Link from "next/link";
 import ProductDetailHeader from "@/app/retailer-catalog/components/ProductDetailHeader";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { WhatsAppPreview } from "@/app/retailer-catalog/components/WhatsAppPreview";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 function ProductDetailSkeleton() {
   return (
@@ -72,11 +79,9 @@ function ProductDetailSkeleton() {
   );
 }
 
-function ProductDetailPageContent() {
-  const params = useParams();
+function ProductDetailPageContent({ params }: { params: { id: string } }) {
   const firestore = useFirestore();
   const router = useRouter();
-
   const productId = params.id as string;
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -92,38 +97,47 @@ function ProductDetailPageContent() {
     useCollection<Category>(categoriesCollection);
 
   useEffect(() => {
+    if (!firestore || !productId) return;
+
     const findProduct = async () => {
-      if (!firestore || !productId || !categoriesData) return;
       setIsLoading(true);
+
+      const allCollections =
+        categoriesData?.map((cat) => {
+          const categorySlug = cat.name.toLowerCase().replace(/\s+/g, "-");
+          return {
+            path: `buyers/${categorySlug}/products`,
+            category: cat.name,
+          };
+        }) || [];
+
+      const fetchPromises = allCollections.map((col) =>
+        getDoc(doc(firestore, col.path, productId)),
+      );
+
+      const results = await Promise.allSettled(fetchPromises);
 
       let foundProduct: Product | null = null;
       let productCategoryName: string | null = null;
 
-      for (const cat of categoriesData) {
-        const categorySlug = cat.name.toLowerCase().replace(/\s+/g, "-");
-        const liveCollectionPath = `buyers/${categorySlug}/products`;
-        try {
-          const productRef = doc(firestore, liveCollectionPath, productId);
-          const productSnap = await getDoc(productRef);
-
-          if (productSnap.exists()) {
-            const data = productSnap.data() as DocumentData;
-            if (data.status === "Published") {
-              foundProduct = {
-                id: productSnap.id,
-                ...data,
-                name: data.productTitle,
-                imageUrl:
-                  data.productImages?.[0] || "https://placehold.co/600x600",
-                category: cat.name,
-                db: "buyers",
-              } as Product;
-              productCategoryName = cat.name;
-              break; // Found the product, no need to search further
-            }
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        if (result.status === "fulfilled" && result.value.exists()) {
+          const productDoc = result.value;
+          const data = productDoc.data() as DocumentData;
+          if (data.status === "Published") {
+            foundProduct = {
+              id: productDoc.id,
+              ...data,
+              name: data.productTitle,
+              imageUrl:
+                data.productImages?.[0] || "https://placehold.co/600x600",
+              category: allCollections[i].category,
+              db: "buyers",
+            } as Product;
+            productCategoryName = allCollections[i].category;
+            break;
           }
-        } catch (e) {
-          // Collection might not exist, which is fine.
         }
       }
 
@@ -131,7 +145,6 @@ function ProductDetailPageContent() {
         setProduct(foundProduct);
         setActiveImage(foundProduct.productImages?.[0] || "");
 
-        // Fetch related products
         if (productCategoryName) {
           const categorySlug = productCategoryName
             .toLowerCase()
@@ -146,7 +159,6 @@ function ProductDetailPageContent() {
           const fetchedRelated: Product[] = [];
           querySnapshot.forEach((doc) => {
             if (doc.id !== productId) {
-              // Exclude the current product
               const data = doc.data() as DocumentData;
               fetchedRelated.push({
                 id: doc.id,
@@ -169,7 +181,7 @@ function ProductDetailPageContent() {
       setIsLoading(false);
     };
 
-    if (!isLoadingCategories && categoriesData) {
+    if (!isLoadingCategories) {
       findProduct();
     }
   }, [firestore, productId, categoriesData, isLoadingCategories]);
@@ -191,7 +203,7 @@ function ProductDetailPageContent() {
         if (parts.length === 2) {
           return { key: parts[0].trim(), value: parts[1].trim() };
         }
-        return { key: item.trim(), value: "" }; // Handle items without a colon
+        return { key: item.trim(), value: "" };
       })
       .filter((item) => item.key);
   }, [product]);
@@ -216,35 +228,17 @@ function ProductDetailPageContent() {
     );
   }
 
-  const handleFilterChange = (filters: Record<string, any[]>) => {
-    const encodedFilters = btoa(JSON.stringify(filters));
-    router.push(`/shop?filters=${encodedFilters}`);
-  };
-
   const generateWhatsAppMessage = () => {
     let message = `*Product Inquiry*\n\n`;
     message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
-
-    //add image
-    if (product.productImages && product.productImages[0]) {
-      message += `${product.productImages[0]}\n\n`;
-    }
-
     message += `*Product Details:*\n`;
     message += `Code: *${product.productCode}*\n`;
     message += `Title: ${product.productTitle}\n`;
 
-    if (product.attributes && Object.keys(product.attributes).length > 0) {
-      message += `\n*Attributes:*\n`;
-      Object.entries(product.attributes).forEach(([key, value]) => {
-        const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-        const formattedValue = Array.isArray(value) ? value.join(", ") : value;
-        message += `${formattedKey}: ${formattedValue}\n`;
-      });
-    }
-
     if (typeof window !== "undefined") {
-      message += `\nLink: ${window.location.href}`;
+      const basePath =
+        product.db === "buyers" ? "/shop" : "/retailer-catalog";
+      message += `\nLink: ${window.location.origin}${basePath}/${product.id}`;
     }
 
     return encodeURIComponent(message);
@@ -272,7 +266,7 @@ function ProductDetailPageContent() {
         <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6 lg:gap-10">
           {/* Image Section */}
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Thumbnail Gallery - Left side on desktop, top on mobile */}
+            {/* Thumbnail Gallery */}
             <div className="flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 md:pb-0 px-1 md:w-24 flex-shrink-0 order-2 md:order-1">
               {allImages.map((img, index) => (
                 <div
@@ -421,12 +415,12 @@ function ProductDetailPageContent() {
               </>
             )}
 
-            {/* WhatsApp Button */}
-            <div className="pt-4">
+            {/* Action Buttons */}
+            <div className="pt-4 flex flex-wrap items-center gap-2">
               <Button
                 asChild
                 size="lg"
-                className="w-full sm:w-auto bg-green-500 hover:bg-green-600 rounded-full text-white"
+                className="flex-1 bg-green-500 hover:bg-green-600 rounded-full text-white"
                 disabled={product.stockStatus === "Out of Stock"}
               >
                 <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
@@ -434,6 +428,22 @@ function ProductDetailPageContent() {
                   Share on WhatsApp
                 </a>
               </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="flex-1 rounded-full"
+                    disabled={product.stockStatus === "Out of Stock"}
+                  >
+                    <Eye className="mr-2 h-5 w-5" />
+                    WhatsApp Preview
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <WhatsAppPreview product={product} />
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
@@ -457,11 +467,11 @@ function ProductDetailPageContent() {
   );
 }
 
-export default function ProductDetailPage() {
+export default function ProductDetailPage({ params }: { params: { id: string } }) {
   return (
     <div className="bg-muted/40 min-h-screen">
       <Suspense fallback={<ProductDetailSkeleton />}>
-        <ProductDetailPageContent />
+        <ProductDetailPageContent params={params} />
       </Suspense>
     </div>
   );

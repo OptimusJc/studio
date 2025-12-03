@@ -1,4 +1,5 @@
 import type { SVGProps } from 'react';
+export { Eye } from 'lucide-react';
 
 export function WhatsAppIcon(props: SVGProps<SVGSVGElement>) {
   return (

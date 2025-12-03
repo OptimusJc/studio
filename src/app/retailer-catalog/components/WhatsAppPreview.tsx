@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -6,8 +5,6 @@ import type { Product } from '@/types';
 import Image from 'next/image';
 import { Globe } from 'lucide-react';
 import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 
 interface WhatsAppPreviewProps {
   product: Product;
@@ -16,19 +13,29 @@ interface WhatsAppPreviewProps {
 export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
   const [domain, setDomain] = React.useState('');
   const [message, setMessage] = React.useState('');
-  const { toast } = useToast();
-  const [baseUrl, setBaseUrl] = React.useState('');
+  const [productUrl, setProductUrl] = React.useState('');
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const origin = window.location.origin;
-      setBaseUrl(origin);
       setDomain(window.location.hostname);
       
+      // Build the product URL
       const basePath = product.db === 'buyers' ? '/shop' : '/retailer-catalog';
       const fullProductUrl = `${origin}${basePath}/${product.id}`;
+      setProductUrl(fullProductUrl);
       
-      let msg = `*Product Inquiry*\n\n`;
+      // Build the WhatsApp message with clean image URL
+      let msg = '';
+      
+      // Include clean image URL FIRST for WhatsApp link preview (no token with public storage)
+      if (product.productImages && product.productImages[0]) {
+        // Remove token from Firebase Storage URL for cleaner WhatsApp preview
+        const cleanImageUrl = product.productImages[0].split('?')[0] + '?alt=media';
+        msg += `${cleanImageUrl}\n\n`;
+      }
+      
+      msg += `*Product Inquiry*\n\n`;
       msg += `Hello, I'm interested in this product:\n\n`;
       msg += `*${product.productTitle}*\n`;
       msg += `Code: *${product.productCode}*\n`;
@@ -49,49 +56,32 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
     }
   }, [product]);
 
-  const rawImageUrl = product.productImages?.[0] || product.imageUrl || 'https://placehold.co/600x600';
-  const proxiedImageUrl = baseUrl ? `${baseUrl}/api/image-proxy?url=${encodeURIComponent(rawImageUrl)}` : rawImageUrl;
-
-
-  const handleCopy = () => {
-    const linkToCopy = `${window.location.origin}/${product.db === 'retailers' ? 'retailer-catalog' : 'shop'}/${product.id}`;
-    navigator.clipboard.writeText(linkToCopy).then(() => {
-        toast({
-            title: "Link Copied!",
-            description: "The product link has been copied to your clipboard.",
-        });
-    }).catch(err => {
-        toast({
-            variant: "destructive",
-            title: "Failed to copy",
-            description: "Could not copy the link. Please try again.",
-        });
-    });
-  }
+  // Use the original image URL or fallback to placeholder
+  const imageUrl = product.productImages?.[0] || product.imageUrl || 'https://placehold.co/600x600';
 
   return (
     <div className="bg-[#E5DDD5] p-4 rounded-lg font-sans">
-        <DialogHeader className="mb-4 text-left">
+        <DialogHeader className="mb-4">
           <DialogTitle>WhatsApp Preview</DialogTitle>
           <DialogDescription>
-            This is how your product will appear when shared on WhatsApp. Copy the link below and paste it to share.
+            This is how your message will appear when shared on WhatsApp.
           </DialogDescription>
         </DialogHeader>
 
         <div className="w-full max-w-sm mx-auto">
             {/* WhatsApp Message Bubble */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-0.5 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-2.5 shadow-sm">
               {/* Link Preview Card */}
-              <div className="bg-gray-100 dark:bg-gray-700 rounded-md p-2">
+              <div className="bg-gray-100 dark:bg-gray-700 rounded-md p-2 mb-2 border-l-4 border-green-500">
                   <div className="flex items-start gap-2">
                       <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
                           <Image 
-                              src={proxiedImageUrl} 
+                              src={imageUrl} 
                               alt={product.name} 
                               fill
                               sizes="64px"
                               className="object-cover"
-                              unoptimized // We use the proxy, no need for Next.js to optimize
+                              unoptimized // Don't optimize external images
                           />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -106,20 +96,38 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
                   </div>
               </div>
               
-              {/* Message Text (Link) */}
-              <div className="px-2.5 py-1.5">
-                  <p className="text-sm text-blue-600 dark:text-blue-400 break-all">
-                    {`${window.location.origin}/${product.db === 'retailers' ? 'retailer-catalog' : 'shop'}/${product.id}`}
-                  </p>
+              {/* Message Text */}
+              <div className="whitespace-pre-wrap text-sm text-gray-900 dark:text-gray-100">
+                  {message.split('\n').map((line, index) => {
+                    const boldRegex = /\*(.*?)\*/g;
+                    const parts = line.split(boldRegex);
+                    
+                    return (
+                        <p key={index} className="min-h-[1.25rem]">
+                        {parts.map((part, i) => 
+                            i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                        )}
+                        </p>
+                    );
+                  })}
+              </div>
+              
+              {/* Timestamp */}
+              <div className="text-right text-xs text-gray-400 mt-1">
+                  10:30 AM
               </div>
             </div>
             
-            <div className="mt-4 text-center">
-              <Button
-                onClick={handleCopy}
+            {/* Copy Message Button (Optional) */}
+            <div className="mt-3 text-center">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(message);
+                }}
+                className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 underline"
               >
-                Copy Link
-              </Button>
+                Copy message text
+              </button>
             </div>
         </div>
     </div>
