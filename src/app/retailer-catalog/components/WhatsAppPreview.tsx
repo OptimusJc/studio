@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Globe } from 'lucide-react';
 import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 interface WhatsAppPreviewProps {
   product: Product;
