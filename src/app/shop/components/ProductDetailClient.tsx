@@ -149,11 +149,13 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
 
   const generateWhatsAppMessage = () => {
     let message = `*Product Inquiry*\n\n`;
-    message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
-    
-    // The link preview will be generated from this URL's meta tags
+    message += `Hello, I'm interested in this product:\n\n`;
+    message += `*${product.productTitle}*\n`;
+    message += `Code: *${product.productCode}*\n\n`;
+    message += `Could you please confirm its availability and price?\n\n`;
+
     if (typeof window !== 'undefined') {
-        message += `Link: ${window.location.href}`;
+        message += `From: ${window.location.href}`;
     }
 
     return encodeURIComponent(message);

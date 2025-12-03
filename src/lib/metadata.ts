@@ -1,4 +1,5 @@
 
+
 import { initializeFirebase } from '@/firebase/server-init';
 import type { Metadata } from 'next';
 import type { Product } from '@/types';
@@ -65,8 +66,12 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
     const description = productData.productDescription || 'View product details.';
     const imageUrl = productData.productImages?.[0];
 
-    // The metadataBase in the root layout will turn this into an absolute URL.
-    const proxyImageUrl = imageUrl ? `/api/image-proxy?url=${encodeURIComponent(imageUrl)}` : undefined;
+    const metadataBase = process.env.VERCEL_URL
+      ? new URL(`https://${process.env.VERCEL_URL}`)
+      : new URL(`http://localhost:${process.env.PORT || 3000}`);
+
+    const absoluteProxyUrl = imageUrl ? new URL(`/api/image-proxy?url=${encodeURIComponent(imageUrl)}`, metadataBase).toString() : undefined;
+
 
     return {
       title,
@@ -74,7 +79,7 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
       openGraph: {
         title,
         description,
-        images: proxyImageUrl ? [{ url: proxyImageUrl }] : [],
+        images: absoluteProxyUrl ? [{ url: absoluteProxyUrl }] : [],
       },
     };
   } catch (error) {

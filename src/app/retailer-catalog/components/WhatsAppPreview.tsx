@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -21,14 +22,17 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
       const origin = window.location.origin;
       setDomain(window.location.hostname);
 
-      // This is for the visual preview inside the dialog ONLY
       if (product.imageUrl) {
-        setProxyImageUrl(product.imageUrl); 
+        // Construct the absolute proxy URL for the visual preview inside the dialog.
+        setProxyImageUrl(`${origin}/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`);
       }
       
-      // This is the actual message content for the share URL
-      let msg = `*Product Inquiry*\n\nHello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
-      msg += `Link: ${origin}${product.db === 'buyers' ? '/shop' : '/retailer-catalog'}/${product.id}`;
+      let msg = `*Product Inquiry*\n\n`;
+      msg += `Hello, I'm interested in this product:\n\n`;
+      msg += `*${product.productTitle}*\n`;
+      msg += `Code: *${product.productCode}*\n\n`;
+      msg += `Could you please confirm its availability and price?\n\n`;
+      msg += `From: ${origin}${product.db === 'buyers' ? '/shop' : '/retailer-catalog'}/${product.id}`;
       
       setMessage(msg);
     }
