@@ -25,7 +25,9 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
 
       if (product.imageUrl) {
         const url = `${origin}/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`;
-        setProxyImageUrl(url);
+        // This is for the preview component's image display, not the message text itself
+        setProxyImageUrl(product.imageUrl); 
+        // This is the crucial part for the text message
         msg += `${url}\n\n`;
       }
       
@@ -50,15 +52,17 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
             <div className="bg-gray-100 dark:bg-gray-700 rounded-md p-2 flex items-start gap-2 border-l-4 border-green-500">
                 <div className="flex-grow">
                     <div className="flex items-center gap-2">
-                        <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
-                            <Image 
-                                src={product.imageUrl} 
-                                alt={product.name} 
-                                fill
-                                sizes="64px"
-                                className="object-cover"
-                            />
-                        </div>
+                        {proxyImageUrl && (
+                            <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
+                                <Image 
+                                    src={proxyImageUrl} 
+                                    alt={product.name} 
+                                    fill
+                                    sizes="64px"
+                                    className="object-cover"
+                                />
+                            </div>
+                        )}
                         <div className="flex-1">
                             <p className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-2">{product.productTitle}</p>
                             <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
