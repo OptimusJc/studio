@@ -3,21 +3,20 @@ import { initializeFirebase } from '@/firebase/server-init'; // Use server initi
 import type { Product } from '@/types';
 
 interface GenerateMetadataProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
   db: 'retailers' | 'buyers';
 }
 
 /**
  * Generate metadata for product detail pages
- * @param params - Route parameters (must be awaited in Next.js 15+)
+ * @param params - Route parameters
  * @param db - Database to search in ('retailers' or 'buyers')
  */
 export async function generateMetadata({ params, db }: GenerateMetadataProps): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = params;
   const { firestore } = initializeFirebase();
 
   try {
-    // Fetch categories using Admin SDK
     const categoriesSnapshot = await firestore.collection('categories').get();
     
     if (categoriesSnapshot.empty) {
@@ -28,9 +27,7 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
     }
 
     let productData: Product | null = null;
-    let productCategory: string | null = null;
 
-    // Search for product across all categories
     for (const categoryDoc of categoriesSnapshot.docs) {
       const category = categoryDoc.data();
       const categorySlug = category.name.toLowerCase().replace(/\s+/g, '-');
@@ -42,20 +39,16 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
         
         if (productDoc.exists) {
           const data = productDoc.data();
-          
           if (data && data.status === 'Published') {
             productData = data as Product;
-            productCategory = category.name;
             break;
           }
         }
       } catch (error) {
-        // Collection might not exist, continue to next category
         continue;
       }
     }
 
-    // If not found in published products, check drafts
     if (!productData) {
       const draftDocRef = firestore.collection('drafts').doc(id);
       const draftDoc = await draftDocRef.get();
@@ -73,9 +66,9 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
 
     const title = `${productData.productCode || ''} - ${productData.productTitle}`.trim();
     const description = productData.productDescription || `View details for ${productData.productTitle}`;
+    // Use the direct Firebase Storage URL. Since the bucket is public, this URL will be clean and preview-friendly.
     const imageUrl = productData.productImages?.[0];
     
-    // Build absolute URL for the product page
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     const productUrl = `${baseUrl}/${db === 'retailers' ? 'retailer-catalog' : 'shop'}/${id}`;
@@ -87,11 +80,11 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
         title: productData.productTitle,
         description,
         url: productUrl,
-        siteName: 'Your Store Name', // Update this with your actual store name
+        siteName: 'Ruby Trading',
         type: 'website',
         images: imageUrl ? [
           {
-            url: imageUrl,
+            url: imageUrl, // Use the direct URL
             width: 1200,
             height: 630,
             alt: productData.productTitle,

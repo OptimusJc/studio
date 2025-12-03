@@ -151,11 +151,21 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
     let message = `*Product Inquiry*\n\n`;
     message += `Hello, I'm interested in this product:\n\n`;
     message += `*${product.productTitle}*\n`;
-    message += `Code: *${product.productCode}*\n\n`;
-    message += `Could you please confirm its availability and price?\n\n`;
+    message += `Code: *${product.productCode}*\n`;
+
+    if (product.attributes && Object.keys(product.attributes).length > 0) {
+      message += `\n*Key Details:*\n`;
+      Object.entries(product.attributes).slice(0, 3).forEach(([key, value]) => {
+        const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
+        const formattedValue = Array.isArray(value) ? value.join(', ') : value;
+        message += `${formattedKey}: ${formattedValue}\n`;
+      });
+    }
+
+    message += `\nCould you please confirm its availability and price?`;
 
     if (typeof window !== 'undefined') {
-        message += `From: ${window.location.href}`;
+        message += `\n\nView full details: ${window.location.href}`;
     }
 
     return encodeURIComponent(message);
@@ -332,5 +342,3 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
     </>
   );
 }
-
-    

@@ -31,109 +31,87 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
   const [activeImage, setActiveImage] = React.useState<string>('');
 
   React.useEffect(() => {
-    // Add console log to debug
-    console.log('Effect running. Firestore:', !!firestore, 'ProductId:', productId);
-    
-    if (!firestore || !productId) {
-      console.log('Waiting for firestore or productId...');
-      return;
-    }
-
+    if (!firestore || !productId) return;
+  
     const findAndFetchProduct = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        console.log('Starting product fetch...');
-        
         const categoriesSnapshot = await getDocs(collection(firestore, 'categories'));
-        console.log('Categories found:', categoriesSnapshot.size);
-        
         if (categoriesSnapshot.empty) {
           console.warn("No categories found.");
           setIsLoading(false);
           return;
         }
-        
+  
         const categoriesData = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
-
+  
         const fetchPromises = categoriesData.map(cat => {
           const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
           const liveCollectionPath = `retailers/${categorySlug}/products`;
           const productRef = doc(firestore, liveCollectionPath, productId);
-          return getDoc(productRef)
-            .then(snapshot => ({ snapshot, category: cat.name }))
-            .catch(err => {
-              console.log(`Error fetching from ${liveCollectionPath}:`, err.message);
-              return { snapshot: null, category: cat.name };
-            });
+          return getDoc(productRef).then(snapshot => ({ snapshot, category: cat.name }));
         });
-        
-        const results = await Promise.all(fetchPromises);
-        console.log('Fetch results:', results.length);
-        
-        let foundProduct: Product | null = null;
-        
+  
+        const results = await Promise.allSettled(fetchPromises);
+        let foundProductData: Product | null = null;
+  
         for (const result of results) {
-          if (result.snapshot && result.snapshot.exists()) {
-            const snapshot = result.snapshot;
-            const categoryName = result.category;
+          if (result.status === 'fulfilled' && result.value.snapshot.exists()) {
+            const snapshot = result.value.snapshot;
             const data = snapshot.data() as DocumentData;
-            
-            console.log('Found product in category:', categoryName, 'Status:', data.status);
-            
+  
             if (data.status === 'Published') {
-              foundProduct = {
-                  id: snapshot.id,
-                  ...data,
-                  name: data.productTitle,
-                  imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                  category: categoryName,
-                  db: 'retailers',
+                foundProductData = {
+                id: snapshot.id,
+                ...data,
+                name: data.productTitle,
+                imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                category: result.value.category,
+                db: 'retailers',
               } as Product;
-              break;
+              break; 
             }
           }
         }
-
-        if (foundProduct) {
-          console.log('Product found:', foundProduct.id);
-          setProduct(foundProduct);
-          setActiveImage(foundProduct.productImages?.[0] || '');
-          
-          // Fetch related products after finding the main product
-          const categorySlug = foundProduct.category.toLowerCase().replace(/\s+/g, '-');
+  
+        if (foundProductData) {
+          setProduct(foundProductData);
+          setActiveImage(foundProductData.productImages?.[0] || '');
+  
+          // Fetch related products
+          const categorySlug = foundProductData.category.toLowerCase().replace(/\s+/g, '-');
           const relatedCollectionPath = `retailers/${categorySlug}/products`;
           const q = query(
-              collection(firestore, relatedCollectionPath), 
-              where("status", "==", "Published"),
-              limit(7)
+            collection(firestore, relatedCollectionPath),
+            where("status", "==", "Published"),
+            limit(7)
           );
           const querySnapshot = await getDocs(q);
           const fetchedRelated: Product[] = [];
           querySnapshot.forEach((doc) => {
-              if (doc.id !== productId) { 
-                 const data = doc.data() as DocumentData;
-                 fetchedRelated.push({
-                     id: doc.id,
-                     ...data,
-                     name: data.productTitle,
-                     imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                     category: foundProduct!.category,
-                     db: 'retailers',
-                 } as Product)
-              }
+            if (doc.id !== productId) {
+              const data = doc.data() as DocumentData;
+              fetchedRelated.push({
+                id: doc.id,
+                ...data,
+                name: data.productTitle,
+                imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                category: foundProductData!.category,
+                db: 'retailers',
+              } as Product);
+            }
           });
           setRelatedProducts(fetchedRelated.slice(0, 6));
         } else {
-          console.warn(`Published product with ID ${productId} not found in 'retailers' database.`);
+          console.warn(`Published product with ID ${productId} not found.`);
         }
-
-        setIsLoading(false);
       } catch (error) {
-        console.error('Error in findAndFetchProduct:', error);
+        console.error("Error fetching product details:", error);
+      } finally {
         setIsLoading(false);
       }
     };
-
+  
     findAndFetchProduct();
   }, [firestore, productId]);
 
@@ -156,7 +134,7 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <p>Loading product... (Firestore: {firestore ? 'Ready' : 'Not Ready'})</p>
+        <p>Loading product...</p>
       </div>
     );
   }
@@ -172,24 +150,13 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
   }
 
   const generateWhatsAppMessage = () => {
-    let message = '';
-    
-    // Add PROXIED image URL FIRST for WhatsApp preview
-    if (product.productImages && product.productImages[0]) {
-      if (typeof window !== 'undefined') {
-        const proxyUrl = `${window.location.origin}/api/image-proxy?url=${encodeURIComponent(product.productImages[0])}`;
-        message += `${proxyUrl}\n\n`;
-      }
-    }
-    
-    message += `*Product Inquiry*\n\n`;
+    let message = `*Product Inquiry*\n\n`;
     message += `Hello, I'm interested in this product:\n\n`;
     message += `*${product.productTitle}*\n`;
     message += `Code: *${product.productCode}*\n`;
 
     if (product.attributes && Object.keys(product.attributes).length > 0) {
       message += `\n*Key Details:*\n`;
-      // Show only first 3 attributes to keep message concise
       Object.entries(product.attributes).slice(0, 3).forEach(([key, value]) => {
         const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
         const formattedValue = Array.isArray(value) ? value.join(', ') : value;
