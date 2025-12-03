@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React from 'react';
@@ -15,82 +13,120 @@ interface WhatsAppPreviewProps {
 export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
   const [domain, setDomain] = React.useState('');
   const [message, setMessage] = React.useState('');
-  const [proxyImageUrl, setProxyImageUrl] = React.useState('');
+  const [productUrl, setProductUrl] = React.useState('');
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const origin = window.location.origin;
       setDomain(window.location.hostname);
-
-      if (product.imageUrl) {
-        // Construct the absolute proxy URL for the visual preview inside the dialog.
-        setProxyImageUrl(`${origin}/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`);
+      
+      // Build the product URL
+      const basePath = product.db === 'buyers' ? '/shop' : '/retailer-catalog';
+      const fullProductUrl = `${origin}${basePath}/${product.id}`;
+      setProductUrl(fullProductUrl);
+      
+      // Build the WhatsApp message - Use PROXIED image URL FIRST
+      let msg = '';
+      
+      // Include the PROXIED image URL FIRST for WhatsApp link preview
+      if (product.productImages && product.productImages[0]) {
+        const proxyUrl = `${origin}/api/image-proxy?url=${encodeURIComponent(product.productImages[0])}`;
+        msg += `${proxyUrl}\n\n`;
       }
       
-      let msg = `*Product Inquiry*\n\n`;
+      msg += `*Product Inquiry*\n\n`;
       msg += `Hello, I'm interested in this product:\n\n`;
       msg += `*${product.productTitle}*\n`;
-      msg += `Code: *${product.productCode}*\n\n`;
-      msg += `Could you please confirm its availability and price?\n\n`;
-      msg += `From: ${origin}${product.db === 'buyers' ? '/shop' : '/retailer-catalog'}/${product.id}`;
+      msg += `Code: *${product.productCode}*\n`;
+      
+      if (product.attributes && Object.keys(product.attributes).length > 0) {
+        msg += `\n*Key Details:*\n`;
+        Object.entries(product.attributes).slice(0, 3).forEach(([key, value]) => {
+          const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
+          const formattedValue = Array.isArray(value) ? value.join(', ') : value;
+          msg += `${formattedKey}: ${formattedValue}\n`;
+        });
+      }
+      
+      msg += `\nCould you please confirm its availability and price?\n\n`;
+      msg += `View full details: ${fullProductUrl}`;
       
       setMessage(msg);
     }
   }, [product]);
+
+  // Use the original image URL or fallback to placeholder
+  const imageUrl = product.productImages?.[0] || product.imageUrl || 'https://placehold.co/600x600';
 
   return (
     <div className="bg-[#E5DDD5] p-4 rounded-lg font-sans">
         <DialogHeader className="mb-4">
           <DialogTitle>WhatsApp Preview</DialogTitle>
           <DialogDescription>
-            This is how the message will look when shared on WhatsApp.
+            This is how your message will appear when shared on WhatsApp.
           </DialogDescription>
         </DialogHeader>
 
         <div className="w-full max-w-sm mx-auto">
+            {/* WhatsApp Message Bubble */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-2.5 shadow-sm">
-            <div className="bg-gray-100 dark:bg-gray-700 rounded-md p-2 flex items-start gap-2 border-l-4 border-green-500">
-                <div className="flex-grow">
-                    <div className="flex items-center gap-2">
-                        {proxyImageUrl && (
-                            <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
-                                <Image 
-                                    src={proxyImageUrl} 
-                                    alt={product.name} 
-                                    fill
-                                    sizes="64px"
-                                    className="object-cover"
-                                />
-                            </div>
+              {/* Link Preview Card */}
+              <div className="bg-gray-100 dark:bg-gray-700 rounded-md p-2 mb-2 border-l-4 border-green-500">
+                  <div className="flex items-start gap-2">
+                      <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
+                          <Image 
+                              src={imageUrl} 
+                              alt={product.name} 
+                              fill
+                              sizes="64px"
+                              className="object-cover"
+                              unoptimized // Don't optimize external images
+                          />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-2">
+                            {product.productTitle}
+                          </p>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              <Globe className="h-3 w-3 flex-shrink-0"/>
+                              <span className="truncate">{domain}</span>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              
+              {/* Message Text */}
+              <div className="whitespace-pre-wrap text-sm text-gray-900 dark:text-gray-100">
+                  {message.split('\n').map((line, index) => {
+                    const boldRegex = /\*(.*?)\*/g;
+                    const parts = line.split(boldRegex);
+                    
+                    return (
+                        <p key={index} className="min-h-[1.25rem]">
+                        {parts.map((part, i) => 
+                            i % 2 === 1 ? <strong key={i}>{part}</strong> : part
                         )}
-                        <div className="flex-1">
-                            <p className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-2">{product.productTitle}</p>
-                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                <Globe className="h-3 w-3"/>
-                                <span>{domain}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        </p>
+                    );
+                  })}
+              </div>
+              
+              {/* Timestamp */}
+              <div className="text-right text-xs text-gray-400 mt-1">
+                  10:30 AM
+              </div>
             </div>
             
-            <div className="mt-2 whitespace-pre-wrap text-sm text-gray-900 dark:text-gray-100">
-                {message.split('\n').map((line, index) => {
-                  const boldRegex = /\*(.*?)\*/g;
-                  const parts = line.split(boldRegex);
-                  
-                  return (
-                      <p key={index} className="min-h-[1.25rem]">
-                      {parts.map((part, i) => 
-                          i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                      )}
-                      </p>
-                  );
-                })}
-            </div>
-            <div className="text-right text-xs text-gray-400 mt-1">
-                10:30 AM
-            </div>
+            {/* Copy Message Button (Optional) */}
+            <div className="mt-3 text-center">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(message);
+                }}
+                className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 underline"
+              >
+                Copy message text
+              </button>
             </div>
         </div>
     </div>
