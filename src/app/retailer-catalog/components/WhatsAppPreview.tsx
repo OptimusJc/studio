@@ -13,14 +13,28 @@ interface WhatsAppPreviewProps {
 
 export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
   const [domain, setDomain] = React.useState('');
+  const [message, setMessage] = React.useState('');
+  const [proxyImageUrl, setProxyImageUrl] = React.useState('');
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
       setDomain(window.location.hostname);
-    }
-  }, []);
 
-  const message = `*Product Inquiry*\n\nHello, I'm interested in this product. Could you please confirm its availability and price?\n\n${product.imageUrl}\n\n*Product Details:*\nCode: *${product.productCode}*\nTitle: ${product.productTitle}\n\nLink: ${typeof window !== 'undefined' ? window.location.href : ''}`;
+      let msg = `*Product Inquiry*\n\nHello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
+
+      if (product.imageUrl) {
+        const url = `${origin}/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`;
+        setProxyImageUrl(url);
+        msg += `${url}\n\n`;
+      }
+      
+      msg += `*Product Details:*\nCode: *${product.productCode}*\nTitle: ${product.productTitle}\n\n`;
+      msg += `Link: ${origin}${product.db === 'buyers' ? '/shop' : '/retailer-catalog'}/${product.id}`;
+      
+      setMessage(msg);
+    }
+  }, [product]);
 
   return (
     <div className="bg-[#E5DDD5] p-4 rounded-lg font-sans">
@@ -58,25 +72,25 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
             
             <div className="mt-2 whitespace-pre-wrap text-sm text-gray-900 dark:text-gray-100">
                 {message.split('\n').map((line, index) => {
-                const boldRegex = /\*(.*?)\*/g;
-                const parts = line.split(boldRegex);
-                
-                // Render image URL as a clickable link in the preview
-                if (line.startsWith('http')) {
-                    return (
-                        <p key={index} className="min-h-[1.25rem] text-blue-600 truncate">
-                            <a href={line} target="_blank" rel="noopener noreferrer">{line}</a>
-                        </p>
-                    )
-                }
-                
-                return (
-                    <p key={index} className="min-h-[1.25rem]">
-                    {parts.map((part, i) => 
-                        i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                    )}
-                    </p>
-                );
+                  const boldRegex = /\*(.*?)\*/g;
+                  const parts = line.split(boldRegex);
+                  
+                  // Render image URL as a clickable link in the preview
+                  if (line.startsWith('http')) {
+                      return (
+                          <p key={index} className="min-h-[1.25rem] text-blue-600 truncate">
+                              <a href={line} target="_blank" rel="noopener noreferrer">{line}</a>
+                          </p>
+                      )
+                  }
+                  
+                  return (
+                      <p key={index} className="min-h-[1.25rem]">
+                      {parts.map((part, i) => 
+                          i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                      )}
+                      </p>
+                  );
                 })}
             </div>
             <div className="text-right text-xs text-gray-400 mt-1">

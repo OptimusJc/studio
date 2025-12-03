@@ -151,9 +151,10 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
     let message = `*Product Inquiry*\n\n`;
     message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
     
-    // Add image URL first for preview
-    if (product.productImages && product.productImages[0]) {
-      message += `${product.productImages[0]}\n\n`;
+    // Add image URL first for preview, using the proxy
+    if (product.productImages && product.productImages[0] && typeof window !== 'undefined') {
+      const proxyImageUrl = `${window.location.origin}/api/image-proxy?url=${encodeURIComponent(product.productImages[0])}`;
+      message += `${proxyImageUrl}\n\n`;
     }
     
     message += `*Product Details:*\n`;
