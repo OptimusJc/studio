@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -154,27 +155,9 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
     let message = `*Product Inquiry*\n\n`;
     message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
     
-    // Add image URL first for preview, using the proxy
-    if (product.productImages && product.productImages[0] && typeof window !== 'undefined') {
-      const proxyImageUrl = `${window.location.origin}/api/image-proxy?url=${encodeURIComponent(product.productImages[0])}`;
-      message += `${proxyImageUrl}\n\n`;
-    }
-    
-    message += `*Product Details:*\n`;
-    message += `Code: *${product.productCode}*\n`;
-    message += `Title: ${product.productTitle}\n`;
-
-    if (product.attributes && Object.keys(product.attributes).length > 0) {
-      message += `\n*Attributes:*\n`;
-      Object.entries(product.attributes).forEach(([key, value]) => {
-        const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-        const formattedValue = Array.isArray(value) ? value.join(', ') : value;
-        message += `${formattedKey}: ${formattedValue}\n`;
-      });
-    }
-
+    // The link preview will be generated from this URL's meta tags
     if (typeof window !== 'undefined') {
-        message += `\nLink: ${window.location.href}`;
+        message += `Link: ${window.location.href}`;
     }
 
     return encodeURIComponent(message);

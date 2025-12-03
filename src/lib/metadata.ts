@@ -37,7 +37,7 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
       const productDocRef = firestore.collection(`${db}/${categorySlug}/products`).doc(id);
       const productDoc = await productDocRef.get();
 
-      if (productDoc.exists) { // Corrected: .exists is a property on the server
+      if (productDoc.exists) { 
         productData = productDoc.data() as Product;
         productCategory = category.name;
         break; // Found it
@@ -48,7 +48,7 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
     if (!productData) {
         const draftDocRef = firestore.collection('drafts').doc(id);
         const draftDoc = await draftDocRef.get();
-         if (draftDoc.exists) { // Corrected: .exists is a property on the server
+         if (draftDoc.exists) {
             productData = draftDoc.data() as Product;
          }
     }
@@ -65,13 +65,16 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
     const description = productData.productDescription || 'View product details.';
     const imageUrl = productData.productImages?.[0];
 
+    // The metadataBase in the root layout will turn this into an absolute URL.
+    const proxyImageUrl = imageUrl ? `/api/image-proxy?url=${encodeURIComponent(imageUrl)}` : undefined;
+
     return {
       title,
       description,
       openGraph: {
         title,
         description,
-        images: imageUrl ? [{ url: imageUrl }] : [],
+        images: proxyImageUrl ? [{ url: proxyImageUrl }] : [],
       },
     };
   } catch (error) {

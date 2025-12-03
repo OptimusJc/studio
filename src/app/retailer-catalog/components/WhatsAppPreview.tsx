@@ -21,17 +21,13 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
       const origin = window.location.origin;
       setDomain(window.location.hostname);
 
-      let msg = `*Product Inquiry*\n\nHello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
-
+      // This is for the visual preview inside the dialog ONLY
       if (product.imageUrl) {
-        const url = `${origin}/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`;
-        // This is for the preview component's image display, not the message text itself
         setProxyImageUrl(product.imageUrl); 
-        // This is the crucial part for the text message
-        msg += `${url}\n\n`;
       }
       
-      msg += `*Product Details:*\nCode: *${product.productCode}*\nTitle: ${product.productTitle}\n\n`;
+      // This is the actual message content for the share URL
+      let msg = `*Product Inquiry*\n\nHello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
       msg += `Link: ${origin}${product.db === 'buyers' ? '/shop' : '/retailer-catalog'}/${product.id}`;
       
       setMessage(msg);
@@ -78,15 +74,6 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
                 {message.split('\n').map((line, index) => {
                   const boldRegex = /\*(.*?)\*/g;
                   const parts = line.split(boldRegex);
-                  
-                  // Render image URL as a clickable link in the preview
-                  if (line.startsWith('http')) {
-                      return (
-                          <p key={index} className="min-h-[1.25rem] text-blue-600 truncate">
-                              <a href={line} target="_blank" rel="noopener noreferrer">{line}</a>
-                          </p>
-                      )
-                  }
                   
                   return (
                       <p key={index} className="min-h-[1.25rem]">

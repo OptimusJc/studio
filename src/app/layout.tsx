@@ -28,6 +28,9 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: 'Ruby Catalogue',
   description: 'Manage and share your product catalogs with ease.',
+  metadataBase: process.env.VERCEL_URL
+    ? new URL(`https://${process.env.VERCEL_URL}`)
+    : new URL(`http://localhost:${process.env.PORT || 3000}`),
 };
 
 export default function RootLayout({
