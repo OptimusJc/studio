@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { initializeFirebase } from '@/firebase/server-init'; // Use server initialization
 import type { Product } from '@/types';
@@ -6,6 +7,44 @@ interface GenerateMetadataProps {
   params: { id: string };
   db: 'retailers' | 'buyers';
 }
+
+/**
+ * Transforms a Firebase Storage URL into a direct, public URL.
+ * e.g., "https://firebasestorage.googleapis.com/v0/b/bucket/o/file.jpg?alt=media&token=..."
+ * becomes "https://storage.googleapis.com/bucket/file.jpg"
+ * @param url The original Firebase Storage URL.
+ * @returns The clean, public URL.
+ */
+function getCleanFirebaseUrl(url: string | undefined): string | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  try {
+    const urlObject = new URL(url);
+    const path = urlObject.pathname;
+
+    // Pathname looks like: /v0/b/YOUR_BUCKET_NAME/o/your/file/path.jpg
+    const parts = path.split('/');
+    if (parts.length < 5 || parts[1] !== 'v0' || parts[2] !== 'b' || parts[4] !== 'o') {
+      // Not a standard Firebase Storage URL, return it as is.
+      return url;
+    }
+
+    const bucketName = parts[3];
+    const objectPath = parts.slice(5).join('/');
+
+    // The object path is URL-encoded, so we need to decode it.
+    const decodedObjectPath = decodeURIComponent(objectPath);
+    
+    return `https://storage.googleapis.com/${bucketName}/${decodedObjectPath}`;
+
+  } catch (error) {
+    console.error("Failed to parse Firebase URL:", error);
+    return url; // Return original URL if parsing fails
+  }
+}
+
 
 /**
  * Generate metadata for product detail pages
@@ -66,8 +105,7 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
 
     const title = `${productData.productCode || ''} - ${productData.productTitle}`.trim();
     const description = productData.productDescription || `View details for ${productData.productTitle}`;
-    // Use the direct Firebase Storage URL. Since the bucket is public, this URL will be clean and preview-friendly.
-    const imageUrl = productData.productImages?.[0];
+    const cleanImageUrl = getCleanFirebaseUrl(productData.productImages?.[0]);
     
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
@@ -82,9 +120,9 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
         url: productUrl,
         siteName: 'Ruby Trading',
         type: 'website',
-        images: imageUrl ? [
+        images: cleanImageUrl ? [
           {
-            url: imageUrl, // Use the direct URL
+            url: cleanImageUrl, // Use the direct URL
             width: 1200,
             height: 630,
             alt: productData.productTitle,
@@ -95,7 +133,7 @@ export async function generateMetadata({ params, db }: GenerateMetadataProps): P
         card: 'summary_large_image',
         title: productData.productTitle,
         description,
-        images: imageUrl ? [imageUrl] : [],
+        images: cleanImageUrl ? [cleanImageUrl] : [],
       },
     };
   } catch (error) {
