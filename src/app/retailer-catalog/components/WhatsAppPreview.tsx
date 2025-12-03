@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -16,10 +17,12 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
   const [domain, setDomain] = React.useState('');
   const [message, setMessage] = React.useState('');
   const { toast } = useToast();
+  const [baseUrl, setBaseUrl] = React.useState('');
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const origin = window.location.origin;
+      setBaseUrl(origin);
       setDomain(window.location.hostname);
       
       const basePath = product.db === 'buyers' ? '/shop' : '/retailer-catalog';
@@ -46,7 +49,9 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
     }
   }, [product]);
 
-  const imageUrl = product.productImages?.[0] || product.imageUrl || 'https://placehold.co/600x600';
+  const rawImageUrl = product.productImages?.[0] || product.imageUrl || 'https://placehold.co/600x600';
+  const proxiedImageUrl = baseUrl ? `${baseUrl}/api/image-proxy?url=${encodeURIComponent(rawImageUrl)}` : rawImageUrl;
+
 
   const handleCopy = () => {
     const linkToCopy = `${window.location.origin}/${product.db === 'retailers' ? 'retailer-catalog' : 'shop'}/${product.id}`;
@@ -81,12 +86,12 @@ export function WhatsAppPreview({ product }: WhatsAppPreviewProps) {
                   <div className="flex items-start gap-2">
                       <div className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
                           <Image 
-                              src={imageUrl} 
+                              src={proxiedImageUrl} 
                               alt={product.name} 
                               fill
                               sizes="64px"
                               className="object-cover"
-                              unoptimized // Don't optimize external images
+                              unoptimized // We use the proxy, no need for Next.js to optimize
                           />
                       </div>
                       <div className="flex-1 min-w-0">
