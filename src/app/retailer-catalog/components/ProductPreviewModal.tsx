@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -64,23 +63,13 @@ export function ProductPreviewModal({
 
   const generateWhatsAppMessage = () => {
     let message = `*Product Inquiry*\n\n`;
-    message += `Hello, I'm interested in this product:\n\n`;
-    message += `*${product.productTitle}*\n`;
+    message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
+    message += `*Product Details:*\n`;
     message += `Code: *${product.productCode}*\n`;
+    message += `Title: ${product.productTitle}\n`;
 
-    if (product.attributes && Object.keys(product.attributes).length > 0) {
-      message += `\n*Key Details:*\n`;
-      Object.entries(product.attributes).slice(0, 3).forEach(([key, value]) => {
-        const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-        const formattedValue = Array.isArray(value) ? value.join(', ') : value;
-        message += `${formattedKey}: ${formattedValue}\n`;
-      });
-    }
-
-    message += `\nCould you please confirm its availability and price?`;
-
-    if (typeof window !== 'undefined') {
-        message += `\n\nView full details: ${window.location.origin}${basePath}/${product.id}`;
+    if (typeof window !== "undefined") {
+      message += `\nLink: ${window.location.origin}${basePath}/${product.id}`;
     }
 
     return encodeURIComponent(message);
