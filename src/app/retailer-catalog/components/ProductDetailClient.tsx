@@ -239,7 +239,7 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
                     {product.price ? (
                         <p className="text-2xl font-bold text-primary">Ksh {product.price.toFixed(2)}</p>
                     ) : (
-                        <p className="text-lg font-semibold text-muted-foreground">Price on inquiry</p>
+                        <p className="text-lg font-semibold text-muted-foreground">0.00</p>
                     )}
                      <Badge variant={product.stockStatus === 'Out of Stock' ? 'destructive' : 'outline'}
                      className={cn('text-sm', product.stockStatus === 'In Stock' && "text-green-600 border-green-600/40")}>

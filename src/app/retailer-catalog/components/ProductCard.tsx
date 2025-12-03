@@ -107,7 +107,7 @@ export default function ProductCard({ product, priority = false, basePath }: Pro
           {product.price ? (
               <p className="text-sm font-semibold text-primary mt-2">Ksh {product.price.toFixed(2)}</p>
           ) : (
-              <p className="text-xs text-muted-foreground mt-2">Price on inquiry</p>
+              <p className="text-xs text-muted-foreground mt-2">0.00</p>
           )}
         </CardContent>
       </Card>
