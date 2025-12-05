@@ -52,42 +52,34 @@ export default function EditProductPage() {
   
   useEffect(() => {
     const findProduct = async () => {
-        if (!firestore || !productId || !categories) return;
+        if (!firestore || !productId) return;
         setIsLoadingProduct(true);
 
-        // 1. Check drafts first
-        const draftRef = doc(firestore, 'drafts', productId);
-        const draftSnap = await getDoc(draftRef);
-        if (draftSnap.exists()) {
-            setProductData({ ...draftSnap.data(), id: draftSnap.id });
-            setIsLoadingProduct(false);
-            return;
-        }
+        const knownCategories = categories ? categories.map(c => c.name.toLowerCase().replace(/\s+/g, '-')) : [];
+        const searchPaths = [
+          `drafts/${productId}`,
+          ...knownCategories.flatMap(cat => [`retailers/${cat}/products/${productId}`, `buyers/${cat}/products/${productId}`])
+        ];
 
-        // 2. If not in drafts, search all published collections
-        for (const db of ['retailers', 'buyers']) {
-            for (const cat of categories) {
-                const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
-                const liveCollectionPath = `${db}/${categorySlug}/products`;
-                const productRef = doc(firestore, liveCollectionPath, productId);
-                const productSnap = await getDoc(productRef);
-                if (productSnap.exists()) {
-                    // FIX: Manually add category and db to the data object
-                    setProductData({ 
-                        ...productSnap.data(), 
-                        id: productSnap.id, 
-                        category: categorySlug, // Add category slug from path
-                        db: db                  // Add db from path
-                    });
-                    setIsLoadingProduct(false);
-                    return;
-                }
-            }
+        const fetchPromises = searchPaths.map(path => getDoc(doc(firestore, path)));
+        
+        const results = await Promise.allSettled(fetchPromises);
+        
+        let foundDocData: any = null;
+        
+        for (const result of results) {
+          if (result.status === 'fulfilled' && result.value.exists()) {
+            foundDocData = { ...result.value.data(), id: result.value.id };
+            break;
+          }
         }
-
-        // 3. If not found anywhere
-        console.warn(`Product with ID ${productId} not found in drafts or any live collection.`);
-        setProductData(null);
+        
+        if (foundDocData) {
+            setProductData(foundDocData);
+        } else {
+            console.warn(`Product with ID ${productId} not found.`);
+            setProductData(null);
+        }
         setIsLoadingProduct(false);
     };
 
@@ -96,20 +88,12 @@ export default function EditProductPage() {
     }
   }, [firestore, productId, categories, isLoadingCategories]);
 
-  const categoryNameFromProduct = useMemo(() => {
-      if (!categories || !productData?.category) return null;
-      // productData.category is a slug, so find matching category name
-      return categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === productData.category)?.name;
-  }, [categories, productData]);
-
-
   const transformedProductData: Product | null = useMemo(() => {
-    // This check is now robust for both draft and published products
-    if (productData && categoryNameFromProduct) {
+    if (productData) {
       return {
         id: productData.id,
         name: productData.productTitle,
-        category: categoryNameFromProduct,
+        category: productData.category,
         price: productData.price,
         stock: 100, // Placeholder
         stockStatus: productData.stockStatus || 'In Stock',
@@ -136,7 +120,7 @@ export default function EditProductPage() {
       };
     }
     return null;
-  }, [productData, categoryNameFromProduct, dbFromUrl]);
+  }, [productData, dbFromUrl]);
 
   const memoizedAttributes = useMemo(() => attributes || [], [attributes]);
   const memoizedCategories = useMemo(() => categories || [], [categories]);
