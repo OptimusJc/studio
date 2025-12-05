@@ -1,13 +1,92 @@
 
 import * as React from "react";
 import { Suspense } from "react";
-import { ProductDetailPageClient } from "@/app/retailer-catalog/components/ProductDetailClient"; // Re-use the client component
+import { ProductDetailPageClient } from "@/app/retailer-catalog/components/ProductDetailClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductDetailHeader from "@/app/retailer-catalog/components/ProductDetailHeader";
 import { generateMetadata as generateProductMetadata } from '@/lib/metadata';
+import { initializeFirebase } from '@/firebase/server-init';
+import { DocumentData } from 'firebase/firestore';
+import type { Product } from '@/types';
 
 export async function generateMetadata({ params }: { params: { id: string }}) {
+  // The alias is necessary to avoid a name collision.
   return generateProductMetadata({ params, db: 'buyers' });
+}
+
+async function getProductAndRelated(productId: string) {
+    const { firestore } = initializeFirebase();
+
+    const knownCategories = ['wallpapers', 'window-blinds', 'wall-murals', 'carpets', 'window-films', 'fluted-panels'];
+    const searchPaths = [
+        `drafts/${productId}`,
+        ...knownCategories.flatMap(cat => [`retailers/${cat}/products/${productId}`, `buyers/${cat}/products/${productId}`])
+    ];
+
+    const fetchPromises = searchPaths.map(path => firestore.doc(path).get());
+    const results = await Promise.allSettled(fetchPromises);
+    
+    let foundProduct: Product | null = null;
+    let foundDb: 'retailers' | 'buyers' | null = null;
+    let foundCategorySlug: string | null = null;
+
+    for (const result of results) {
+        if (result.status === 'fulfilled' && result.value.exists) {
+            const snapshot = result.value;
+            const data = snapshot.data() as DocumentData;
+            const pathSegments = snapshot.ref.path.split('/');
+
+            if (pathSegments[0] === 'drafts') {
+                foundDb = data.db;
+                foundCategorySlug = data.category;
+            } else {
+                foundDb = pathSegments[0] as 'retailers' | 'buyers';
+                foundCategorySlug = pathSegments[1];
+            }
+
+            if (data.status === 'Published' || pathSegments[0] === 'drafts') {
+                foundProduct = {
+                    id: snapshot.id,
+                    ...data,
+                    name: data.productTitle,
+                    imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                    db: foundDb,
+                    category: foundCategorySlug,
+                } as Product;
+                break;
+            }
+        }
+    }
+    
+    if (!foundProduct) {
+        return { product: null, relatedProducts: [] };
+    }
+
+    let relatedProducts: Product[] = [];
+    if (foundCategorySlug && foundDb) {
+        const relatedCollectionPath = `${foundDb}/${foundCategorySlug}/products`;
+        const q = firestore.collection(relatedCollectionPath).where("status", "==", "Published").limit(7);
+        try {
+            const querySnapshot = await q.get();
+            querySnapshot.forEach((doc) => {
+                if (doc.id !== productId) {
+                    const data = doc.data() as DocumentData;
+                    relatedProducts.push({
+                        id: doc.id,
+                        ...data,
+                        name: data.productTitle,
+                        imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                        category: foundCategorySlug,
+                        db: foundDb,
+                    } as Product);
+                }
+            });
+        } catch (e) {
+            console.warn(`Could not fetch related products from ${relatedCollectionPath}`, e);
+        }
+    }
+
+    return { product: foundProduct, relatedProducts: relatedProducts.slice(0, 6) };
 }
 
 function ProductDetailSkeleton() {
@@ -56,13 +135,13 @@ function ProductDetailSkeleton() {
 }
 
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
-  // This is a Server Component. It can be async.
-  // It fetches the data and passes it to the client component.
+  const { product, relatedProducts } = await getProductAndRelated(params.id);
+
   return (
     <div className="bg-muted/40 min-h-screen">
       <ProductDetailHeader basePath="/shop" />
       <Suspense fallback={<ProductDetailSkeleton />}>
-        <ProductDetailPageClient params={params} />
+        <ProductDetailPageClient product={product} relatedProducts={relatedProducts} />
       </Suspense>
     </div>
   );

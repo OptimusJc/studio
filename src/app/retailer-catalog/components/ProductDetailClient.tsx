@@ -3,8 +3,6 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { useFirestore } from '@/firebase';
-import { collection, query, getDocs, where, limit, DocumentData, doc, getDoc } from 'firebase/firestore';
 import type { Product } from '@/types';
 import ProductCard from '../components/ProductCard';
 import { Button } from '@/components/ui/button';
@@ -18,159 +16,31 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { WhatsAppPreview } from './WhatsAppPreview';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
 
-function ProductDetailSkeleton() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-        <div className="space-y-4">
-          <Skeleton className="aspect-square w-full rounded-xl" />
-          <div className="grid grid-cols-5 gap-3">
-            <Skeleton className="aspect-square w-full rounded-lg" />
-            <Skeleton className="aspect-square w-full rounded-lg" />
-            <Skeleton className="aspect-square w-full rounded-lg" />
-          </div>
-        </div>
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-3/4" />
-          <Skeleton className="h-6 w-1/3" />
-          <Skeleton className="h-20 w-full" />
-          <div className="space-y-4">
-            <Skeleton className="h-5 w-24" />
-            <div className="flex gap-4">
-              <Skeleton className="h-10 w-24" />
-              <Skeleton className="h-10 w-24" />
-            </div>
-          </div>
-          <div className="space-y-4">
-            <Skeleton className="h-5 w-24" />
-            <div className="flex gap-4">
-              <Skeleton className="h-10 w-24" />
-              <Skeleton className="h-10 w-24" />
-            </div>
-          </div>
-          <Skeleton className="h-12 w-48" />
-        </div>
-      </div>
-      <div className="mt-16">
-        <Skeleton className="h-8 w-48 mb-6" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-80 w-full" />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+interface ProductDetailPageClientProps {
+  product: Product | null;
+  relatedProducts: Product[];
 }
 
-
-export function ProductDetailPageClient({ params }: { params: { id: string } }) {
-  const firestore = useFirestore();
+export function ProductDetailPageClient({ product, relatedProducts }: ProductDetailPageClientProps) {
   const router = useRouter();
-
-  const productId = params.id as string;
-  
-  const [product, setProduct] = React.useState<Product | null>(null);
-  const [relatedProducts, setRelatedProducts] = React.useState<Product[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
   const [activeImage, setActiveImage] = React.useState<string>('');
 
   React.useEffect(() => {
-    if (!firestore || !productId) {
-      return;
+    if (product) {
+      setActiveImage(product.productImages?.[0] || '');
     }
+  }, [product]);
 
-    const findAndFetchProduct = async () => {
-      setIsLoading(true);
-      
-      const knownCategories = ['wallpapers', 'window-blinds', 'wall-murals', 'carpets', 'window-films', 'fluted-panels'];
-      
-      const searchPaths = [
-        `drafts/${productId}`,
-        ...knownCategories.flatMap(cat => [`retailers/${cat}/products/${productId}`, `buyers/${cat}/products/${productId}`])
-      ];
-
-      const fetchPromises = searchPaths.map(path => getDoc(doc(firestore, path)));
-      
-      const results = await Promise.allSettled(fetchPromises);
-      
-      let foundProduct: Product | null = null;
-      let foundDb: 'retailers' | 'buyers' | null = null;
-      let foundCategorySlug: string | null = null;
-      
-      for (const result of results) {
-        if (result.status === 'fulfilled' && result.value.exists()) {
-          const snapshot = result.value;
-          const data = snapshot.data() as DocumentData;
-          const pathSegments = snapshot.ref.path.split('/');
-
-          // Determine DB and Category from path
-          if (pathSegments[0] === 'drafts') {
-            foundDb = data.db;
-            foundCategorySlug = data.category;
-          } else {
-            foundDb = pathSegments[0] as 'retailers' | 'buyers';
-            foundCategorySlug = pathSegments[1];
-          }
-
-          if (data.status === 'Published' || pathSegments[0] === 'drafts') {
-            foundProduct = {
-                id: snapshot.id,
-                ...data,
-                name: data.productTitle,
-                imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                db: foundDb,
-                category: foundCategorySlug // Will be slug, we'll map to name later if needed
-            } as Product;
-            break; 
-          }
-        }
-      }
-
-      if (foundProduct) {
-        setProduct(foundProduct);
-        setActiveImage(foundProduct.productImages?.[0] || '');
-        
-        if (foundCategorySlug && foundDb) {
-          const relatedCollectionPath = `${foundDb}/${foundCategorySlug}/products`;
-          const q = query(
-              collection(firestore, relatedCollectionPath), 
-              where("status", "==", "Published"),
-              limit(7)
-          );
-          try {
-            const querySnapshot = await getDocs(q);
-            const fetchedRelated: Product[] = [];
-            querySnapshot.forEach((doc) => {
-                if (doc.id !== productId) { 
-                   const data = doc.data() as DocumentData;
-                   fetchedRelated.push({
-                       id: doc.id,
-                       ...data,
-                       name: data.productTitle,
-                       imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                       category: foundCategorySlug, // slug is fine
-                       db: foundDb,
-                   } as Product)
-                }
-            });
-            setRelatedProducts(fetchedRelated.slice(0, 6));
-          } catch (e) {
-            console.warn(`Could not fetch related products from ${relatedCollectionPath}`, e);
-            setRelatedProducts([]);
-          }
-        }
-      } else {
-        console.warn(`Product with ID ${productId} not found.`);
-      }
-
-      setIsLoading(false);
-    };
-
-    findAndFetchProduct();
-  }, [firestore, productId]);
+  if (!product) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] bg-background">
+        <h2 className="text-2xl font-semibold text-muted-foreground">Product Not Found</h2>
+        <p className="text-muted-foreground mt-2">The product you are looking for does not exist or is not available.</p>
+        <Button onClick={() => router.back()} className="mt-6">Go Back</Button>
+      </div>
+    );
+  }
 
   const allImages = React.useMemo(() => {
     if (!product) return [];
@@ -188,20 +58,6 @@ export function ProductDetailPageClient({ params }: { params: { id: string } }) 
     }).filter(item => item.key);
   }, [product]);
   
-  if (isLoading) {
-    return <ProductDetailSkeleton />;
-  }
-
-  if (!product) {
-    return (
-        <div className="flex flex-col items-center justify-center h-[60vh] bg-background">
-            <h2 className="text-2xl font-semibold text-muted-foreground">Product Not Found</h2>
-            <p className="text-muted-foreground mt-2">The product you are looking for does not exist or is not available.</p>
-            <Button onClick={() => router.push('/retailer-catalog')} className="mt-6">Back to Catalog</Button>
-        </div>
-    );
-  }
-
   const generateWhatsAppMessage = () => {
     let message = `*Product Inquiry*\n\n`;
     message += `Hello, I'm interested in this product:\n\n`;
@@ -228,12 +84,13 @@ export function ProductDetailPageClient({ params }: { params: { id: string } }) 
   };
   
   const whatsAppUrl = `https://wa.me/?text=${generateWhatsAppMessage()}`;
+  const basePath = product.db === 'buyers' ? '/shop' : '/retailer-catalog';
 
   return (
     <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
             <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground/50">
-                <Link href="/retailer-catalog" prefetch={false}>
+                <Link href={basePath} prefetch={false}>
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Back to Catalog
                 </Link>
@@ -386,7 +243,7 @@ export function ProductDetailPageClient({ params }: { params: { id: string } }) 
                 <h2 className="text-2xl font-bold mb-6">Related Items</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                      {relatedProducts.map(related => (
-                        <ProductCard key={related.id} product={related} basePath="/retailer-catalog" />
+                        <ProductCard key={related.id} product={related} basePath={basePath} />
                      ))}
                 </div>
             </div>
