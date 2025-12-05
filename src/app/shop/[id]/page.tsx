@@ -14,8 +14,8 @@ type PageProps = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export async function generateMetadata({ params, searchParams }: PageProps) {
-  return generateProductMetadataAlias({ params, searchParams, db: 'buyers' });
+export async function generateMetadata(props: PageProps) {
+  return generateProductMetadataAlias({ ...props, db: 'buyers' });
 }
 
 async function getProductAndRelated(productId: string) {

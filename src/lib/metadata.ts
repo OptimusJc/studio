@@ -13,7 +13,8 @@ interface GenerateMetadataProps {
  * Generate metadata for product detail pages
  * @param props - Object containing params, searchParams, and db
  */
-export async function generateMetadata({ params, searchParams, db }: GenerateMetadataProps): Promise<Metadata> {
+export async function generateMetadata(props: GenerateMetadataProps): Promise<Metadata> {
+  const { params, searchParams, db } = props;
   const { id } = params;
   const { firestore } = initializeFirebase();
   

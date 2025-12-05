@@ -14,8 +14,8 @@ type PageProps = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export async function generateMetadata({ params, searchParams }: PageProps) {
-  return generateProductMetadataAlias({ params, searchParams, db: 'retailers' });
+export async function generateMetadata(props: PageProps) {
+  return generateProductMetadataAlias({ ...props, db: 'retailers' });
 }
 
 async function getProductAndRelated(productId: string) {
@@ -141,7 +141,8 @@ function ProductDetailSkeleton() {
 
 
 export default async function ProductDetailPage({ params }: PageProps) {
-  const { product, relatedProducts } = await getProductAndRelated(params.id);
+  const { id } = params;
+  const { product, relatedProducts } = await getProductAndRelated(id);
 
   return (
     <div className="bg-muted/40 min-h-screen">
