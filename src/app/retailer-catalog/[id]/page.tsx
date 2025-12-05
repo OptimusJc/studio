@@ -4,14 +4,13 @@ import { Suspense } from 'react';
 import { ProductDetailPageClient } from '../components/ProductDetailClient';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProductDetailHeader from '../components/ProductDetailHeader';
-import { generateMetadata as generateProductMetadata } from '@/lib/metadata';
+import { generateMetadata as generateProductMetadataAlias } from '@/lib/metadata';
 import { initializeFirebase } from '@/firebase/server-init';
 import { DocumentData } from 'firebase/firestore';
 import type { Product } from '@/types';
 
 export async function generateMetadata({ params }: { params: { id: string }}) {
-  // The alias is necessary to avoid a name collision.
-  return generateProductMetadata({ params, db: 'retailers' });
+  return generateProductMetadataAlias({ params, db: 'retailers' });
 }
 
 async function getProductAndRelated(productId: string) {
