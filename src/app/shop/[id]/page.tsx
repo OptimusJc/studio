@@ -9,8 +9,13 @@ import { initializeFirebase } from '@/firebase/server-init';
 import { DocumentData } from 'firebase/firestore';
 import type { Product } from '@/types';
 
-export async function generateMetadata({ params }: { params: { id: string }}) {
-  return generateProductMetadataAlias({ params, db: 'buyers' });
+type PageProps = {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export async function generateMetadata({ params, searchParams }: PageProps) {
+  return generateProductMetadataAlias({ params, searchParams, db: 'buyers' });
 }
 
 async function getProductAndRelated(productId: string) {
@@ -133,7 +138,7 @@ function ProductDetailSkeleton() {
   );
 }
 
-export default async function ProductDetailPage({ params }: { params: { id: string } }) {
+export default async function ProductDetailPage({ params }: PageProps) {
   const { product, relatedProducts } = await getProductAndRelated(params.id);
 
   return (

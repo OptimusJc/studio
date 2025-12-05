@@ -5,15 +5,15 @@ import type { Product } from '@/types';
 
 interface GenerateMetadataProps {
   params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
   db: 'retailers' | 'buyers';
 }
 
 /**
  * Generate metadata for product detail pages
- * @param params - Route parameters
- * @param db - Database to search in ('retailers' or 'buyers')
+ * @param props - Object containing params, searchParams, and db
  */
-export async function generateMetadata({ params, db }: GenerateMetadataProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams, db }: GenerateMetadataProps): Promise<Metadata> {
   const { id } = params;
   const { firestore } = initializeFirebase();
   
