@@ -4,8 +4,8 @@ import { initializeFirebase } from '@/firebase/server-init'; // Use server initi
 import type { Product } from '@/types';
 
 interface GenerateMetadataProps {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
   db: 'retailers' | 'buyers';
 }
 
@@ -15,7 +15,7 @@ interface GenerateMetadataProps {
  */
 export async function generateMetadata(props: GenerateMetadataProps): Promise<Metadata> {
   const { params, searchParams, db } = props;
-  const { id } = params;
+  const { id } = await params;
   const { firestore } = initializeFirebase();
   
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 

@@ -10,8 +10,8 @@ import { DocumentData } from 'firebase/firestore';
 import type { Product } from '@/types';
 
 type PageProps = {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata(props: PageProps) {
@@ -141,7 +141,7 @@ function ProductDetailSkeleton() {
 
 
 export default async function ProductDetailPage({ params }: PageProps) {
-  const { id } = params;
+  const { id } = await params;
   const { product, relatedProducts } = await getProductAndRelated(id);
 
   return (
