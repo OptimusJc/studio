@@ -24,7 +24,8 @@ export function getPublicUrl(firebaseUrl: string | undefined): string | null {
       return firebaseUrl.split('?')[0];
     }
     
-    const bucket = pathSegments[3];
+    // The bucket name is the 4th segment. The full hostname is not the bucket name.
+    const bucket = pathSegments[3]; 
     const objectPath = pathSegments.slice(5).join('/');
 
     // The object path is URL-encoded, so we decode it.

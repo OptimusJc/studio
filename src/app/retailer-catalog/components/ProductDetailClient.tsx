@@ -68,7 +68,7 @@ export function ProductDetailPageClient({ product, relatedProducts }: ProductDet
     }
 
     message += `*Product Inquiry*\n\n`;
-    message += `I'm interested in this product:\n`;
+    message += `I'm interested in this product:\n\n`;
     message += `*${product.productTitle}*\n`;
     message += `Code: _${product.productCode}_\n\n`;
 
