@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { WhatsAppPreview } from './WhatsAppPreview';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { getPublicUrl } from '@/lib/storage-utils';
 
 interface ProductDetailPageClientProps {
   product: Product | null;
@@ -59,26 +60,23 @@ export function ProductDetailPageClient({ product, relatedProducts }: ProductDet
   }, [product]);
   
   const generateWhatsAppMessage = () => {
-    let message = `*Product Inquiry*\n\n`;
-    message += `Hello, I'm interested in this product:\n\n`;
+    const publicImageUrl = getPublicUrl(product.productImages?.[0]);
+
+    let message = '';
+    if (publicImageUrl) {
+        message += `${publicImageUrl}\n\n`;
+    }
+
+    message += `*Product Inquiry*\n\n`;
+    message += `I'm interested in this product:\n`;
     message += `*${product.productTitle}*\n`;
-    message += `Code: *${product.productCode}*\n`;
+    message += `Code: _${product.productCode}_\n\n`;
 
-    if (product.attributes && Object.keys(product.attributes).length > 0) {
-      message += `\n*Key Details:*\n`;
-      Object.entries(product.attributes).slice(0, 3).forEach(([key, value]) => {
-        const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-        const formattedValue = Array.isArray(value) ? value.join(', ') : value;
-        message += `${formattedKey}: ${formattedValue}\n`;
-      });
+    if (product.price) {
+        message += `Price: *Ksh ${product.price.toFixed(2)}*\n\n`;
     }
 
-    message += `\nCould you please confirm its availability and price?`;
-
-    if (typeof window !== 'undefined') {
-        const basePath = product.db === 'buyers' ? '/shop' : '/retailer-catalog';
-        message += `\n\nView full details: ${window.location.origin}${basePath}/${product.id}`;
-    }
+    message += `Could you please confirm its availability?`;
 
     return encodeURIComponent(message);
   };
