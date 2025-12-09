@@ -25,10 +25,33 @@ interface ProductDetailPageClientProps {
 export function ProductDetailPageClient({ product, relatedProducts }: ProductDetailPageClientProps) {
   const router = useRouter();
   const [activeImage, setActiveImage] = React.useState<string>('');
+  const [whatsAppUrl, setWhatsAppUrl] = React.useState('');
 
   React.useEffect(() => {
     if (product) {
       setActiveImage(product.productImages?.[0] || '');
+
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const rawImageUrl = product.productImages?.[0];
+      const proxiedImageUrl = rawImageUrl ? `${origin}/api/image-proxy?url=${encodeURIComponent(rawImageUrl)}` : '';
+
+      let message = '';
+      if (proxiedImageUrl) {
+          message += `${proxiedImageUrl}\n\n`;
+      }
+
+      message += `*Product Inquiry*\n\n`;
+      message += `I'm interested in this product:\n\n`;
+      message += `*${product.productTitle}*\n`;
+      message += `Code: _${product.productCode}_\n\n`;
+
+      if (product.price) {
+          message += `Price: *Ksh ${product.price.toFixed(2)}*\n\n`;
+      }
+
+      message += `Could you please confirm its availability?`;
+      
+      setWhatsAppUrl(`https://wa.me/?text=${encodeURIComponent(message)}`);
     }
   }, [product]);
 
@@ -58,31 +81,6 @@ export function ProductDetailPageClient({ product, relatedProducts }: ProductDet
     }).filter(item => item.key);
   }, [product]);
   
-  const generateWhatsAppMessage = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const rawImageUrl = product.productImages?.[0];
-    const proxiedImageUrl = rawImageUrl ? `${origin}/api/image-proxy?url=${encodeURIComponent(rawImageUrl)}` : '';
-
-    let message = '';
-    if (proxiedImageUrl) {
-        message += `${proxiedImageUrl}\n\n`;
-    }
-
-    message += `*Product Inquiry*\n\n`;
-    message += `I'm interested in this product:\n\n`;
-    message += `*${product.productTitle}*\n`;
-    message += `Code: _${product.productCode}_\n\n`;
-
-    if (product.price) {
-        message += `Price: *Ksh ${product.price.toFixed(2)}*\n\n`;
-    }
-
-    message += `Could you please confirm its availability?`;
-
-    return encodeURIComponent(message);
-  };
-  
-  const whatsAppUrl = `https://wa.me/?text=${generateWhatsAppMessage()}`;
   const basePath = product.db === 'buyers' ? '/shop' : '/retailer-catalog';
 
   return (
@@ -210,7 +208,7 @@ export function ProductDetailPageClient({ product, relatedProducts }: ProductDet
                       asChild 
                       size="lg" 
                       className="flex-1 bg-green-500 hover:bg-green-600 rounded-full text-white"
-                      disabled={product.stockStatus === 'Out of Stock'}
+                      disabled={product.stockStatus === 'Out of Stock' || !whatsAppUrl}
                   >
                       <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
                           <WhatsAppIcon className="mr-2 h-5 w-5"/>
