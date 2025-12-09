@@ -16,7 +16,6 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { WhatsAppPreview } from './WhatsAppPreview';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { getPublicUrl } from '@/lib/storage-utils';
 
 interface ProductDetailPageClientProps {
   product: Product | null;
@@ -60,11 +59,13 @@ export function ProductDetailPageClient({ product, relatedProducts }: ProductDet
   }, [product]);
   
   const generateWhatsAppMessage = () => {
-    const publicImageUrl = getPublicUrl(product.productImages?.[0]);
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const rawImageUrl = product.productImages?.[0];
+    const proxiedImageUrl = rawImageUrl ? `${origin}/api/image-proxy?url=${encodeURIComponent(rawImageUrl)}` : '';
 
     let message = '';
-    if (publicImageUrl) {
-        message += `${publicImageUrl}\n\n`;
+    if (proxiedImageUrl) {
+        message += `${proxiedImageUrl}\n\n`;
     }
 
     message += `*Product Inquiry*\n\n`;

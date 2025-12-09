@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -10,11 +11,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Fetch the image from Firebase Storage
-    const imageResponse = await fetch(imageUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ImageProxy/1.0)',
-      },
-    });
+    const imageResponse = await fetch(imageUrl);
 
     if (!imageResponse.ok) {
       console.error('Failed to fetch image:', imageResponse.status, imageResponse.statusText);

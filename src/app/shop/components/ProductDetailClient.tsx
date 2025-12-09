@@ -1,10 +1,9 @@
+
 'use client';
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { useFirestore } from '@/firebase';
-import { collection, query, getDocs, where, limit, DocumentData, doc, getDoc } from 'firebase/firestore';
-import type { Product, Category } from '@/types';
+import type { Product } from '@/types';
 import ProductCard from '../../retailer-catalog/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -19,123 +18,31 @@ import { cn } from '@/lib/utils';
 import { WhatsAppPreview } from '../../retailer-catalog/components/WhatsAppPreview';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
-export default function ProductDetailPageClient({ params }: { params: { id: string } }) {
-  const firestore = useFirestore();
-  const router = useRouter();
+interface ProductDetailPageClientProps {
+  product: Product | null;
+  relatedProducts: Product[];
+}
 
-  const productId = params.id as string;
-  
-  const [product, setProduct] = React.useState<Product | null>(null);
-  const [relatedProducts, setRelatedProducts] = React.useState<Product[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+export function ProductDetailPageClient({ product, relatedProducts }: ProductDetailPageClientProps) {
+  const router = useRouter();
   const [activeImage, setActiveImage] = React.useState<string>('');
 
   React.useEffect(() => {
-    // Add console log to debug
-    console.log('Effect running. Firestore:', !!firestore, 'ProductId:', productId);
-    
-    if (!firestore || !productId) {
-      console.log('Waiting for firestore or productId...');
-      return;
+    if (product) {
+      setActiveImage(product.productImages?.[0] || '');
     }
+  }, [product]);
 
-    const findAndFetchProduct = async () => {
-      try {
-        setIsLoading(true);
-        console.log('Starting product fetch...');
-        
-        const categoriesSnapshot = await getDocs(collection(firestore, 'categories'));
-        console.log('Categories found:', categoriesSnapshot.size);
-        
-        if (categoriesSnapshot.empty) {
-          console.warn("No categories found.");
-          setIsLoading(false);
-          return;
-        }
-        
-        const categoriesData = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
 
-        const fetchPromises = categoriesData.map(cat => {
-          const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
-          const liveCollectionPath = `retailers/${categorySlug}/products`;
-          const productRef = doc(firestore, liveCollectionPath, productId);
-          return getDoc(productRef)
-            .then(snapshot => ({ snapshot, category: cat.name }))
-            .catch(err => {
-              console.log(`Error fetching from ${liveCollectionPath}:`, err.message);
-              return { snapshot: null, category: cat.name };
-            });
-        });
-        
-        const results = await Promise.all(fetchPromises);
-        console.log('Fetch results:', results.length);
-        
-        let foundProduct: Product | null = null;
-        
-        for (const result of results) {
-          if (result.snapshot && result.snapshot.exists()) {
-            const snapshot = result.snapshot;
-            const categoryName = result.category;
-            const data = snapshot.data() as DocumentData;
-            
-            console.log('Found product in category:', categoryName, 'Status:', data.status);
-            
-            if (data.status === 'Published') {
-              foundProduct = {
-                  id: snapshot.id,
-                  ...data,
-                  name: data.productTitle,
-                  imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                  category: categoryName,
-                  db: 'retailers',
-              } as Product;
-              break;
-            }
-          }
-        }
-
-        if (foundProduct) {
-          console.log('Product found:', foundProduct.id);
-          setProduct(foundProduct);
-          setActiveImage(foundProduct.productImages?.[0] || '');
-          
-          // Fetch related products after finding the main product
-          const categorySlug = foundProduct.category.toLowerCase().replace(/\s+/g, '-');
-          const relatedCollectionPath = `retailers/${categorySlug}/products`;
-          const q = query(
-              collection(firestore, relatedCollectionPath), 
-              where("status", "==", "Published"),
-              limit(7)
-          );
-          const querySnapshot = await getDocs(q);
-          const fetchedRelated: Product[] = [];
-          querySnapshot.forEach((doc) => {
-              if (doc.id !== productId) { 
-                 const data = doc.data() as DocumentData;
-                 fetchedRelated.push({
-                     id: doc.id,
-                     ...data,
-                     name: data.productTitle,
-                     imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                     category: foundProduct!.category,
-                     db: 'retailers',
-                 } as Product)
-              }
-          });
-          setRelatedProducts(fetchedRelated.slice(0, 6));
-        } else {
-          console.warn(`Published product with ID ${productId} not found in 'retailers' database.`);
-        }
-
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error in findAndFetchProduct:', error);
-        setIsLoading(false);
-      }
-    };
-
-    findAndFetchProduct();
-  }, [firestore, productId]);
+  if (!product) {
+    return (
+        <div className="flex flex-col items-center justify-center h-[60vh] bg-background">
+            <h2 className="text-2xl font-semibold text-muted-foreground">Product Not Found</h2>
+            <p className="text-muted-foreground mt-2">The product you are looking for does not exist or is not available.</p>
+            <Button onClick={() => router.push('/shop')} className="mt-6">Back to Catalog</Button>
+        </div>
+    );
+  }
 
   const allImages = React.useMemo(() => {
     if (!product) return [];
@@ -153,67 +60,39 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
     }).filter(item => item.key);
   }, [product]);
   
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <p>Loading product... (Firestore: {firestore ? 'Ready' : 'Not Ready'})</p>
-      </div>
-    );
-  }
-
-  if (!product) {
-    return (
-        <div className="flex flex-col items-center justify-center h-[60vh] bg-background">
-            <h2 className="text-2xl font-semibold text-muted-foreground">Product Not Found</h2>
-            <p className="text-muted-foreground mt-2">The product you are looking for does not exist or is not available.</p>
-            <Button onClick={() => router.push('/retailer-catalog')} className="mt-6">Back to Catalog</Button>
-        </div>
-    );
-  }
-
   const generateWhatsAppMessage = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const rawImageUrl = product.productImages?.[0];
+    const proxiedImageUrl = rawImageUrl ? `${origin}/api/image-proxy?url=${encodeURIComponent(rawImageUrl)}` : '';
+
     let message = '';
-    
-    // Add clean image URL FIRST for WhatsApp preview (no token needed with public storage)
-    if (product.productImages && product.productImages[0]) {
-      // Remove token from Firebase Storage URL for cleaner WhatsApp preview
-      const cleanImageUrl = product.productImages[0].split('?')[0] + '?alt=media';
-      message += `${cleanImageUrl}\n\n`;
+    if (proxiedImageUrl) {
+        message += `${proxiedImageUrl}\n\n`;
     }
-    
+
     message += `*Product Inquiry*\n\n`;
-    message += `Hello, I'm interested in this product:\n\n`;
+    message += `I'm interested in this product:\n\n`;
     message += `*${product.productTitle}*\n`;
-    message += `Code: *${product.productCode}*\n`;
+    message += `Code: _${product.productCode}_\n\n`;
 
-    if (product.attributes && Object.keys(product.attributes).length > 0) {
-      message += `\n*Key Details:*\n`;
-      // Show only first 3 attributes to keep message concise
-      Object.entries(product.attributes).slice(0, 3).forEach(([key, value]) => {
-        const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-        const formattedValue = Array.isArray(value) ? value.join(', ') : value;
-        message += `${formattedKey}: ${formattedValue}\n`;
-      });
+    if (product.price) {
+        message += `Price: *Ksh ${product.price.toFixed(2)}*\n\n`;
     }
 
-    message += `\nCould you please confirm its availability and price?`;
-
-    if (typeof window !== 'undefined') {
-        message += `\n\nView full details: ${window.location.href}`;
-    }
+    message += `Could you please confirm its availability?`;
 
     return encodeURIComponent(message);
   };
   
   const whatsAppUrl = `https://wa.me/?text=${generateWhatsAppMessage()}`;
+  const basePath = product.db === 'buyers' ? '/shop' : '/retailer-catalog';
 
   return (
     <>
-      <ProductDetailHeader basePath="/retailer-catalog"/>
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
             <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground/50">
-                <Link href="/retailer-catalog" prefetch={false}>
+                <Link href={basePath} prefetch={false}>
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Back to Catalog
                 </Link>
@@ -329,11 +208,11 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
               )}
               
               {/* Action Buttons */}
-              <div className="pt-4 flex items-center gap-2">
+              <div className="pt-4 flex flex-wrap items-center gap-2">
                   <Button 
                       asChild 
                       size="lg" 
-                      className="flex-1 sm:flex-none bg-green-500 hover:bg-green-600 rounded-full text-white"
+                      className="flex-1 bg-green-500 hover:bg-green-600 rounded-full text-white"
                       disabled={product.stockStatus === 'Out of Stock'}
                   >
                       <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
@@ -346,11 +225,11 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
                           <Button
                               size="lg"
                               variant="outline"
-                              className="flex-1 sm:flex-none rounded-full"
+                              className="flex-1 rounded-full"
                               disabled={product.stockStatus === 'Out of Stock'}
                           >
                               <Eye className="mr-2 h-5 w-5"/>
-                              Preview
+                              WhatsApp Preview
                           </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-md">
@@ -366,7 +245,7 @@ export default function ProductDetailPageClient({ params }: { params: { id: stri
                 <h2 className="text-2xl font-bold mb-6">Related Items</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                      {relatedProducts.map(related => (
-                        <ProductCard key={related.id} product={related} basePath="/retailer-catalog" />
+                        <ProductCard key={related.id} product={related} basePath={basePath} />
                      ))}
                 </div>
             </div>
