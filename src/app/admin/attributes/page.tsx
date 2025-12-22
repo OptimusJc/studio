@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AddAttributeDialog } from './components/AddAttributeDialog';
 import { EditAttributeDialog } from './components/EditAttributeDialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Attribute = {
   id: string;
@@ -51,60 +50,58 @@ export default function AttributesPage() {
           <CardTitle>Attribute List</CardTitle>
           <CardDescription>A list of all product attributes and their possible values.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <ScrollArea className="max-h-[60vh]">
-            <Table>
-              <TableHeader>
+        <CardContent className="max-h-[60vh] overflow-y-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Attribute Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Values</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && (
                 <TableRow>
-                  <TableHead>Attribute Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Values</TableHead>
-                  <TableHead className="w-[40px]"></TableHead>
+                  <TableCell colSpan={4} className="text-center">Loading attributes...</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center">Loading attributes...</TableCell>
-                  </TableRow>
-                )}
-                {!isLoading && attributes?.map((attribute) => (
-                  <TableRow key={attribute.id}>
-                    <TableCell className="font-medium">{attribute.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{attribute.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        {attribute.values.map((value) => (
-                          <Badge key={value} variant="secondary">{value}</Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <EditAttributeDialog attribute={attribute} />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => handleDelete(attribute.id)}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+              )}
+              {!isLoading && attributes?.map((attribute) => (
+                <TableRow key={attribute.id}>
+                  <TableCell className="font-medium">{attribute.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{attribute.category}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-2">
+                      {attribute.values.map((value) => (
+                        <Badge key={value} variant="secondary">{value}</Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <EditAttributeDialog attribute={attribute} />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleDelete(attribute.id)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
