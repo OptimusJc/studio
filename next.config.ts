@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    loader: 'custom',
+    loaderFile: './src/lib/image-loader.ts',
     remotePatterns: [
       {
         protocol: 'https',
@@ -35,6 +37,18 @@ const nextConfig: NextConfig = {
         hostname: 'firebasestorage.googleapis.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.cloudworkstations.dev",
+        port: "",
+        pathname: "/**",
       }
     ],
   },
