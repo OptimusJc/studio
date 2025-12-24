@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -18,8 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Rocket, Save, XCircle, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, doc, addDoc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Attribute } from '@/types';
 import { useEffect, useMemo, useState } from 'react';
@@ -196,7 +197,8 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     } catch (e) {
       console.error(e);
       update({ id, variant: 'destructive', title: 'Unpublishing Failed', description: (e as Error).message });
-      setIsSubmitting(false); // Only set to false on error, success navigates away
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
