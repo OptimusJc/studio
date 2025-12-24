@@ -19,11 +19,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Rocket, Save, XCircle, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, doc, addDoc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Product, Attribute } from '@/types';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { manageProductStatus } from '@/ai/flows/manage-product-status-flow';
 import { Badge } from '@/components/ui/badge';
 import { ImageUploader } from './ImageUploader';
@@ -58,6 +58,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const isEditMode = !!initialData;
   const currentProductId = initialData?.id || null;
@@ -83,7 +84,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     }
   });
 
-  const { fields: additionalImageFields, append: appendAdditionalImage, remove: removeAdditionalImage } = useFieldArray({
+  const { fields: additionalImageFields, append: appendAdditionalImage } = useFieldArray({
       control: form.control,
       name: "additionalImages",
   });
@@ -120,41 +121,38 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
 
   const handleSave = async (data: ProductFormValues) => {
     if (!firestore) return;
+    setIsSubmitting(true);
+    const { id, update } = toast({ variant: 'loading', title: 'Saving...', description: 'Your changes are being saved.' });
     
-    const productData = getProductDataFromForm(data);
+    try {
+      const productData = getProductDataFromForm(data);
 
-    if (currentStatus === 'Published' && currentProductId) {
-        // Update a published product
-        const collectionPath = `${data.db}/${data.category}/products`;
-        const docRef = doc(firestore, collectionPath, currentProductId);
-        setDocumentNonBlocking(docRef, productData, { merge: true });
-        toast({
-            title: "Product Updated!",
-            description: `${data.productTitle} has been updated live.`,
-        });
+      if (currentStatus === 'Published' && currentProductId) {
+          // Update a published product
+          const collectionPath = `${data.db}/${data.category}/products`;
+          const docRef = doc(firestore, collectionPath, currentProductId);
+          await setDoc(docRef, productData, { merge: true });
+          update({ id, variant: 'success', title: 'Product Updated!', description: `${data.productTitle} has been updated live.` });
 
-    } else if (currentStatus === 'Draft') {
-        // Save or update a draft
-        if (currentProductId) {
-            const docRef = doc(firestore, 'drafts', currentProductId);
-            setDocumentNonBlocking(docRef, productData, { merge: true });
-            toast({
-                title: "Draft Updated!",
-                description: `${data.productTitle} has been updated.`,
-            });
-        } else {
-            addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' })
-            .then(newDocRef => {
-                toast({
-                    title: "Draft Saved!",
-                    description: `${data.productTitle} has been saved.`,
-                });
-                if (newDocRef) {
-                    const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
-                    router.replace(newPath, { scroll: false });
-                }
-            });
-        }
+      } else if (currentStatus === 'Draft') {
+          // Save or update a draft
+          if (currentProductId) {
+              const docRef = doc(firestore, 'drafts', currentProductId);
+              await setDoc(docRef, productData, { merge: true });
+              update({ id, variant: 'success', title: 'Draft Updated!', description: `${data.productTitle} has been updated.` });
+          } else {
+              const newDocRef = await addDoc(collection(firestore, 'drafts'), { ...productData, status: 'Draft' });
+              update({ id, variant: 'success', title: 'Draft Saved!', description: `${data.productTitle} has been saved.` });
+              if (newDocRef) {
+                  const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
+                  router.replace(newPath, { scroll: false });
+              }
+          }
+      }
+    } catch (error) {
+      update({ id, variant: 'destructive', title: 'Save Failed', description: (error as Error).message });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -163,22 +161,27 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       toast({ variant: 'destructive', title: 'Error', description: 'You must save a draft before publishing.' });
       return;
     }
+    setIsSubmitting(true);
+    const { id, update } = toast({ variant: 'loading', title: 'Publishing...', description: 'Please wait while the product goes live.' });
     try {
       await manageProductStatus({
         action: 'publish',
         productId: currentProductId,
       });
-      toast({ title: 'Product Published!', description: `${data.productTitle} is now live.` });
+      update({ id, variant: 'success', title: 'Product Published!', description: `${data.productTitle} is now live.` });
       router.push(`/admin/products?db=${data.db}&category=${data.category}`);
       router.refresh();
     } catch (e) {
       console.error(e);
-      toast({ variant: 'destructive', title: 'Publishing Failed', description: (e as Error).message });
+      update({ id, variant: 'destructive', title: 'Publishing Failed', description: (e as Error).message });
+      setIsSubmitting(false); // Only set to false on error, success navigates away
     }
   };
 
   const handleUnpublish = async (data: ProductFormValues) => {
     if (!currentProductId || !firestore) return;
+    setIsSubmitting(true);
+    const { id, update } = toast({ variant: 'loading', title: 'Unpublishing...', description: 'Moving product to drafts.' });
     try {
       await manageProductStatus({
         action: 'unpublish',
@@ -186,14 +189,16 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         db: data.db,
         category: data.category,
       });
-      toast({ title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
+      update({ id, variant: 'success', title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
       form.setValue('status', 'Draft');
       router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${data.category}`);
       router.refresh();
 
     } catch (e) {
       console.error(e);
-      toast({ variant: 'destructive', title: 'Unpublishing Failed', description: (e as Error).message });
+      update({ id, variant: 'destructive', title: 'Unpublishing Failed', description: (e as Error).message });
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -206,19 +211,21 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       <Form {...form}>
         <form className="space-y-8">
            <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/95 py-4 backdrop-blur-sm px-4 md:px-8 -mx-4 md:-mx-8">
-              <Button type="button" variant="outline" onClick={handleDiscard}>Discard</Button>
-              <Button type="button" variant="secondary" onClick={form.handleSubmit(handleSave)}>
+              <Button type="button" variant="outline" onClick={handleDiscard} disabled={isSubmitting}>Discard</Button>
+              <Button type="button" variant="secondary" onClick={form.handleSubmit(handleSave)} disabled={isSubmitting}>
                 <Save className="mr-2 h-4 w-4" /> 
-                {currentStatus === 'Published' ? 'Save Changes' : 'Save Draft'}
+                {isSubmitting && currentStatus === 'Draft' ? 'Saving...' : (currentStatus === 'Published' ? 'Save Changes' : 'Save Draft')}
               </Button>
               {isEditMode && currentStatus === 'Published' && (
-                <Button type="button" variant="destructive" onClick={form.handleSubmit(handleUnpublish)}>
-                  <XCircle className="mr-2 h-4 w-4" /> Unpublish
+                <Button type="button" variant="destructive" onClick={form.handleSubmit(handleUnpublish)} disabled={isSubmitting}>
+                  <XCircle className="mr-2 h-4 w-4" />
+                  {isSubmitting ? 'Unpublishing...' : 'Unpublish'}
                 </Button>
               )}
                {isEditMode && currentStatus === 'Draft' && (
-                <Button type="button" className="bg-green-600 hover:bg-green-700" onClick={form.handleSubmit(handlePublish)}>
-                  <Rocket className="mr-2 h-4 w-4" /> Publish
+                <Button type="button" className="bg-green-600 hover:bg-green-700" onClick={form.handleSubmit(handlePublish)} disabled={isSubmitting}>
+                  <Rocket className="mr-2 h-4 w-4" />
+                  {isSubmitting ? 'Publishing...' : 'Publish'}
                 </Button>
               )}
           </div>
