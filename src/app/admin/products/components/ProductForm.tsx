@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -120,8 +119,9 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   }
 
   const handleSave = async (data: ProductFormValues) => {
-    if (!firestore || isSubmitting) return;
+    if (!firestore) return;
     setIsSubmitting(true);
+    const { id, update } = toast({ variant: 'loading', title: 'Saving...', description: 'Your changes are being saved.' });
     
     try {
       const productData = getProductDataFromForm(data);
@@ -130,27 +130,18 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
           // Update a published product
           const collectionPath = `${data.db}/${data.category}/products`;
           const docRef = doc(firestore, collectionPath, currentProductId);
-          await setDocumentNonBlocking(docRef, productData, { merge: true });
-          toast({
-              title: "Product Updated!",
-              description: `${data.productTitle} has been updated live.`,
-          });
+          await setDoc(docRef, productData, { merge: true });
+          update({ id, variant: 'success', title: 'Product Updated!', description: `${data.productTitle} has been updated live.` });
 
       } else if (currentStatus === 'Draft') {
           // Save or update a draft
           if (currentProductId) {
               const docRef = doc(firestore, 'drafts', currentProductId);
-              await setDocumentNonBlocking(docRef, productData, { merge: true });
-              toast({
-                  title: "Draft Updated!",
-                  description: `${data.productTitle} has been updated.`,
-              });
+              await setDoc(docRef, productData, { merge: true });
+              update({ id, variant: 'success', title: 'Draft Updated!', description: `${data.productTitle} has been updated.` });
           } else {
-              const newDocRef = await addDocumentNonBlocking(collection(firestore, 'drafts'), { ...productData, status: 'Draft' });
-              toast({
-                  title: "Draft Saved!",
-                  description: `${data.productTitle} has been saved.`,
-              });
+              const newDocRef = await addDoc(collection(firestore, 'drafts'), { ...productData, status: 'Draft' });
+              update({ id, variant: 'success', title: 'Draft Saved!', description: `${data.productTitle} has been saved.` });
               if (newDocRef) {
                   const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
                   router.replace(newPath, { scroll: false });
@@ -158,36 +149,38 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
           }
       }
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Save Failed', description: (error as Error).message });
+      update({ id, variant: 'destructive', title: 'Save Failed', description: (error as Error).message });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handlePublish = async (data: ProductFormValues) => {
-    if (!currentProductId || isSubmitting) {
+    if (!currentProductId) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must save a draft before publishing.' });
       return;
     }
     setIsSubmitting(true);
+    const { id, update } = toast({ variant: 'loading', title: 'Publishing...', description: 'Please wait while the product goes live.' });
     try {
       await manageProductStatus({
         action: 'publish',
         productId: currentProductId,
       });
-      toast({ title: 'Product Published!', description: `${data.productTitle} is now live.` });
+      update({ id, variant: 'success', title: 'Product Published!', description: `${data.productTitle} is now live.` });
       router.push(`/admin/products?db=${data.db}&category=${data.category}`);
       router.refresh();
     } catch (e) {
       console.error(e);
-      toast({ variant: 'destructive', title: 'Publishing Failed', description: (e as Error).message });
+      update({ id, variant: 'destructive', title: 'Publishing Failed', description: (e as Error).message });
       setIsSubmitting(false); // Only set to false on error, success navigates away
     }
   };
 
   const handleUnpublish = async (data: ProductFormValues) => {
-    if (!currentProductId || !firestore || isSubmitting) return;
+    if (!currentProductId || !firestore) return;
     setIsSubmitting(true);
+    const { id, update } = toast({ variant: 'loading', title: 'Unpublishing...', description: 'Moving product to drafts.' });
     try {
       await manageProductStatus({
         action: 'unpublish',
@@ -195,14 +188,14 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         db: data.db,
         category: data.category,
       });
-      toast({ title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
+      update({ id, variant: 'success', title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
       form.setValue('status', 'Draft');
       router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${data.category}`);
       router.refresh();
 
     } catch (e) {
       console.error(e);
-      toast({ variant: 'destructive', title: 'Unpublishing Failed', description: (e as Error).message });
+      update({ id, variant: 'destructive', title: 'Unpublishing Failed', description: (e as Error).message });
       setIsSubmitting(false); // Only set to false on error, success navigates away
     }
   };
