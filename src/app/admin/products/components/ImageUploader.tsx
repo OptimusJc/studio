@@ -149,7 +149,8 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
           <div className="relative aspect-square">
             <Image 
                 src={previewUrl} 
-                alt="Product image preview" 
+                alt="Product image preview"
+                unoptimized
                 fill 
                 sizes={sizes}
                 className="object-cover rounded-md" 
@@ -207,3 +208,5 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
     </Card>
   );
 }
+
+    

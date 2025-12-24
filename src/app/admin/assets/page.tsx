@@ -286,7 +286,8 @@ export default function AssetsPage() {
                                 {item.url ? (
                                     <Image 
                                         src={item.url} 
-                                        alt={item.name} 
+                                        alt={item.name}
+                                        unoptimized
                                         fill 
                                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16.6vw"
                                         className="object-cover" 
@@ -353,3 +354,5 @@ export default function AssetsPage() {
     </div>
   );
 }
+
+    
