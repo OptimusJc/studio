@@ -143,7 +143,8 @@ export function AssetPickerDialog({ children, onAssetSelect }: AssetPickerDialog
                                 {item.url && (item.url.includes('.jpg') || item.url.includes('.jpeg') || item.url.includes('.png') || item.url.includes('.gif') || item.url.includes('.webp')) ? (
                                     <Image 
                                         src={item.url} 
-                                        alt={item.name} 
+                                        alt={item.name}
+                                        unoptimized
                                         fill 
                                         sizes="(max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                                         className="object-cover" 
@@ -170,3 +171,5 @@ export function AssetPickerDialog({ children, onAssetSelect }: AssetPickerDialog
     </Dialog>
   );
 }
+
+    

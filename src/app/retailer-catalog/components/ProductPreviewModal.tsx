@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -32,12 +33,30 @@ export function ProductPreviewModal({
   const [activeImage, setActiveImage] = React.useState<string>(
     product.productImages?.[0] || "",
   );
+  const [whatsAppUrl, setWhatsAppUrl] = React.useState('');
 
   React.useEffect(() => {
     if (open) {
       setActiveImage(product.productImages?.[0] || "");
+
+      const generateWhatsAppMessage = () => {
+        let message = `*Product Inquiry*\n\n`;
+        message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
+        message += `*Product Details:*\n`;
+        message += `Code: *${product.productCode}*\n`;
+        message += `Title: ${product.productTitle}\n`;
+        
+        const imageUrl = product.imageUrl;
+        const proxiedImageUrl = `${window.location.origin}/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+        
+        message += `\n${proxiedImageUrl}`;
+
+        return encodeURIComponent(message);
+      };
+
+      setWhatsAppUrl(`https://wa.me/?text=${generateWhatsAppMessage()}`);
     }
-  }, [open, product.productImages]);
+  }, [open, product]);
 
   const allImages = React.useMemo(() => {
     if (!product) return [];
@@ -60,22 +79,6 @@ export function ProductPreviewModal({
       })
       .filter(Boolean);
   }, [product]);
-
-  const generateWhatsAppMessage = () => {
-    let message = `*Product Inquiry*\n\n`;
-    message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
-    message += `*Product Details:*\n`;
-    message += `Code: *${product.productCode}*\n`;
-    message += `Title: ${product.productTitle}\n`;
-
-    if (typeof window !== "undefined") {
-      message += `\nLink: ${window.location.origin}${basePath}/${product.id}`;
-    }
-
-    return encodeURIComponent(message);
-  };
-
-  const whatsAppUrl = `https://wa.me/?text=${generateWhatsAppMessage()}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,6 +113,7 @@ export function ProductPreviewModal({
                     src={activeImage}
                     alt={product.name}
                     fill
+                    unoptimized
                     sizes="(max-width: 768px) 100vw, 50vw"
                     className="object-cover"
                     priority
@@ -128,6 +132,7 @@ export function ProductPreviewModal({
                       alt={`${product.name} thumbnail ${index + 1}`}
                       width={100}
                       height={100}
+                      unoptimized
                       className="object-cover w-full h-full"
                     />
                   </div>
@@ -234,3 +239,5 @@ export function ProductPreviewModal({
     </Dialog>
   );
 }
+
+    

@@ -31,7 +31,7 @@ function RowActions({ product }: { product: Product }) {
       category: [product.category],
     };
     const encodedFilters = btoa(JSON.stringify(filters));
-    const basePath = product.db === 'retailers' ? '/catalog' : '/shop';
+    const basePath = product.db === 'retailers' ? '/retailer-catalog' : '/shop';
     return `${window.location.origin}${basePath}?filters=${encodedFilters}`;
   };
 
@@ -166,6 +166,7 @@ export function ProductTableClient({ products }: { products: Product[] }) {
                 alt={product.name}
                 width={48}
                 height={48}
+                unoptimized
                 className="rounded-md object-cover"
                 data-ai-hint={product.imageHint}
               />
@@ -193,3 +194,5 @@ export function ProductTableClient({ products }: { products: Product[] }) {
     </Table>
   );
 }
+
+    

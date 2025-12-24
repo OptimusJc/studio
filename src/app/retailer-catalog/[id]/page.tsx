@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -83,6 +84,7 @@ function ProductDetailPageContent() {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string>("");
+  const [whatsAppUrl, setWhatsAppUrl] = useState('');
 
   const categoriesCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -174,6 +176,35 @@ function ProductDetailPageContent() {
     }
   }, [firestore, productId, categoriesData, isLoadingCategories]);
 
+  useEffect(() => {
+    if (product) {
+      const generateWhatsAppMessage = () => {
+        let message = `*Product Inquiry*\n\n`;
+        message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
+        message += `*Product Details:*\n`;
+        message += `Code: *${product.productCode}*\n`;
+        message += `Title: ${product.productTitle}\n`;
+
+        if (product.attributes && Object.keys(product.attributes).length > 0) {
+          message += `\n*Attributes:*\n`;
+          Object.entries(product.attributes).forEach(([key, value]) => {
+            const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
+            const formattedValue = Array.isArray(value) ? value.join(", ") : value;
+            message += `${formattedKey}: ${formattedValue}\n`;
+          });
+        }
+        
+        const imageUrl = product.imageUrl
+        const proxiedImageUrl = `${window.location.origin}/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+        
+        message += `\n${proxiedImageUrl}`;
+
+        return encodeURIComponent(message);
+      };
+      setWhatsAppUrl(`https://wa.me/?text=${generateWhatsAppMessage()}`)
+    }
+  }, [product]);
+
   const allImages = useMemo(() => {
     if (!product) return [];
     return [
@@ -224,31 +255,6 @@ function ProductDetailPageContent() {
     router.push(`/retailer-catalog?filters=${encodedFilters}`);
   };
 
-  const generateWhatsAppMessage = () => {
-    let message = `*Product Inquiry*\n\n`;
-    message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
-    message += `*Product Details:*\n`;
-    message += `Code: *${product.productCode}*\n`;
-    message += `Title: ${product.productTitle}\n`;
-
-    if (product.attributes && Object.keys(product.attributes).length > 0) {
-      message += `\n*Attributes:*\n`;
-      Object.entries(product.attributes).forEach(([key, value]) => {
-        const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-        const formattedValue = Array.isArray(value) ? value.join(", ") : value;
-        message += `${formattedKey}: ${formattedValue}\n`;
-      });
-    }
-
-    if (typeof window !== "undefined") {
-      message += `\nLink: ${window.location.href}`;
-    }
-
-    return encodeURIComponent(message);
-  };
-
-  const whatsAppUrl = `https://wa.me/?text=${generateWhatsAppMessage()}`;
-
   return (
     <>
       <ProductDetailHeader basePath="/retailer-catalog" />
@@ -282,6 +288,7 @@ function ProductDetailPageContent() {
                     alt={`${product.name} thumbnail ${index + 1}`}
                     width={80}
                     height={80}
+                    unoptimized
                     className="object-cover w-full h-full"
                   />
                 </div>
@@ -297,6 +304,7 @@ function ProductDetailPageContent() {
                       src={activeImage}
                       alt={product.name}
                       fill
+                      unoptimized
                       sizes="(max-width: 1024px) 100vw, 50vw"
                       className="object-cover"
                       priority
@@ -463,3 +471,5 @@ export default function ProductDetailPage() {
     </div>
   );
 }
+
+    
