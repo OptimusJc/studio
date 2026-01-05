@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Suspense, useEffect, useState, useMemo } from "react";
@@ -183,22 +184,34 @@ function CatalogContent() {
   const consolidatedAttributes = useMemo(() => {
     if (!attributesData) return [];
   
+    // Whitelist of attribute names to display in the filter panel
+    const attributeWhitelist = [
+        'color', 
+        'material', 
+        'texture', 
+        'fabric type', 
+        'carpet type', 
+        'window blind type'
+    ];
+  
     const attributeMap = new Map<string, { id: string; values: Set<string> }>();
   
-    // 1. Group all attributes by name and collect unique values
     attributesData.forEach(attr => {
-      if (!attributeMap.has(attr.name)) {
-        attributeMap.set(attr.name, { id: attr.id, values: new Set() });
-      }
-      const attrGroup = attributeMap.get(attr.name)!;
-      attr.values.forEach(val => attrGroup.values.add(val));
+        const lowerCaseName = attr.name.toLowerCase();
+        // Only process attributes that are in our whitelist
+        if (attributeWhitelist.includes(lowerCaseName)) {
+            if (!attributeMap.has(attr.name)) {
+                attributeMap.set(attr.name, { id: attr.id, values: new Set() });
+            }
+            const attrGroup = attributeMap.get(attr.name)!;
+            attr.values.forEach(val => attrGroup.values.add(val));
+        }
     });
   
-    // 2. Format for the FacetedSearch component
     return Array.from(attributeMap.entries()).map(([name, group]) => ({
       id: group.id,
       name: name,
-      category: 'All', // No longer category-specific
+      category: 'All', // This field is no longer used for filtering but kept for type consistency
       values: Array.from(group.values).sort(),
     }));
   }, [attributesData]);
