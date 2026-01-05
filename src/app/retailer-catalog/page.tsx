@@ -13,7 +13,7 @@ import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Filter, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -35,12 +35,6 @@ function CatalogContent() {
     return collection(firestore, 'categories');
   }, [firestore]);
   const { data: categoriesData, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
-
-  const attributesCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'attributes');
-  }, [firestore]);
-  const { data: attributesData, isLoading: isLoadingAttributes } = useCollection<Attribute>(attributesCollection);
 
   // Fetch all products from all categories
   useEffect(() => {
@@ -159,47 +153,44 @@ function CatalogContent() {
   }, [filters, searchTerm, allProducts]);
 
   const memoizedCategories = useMemo(() => categoriesData || [], [categoriesData]);
-  
-  const consolidatedAttributes = useMemo(() => {
-    if (!attributesData) return [];
-  
-    const attributeWhitelist = [
-        'color', 
-        'material', 
-        'texture', 
-        'fabric type', 
-        'carpet type', 
-        'window blind type'
-    ];
 
-    const attributeMap = new Map<string, { originalName: string; id: string; values: Set<string> }>();
+  const availableFilters = useMemo(() => {
+    const attributeWhitelist = new Set([
+      'color', 'material', 'texture', 'fabric type', 'carpet type', 'window blind type'
+    ]);
+    const filterMap = new Map<string, { originalName: string; values: Set<string> }>();
 
-    attributesData.forEach(attr => {
-        const lowerCaseName = attr.name.toLowerCase();
-        if (attributeWhitelist.includes(lowerCaseName)) {
-            if (!attributeMap.has(lowerCaseName)) {
-                attributeMap.set(lowerCaseName, { originalName: attr.name, id: attr.id, values: new Set() });
+    allProducts.forEach(product => {
+      if (product.attributes) {
+        Object.entries(product.attributes).forEach(([key, value]) => {
+          const lowerKey = key.toLowerCase();
+          if (attributeWhitelist.has(lowerKey)) {
+            if (!filterMap.has(lowerKey)) {
+              filterMap.set(lowerKey, { originalName: key, values: new Set() });
             }
-            const attrGroup = attributeMap.get(lowerCaseName)!;
-            attr.values.forEach(val => attrGroup.values.add(val));
-        }
+            if (value && typeof value === 'string') {
+              filterMap.get(lowerKey)!.values.add(value);
+            }
+          }
+        });
+      }
     });
-  
-    return Array.from(attributeMap.values()).map(group => ({
-      id: group.id,
-      name: group.originalName,
-      category: 'All', 
-      values: Array.from(group.values).sort(),
+
+    return Array.from(filterMap.entries()).map(([key, data], index) => ({
+      id: `filter-${key}-${index}`,
+      name: data.originalName,
+      category: 'All',
+      values: Array.from(data.values).sort(),
     }));
-  }, [attributesData]);
+  }, [allProducts]);
 
 
   const facetedSearchComponent = (
-    isLoadingAttributes ? (
+    isLoading ? (
         <Skeleton className="h-[600px] w-full" />
     ) : (
         <FacetedSearch
-        attributes={consolidatedAttributes}
+        attributes={availableFilters}
         appliedFilters={filters}
         onFilterChange={setFilters}
         isMobile={isMobile}
