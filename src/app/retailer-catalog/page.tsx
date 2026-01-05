@@ -166,20 +166,17 @@ function CatalogContent() {
   
     // 1. Group all attributes by name and collect unique values
     attributesData.forEach(attr => {
-      // Use original name for grouping, handle 'Pattern' -> 'Style' rename later if needed
-      const groupName = attr.name;
-  
-      if (!attributeMap.has(groupName)) {
-        attributeMap.set(groupName, { id: attr.id, values: new Set() });
+      if (!attributeMap.has(attr.name)) {
+        attributeMap.set(attr.name, { id: attr.id, values: new Set() });
       }
-      const attrGroup = attributeMap.get(groupName)!;
+      const attrGroup = attributeMap.get(attr.name)!;
       attr.values.forEach(val => attrGroup.values.add(val));
     });
   
     // 2. Format for the FacetedSearch component
     return Array.from(attributeMap.entries()).map(([name, group]) => ({
       id: group.id,
-      name: name, // Keep the original name like 'Color', 'Material'
+      name: name,
       category: 'All', // No longer category-specific
       values: Array.from(group.values).sort(),
     }));
