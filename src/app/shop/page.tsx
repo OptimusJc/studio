@@ -178,28 +178,37 @@ function CatalogContent() {
     const attributeWhitelist = new Set([
       'color', 'material', 'texture', 'fabric type', 'carpet type', 'window blind type'
     ]);
+    // Use a Map to group values by the lowercase attribute name
     const filterMap = new Map<string, { originalName: string; values: Set<string> }>();
 
     allProducts.forEach(product => {
       if (product.attributes) {
-        Object.entries(product.attributes).forEach(([key, value]) => {
+        Object.entries(product.attributes).forEach(([key, valueOrValues]) => {
           const lowerKey = key.toLowerCase();
           if (attributeWhitelist.has(lowerKey)) {
+            // Initialize if not present
             if (!filterMap.has(lowerKey)) {
               filterMap.set(lowerKey, { originalName: key, values: new Set() });
             }
-            if (value && typeof value === 'string') {
-              filterMap.get(lowerKey)!.values.add(value);
+            
+            const current = filterMap.get(lowerKey)!;
+
+            // Handle both string and array of strings
+            if (Array.isArray(valueOrValues)) {
+              valueOrValues.forEach(v => v && current.values.add(v));
+            } else if (valueOrValues && typeof valueOrValues === 'string') {
+              current.values.add(valueOrValues);
             }
           }
         });
       }
     });
-
-    return Array.from(filterMap.entries()).map(([key, data], index) => ({
-      id: `filter-${key}-${index}`,
+    
+    // Convert the map to the array structure needed by the component
+    return Array.from(filterMap.entries()).map(([key, data]) => ({
+      id: `filter-${key}`,
       name: data.originalName,
-      category: 'All',
+      category: 'All', // This is fine, category isn't used for filtering here
       values: Array.from(data.values).sort(),
     }));
   }, [allProducts]);
