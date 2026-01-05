@@ -163,7 +163,6 @@ function CatalogContent() {
   const consolidatedAttributes = useMemo(() => {
     if (!attributesData) return [];
   
-    // Whitelist of attribute names to display in the filter panel
     const attributeWhitelist = [
         'color', 
         'material', 
@@ -173,24 +172,23 @@ function CatalogContent() {
         'window blind type'
     ];
 
-    const attributeMap = new Map<string, { id: string; values: Set<string> }>();
-  
+    const attributeMap = new Map<string, { originalName: string; id: string; values: Set<string> }>();
+
     attributesData.forEach(attr => {
         const lowerCaseName = attr.name.toLowerCase();
-        // Only process attributes that are in our whitelist
         if (attributeWhitelist.includes(lowerCaseName)) {
-            if (!attributeMap.has(attr.name)) {
-                attributeMap.set(attr.name, { id: attr.id, values: new Set() });
+            if (!attributeMap.has(lowerCaseName)) {
+                attributeMap.set(lowerCaseName, { originalName: attr.name, id: attr.id, values: new Set() });
             }
-            const attrGroup = attributeMap.get(attr.name)!;
+            const attrGroup = attributeMap.get(lowerCaseName)!;
             attr.values.forEach(val => attrGroup.values.add(val));
         }
     });
   
-    return Array.from(attributeMap.entries()).map(([name, group]) => ({
+    return Array.from(attributeMap.values()).map(group => ({
       id: group.id,
-      name: name,
-      category: 'All', // This field is no longer used for filtering but kept for type consistency
+      name: group.originalName,
+      category: 'All', 
       values: Array.from(group.values).sort(),
     }));
   }, [attributesData]);
