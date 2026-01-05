@@ -84,6 +84,7 @@ function CatalogContent() {
               specifications: data.specifications,
               db: db,
               stock: data.stock || 0,
+              stockStatus: data.stockStatus,
               sku: data.sku || '',
               imageHint: data.imageHint || '',
               createdAt: data.createdAt || '',
@@ -160,26 +161,27 @@ function CatalogContent() {
   
   const consolidatedAttributes = useMemo(() => {
     if (!attributesData) return [];
-
-    const allowedFilters = ['Color', 'Material', 'Texture', 'Pattern'];
+  
     const attributeMap = new Map<string, { id: string; values: Set<string> }>();
-
+  
+    // 1. Group all attributes by name and collect unique values
     attributesData.forEach(attr => {
-        if (allowedFilters.includes(attr.name)) {
-            const filterName = attr.name === 'Pattern' ? 'Style' : attr.name;
-            if (!attributeMap.has(filterName)) {
-                attributeMap.set(filterName, { id: attr.id, values: new Set() });
-            }
-            const attrGroup = attributeMap.get(filterName)!;
-            attr.values.forEach(val => attrGroup.values.add(val));
-        }
+      // Use original name for grouping, handle 'Pattern' -> 'Style' rename later if needed
+      const groupName = attr.name;
+  
+      if (!attributeMap.has(groupName)) {
+        attributeMap.set(groupName, { id: attr.id, values: new Set() });
+      }
+      const attrGroup = attributeMap.get(groupName)!;
+      attr.values.forEach(val => attrGroup.values.add(val));
     });
-
+  
+    // 2. Format for the FacetedSearch component
     return Array.from(attributeMap.entries()).map(([name, group]) => ({
-        id: group.id,
-        name: name,
-        category: 'All', 
-        values: Array.from(group.values).sort(),
+      id: group.id,
+      name: name, // Keep the original name like 'Color', 'Material'
+      category: 'All', // No longer category-specific
+      values: Array.from(group.values).sort(),
     }));
   }, [attributesData]);
 
