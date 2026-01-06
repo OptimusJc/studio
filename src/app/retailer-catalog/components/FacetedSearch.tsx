@@ -100,32 +100,34 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
             Reset All
         </Button>
       </div>
-      <Accordion type="multiple" className="w-full">
-        {attributes.map((attribute) => (
-          <AccordionItem key={attribute.id} value={attribute.id}>
-            <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
-            <AccordionContent className="pt-2">
-              <div className="grid gap-y-3">
-                {attribute.values.map((value) => (
-                  <div key={value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`attr-${attribute.id}-${value}`}
-                      checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value) || false}
-                      onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
-                    />
-                    <Label
-                      htmlFor={`attr-${attribute.id}-${value}`}
-                      className="font-normal text-card-foreground leading-tight"
-                    >
-                      {value}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+      <ScrollArea className="h-full max-h-[65vh] pr-4 -mr-4">
+        <Accordion type="multiple" className="w-full">
+          {attributes.map((attribute) => (
+            <AccordionItem key={attribute.id} value={attribute.id}>
+              <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <div className="grid gap-y-3">
+                  {attribute.values.map((value) => (
+                    <div key={value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`attr-${attribute.id}-${value}`}
+                        checked={appliedFilters[attribute.name.toLowerCase()]?.includes(value) || false}
+                        onCheckedChange={(checked) => handleCheckedChange(attribute.name.toLowerCase(), value, !!checked)}
+                      />
+                      <Label
+                        htmlFor={`attr-${attribute.id}-${value}`}
+                        className="font-normal text-card-foreground leading-tight"
+                      >
+                        {value}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </ScrollArea>
     </div>
   );
 }

@@ -156,7 +156,7 @@ function CatalogContent() {
 
   const availableFilters = useMemo(() => {
     const attributeWhitelist = [
-      'color', 'material', 'texture', 'fabric type', 'carpet type', 'window blind type'
+      'color', 'material', 'texture', 'fabric type', 'carpet type', 'window blind type', 'wallpaper type', 'wall mural type', 'window film type', 'fluted panel type',
     ];
 
     // Initialize the filter map with all whitelisted attributes to ensure they always appear.
