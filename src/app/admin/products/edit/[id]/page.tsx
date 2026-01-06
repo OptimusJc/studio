@@ -24,6 +24,16 @@ function EditProductFormSkeleton() {
     )
 }
 
+function createSafeSlug(name: string) {
+    if (!name) return '';
+    return name
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
+}
+
 export default function EditProductPage() {
   const firestore = useFirestore();
   const params = useParams();
@@ -67,17 +77,14 @@ export default function EditProductPage() {
         // 2. If not in drafts, search all published collections
         for (const db of ['retailers', 'buyers']) {
             for (const cat of categories) {
-                const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
+                const categorySlug = createSafeSlug(cat.name);
                 const liveCollectionPath = `${db}/${categorySlug}/products`;
                 const productRef = doc(firestore, liveCollectionPath, productId);
                 const productSnap = await getDoc(productRef);
                 if (productSnap.exists()) {
-                    // FIX: Manually add category and db to the data object
                     setProductData({ 
                         ...productSnap.data(), 
-                        id: productSnap.id, 
-                        category: categorySlug, // Add category slug from path
-                        db: db                  // Add db from path
+                        id: productSnap.id,
                     });
                     setIsLoadingProduct(false);
                     return;
@@ -96,20 +103,15 @@ export default function EditProductPage() {
     }
   }, [firestore, productId, categories, isLoadingCategories]);
 
-  const categoryNameFromProduct = useMemo(() => {
-      if (!categories || !productData?.category) return null;
-      // productData.category is a slug, so find matching category name
-      return categories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === productData.category)?.name;
-  }, [categories, productData]);
-
-
   const transformedProductData: Product | null = useMemo(() => {
-    // This check is now robust for both draft and published products
-    if (productData && categoryNameFromProduct) {
+    if (productData) {
+      // The category field in productData can be either a slug or a full name.
+      // We pass it directly to the form, which will then use createSafeSlug on it.
+      // This ensures consistency. The form's internal state will always be a slug.
       return {
         id: productData.id,
         name: productData.productTitle,
-        category: categoryNameFromProduct,
+        category: productData.category, // Pass the raw category (slug or name)
         price: productData.price,
         stock: 100, // Placeholder
         stockStatus: productData.stockStatus || 'In Stock',
@@ -136,7 +138,7 @@ export default function EditProductPage() {
       };
     }
     return null;
-  }, [productData, categoryNameFromProduct, dbFromUrl]);
+  }, [productData, dbFromUrl]);
 
   const memoizedAttributes = useMemo(() => attributes || [], [attributes]);
   const memoizedCategories = useMemo(() => categories || [], [categories]);

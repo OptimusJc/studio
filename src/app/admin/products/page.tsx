@@ -27,6 +27,16 @@ function ProductTableSkeleton() {
     )
 }
 
+function createSafeSlug(name: string) {
+    if (!name) return '';
+    return name
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
+}
+
 export default function ProductsPage() {
   const firestore = useFirestore();
   const searchParams = useSearchParams();
@@ -82,11 +92,11 @@ export default function ProductsPage() {
 
 
       // 2. Fetch Published
-      const productCategories = categoriesData.map(c => c.name.toLowerCase().replace(/\s+/g, '-'));
-      const collectionsToFetch = newCategory ? [newCategory] : productCategories;
+      const productCategories = categoriesData.map(c => ({ name: c.name, slug: createSafeSlug(c.name) }));
+      const collectionsToFetch = newCategory ? productCategories.filter(c => c.slug === newCategory) : productCategories;
 
       for (const cat of collectionsToFetch) {
-          const collectionPath = `${newDb}/${cat}/products`;
+          const collectionPath = `${newDb}/${cat.slug}/products`;
           try {
             const publishedQuery = query(collection(firestore, collectionPath));
             const publishedSnapshot = await getDocs(publishedQuery);
@@ -97,7 +107,7 @@ export default function ProductsPage() {
                   ...data,
                   name: data.productTitle,
                   imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
-                  category: cat,
+                  category: cat.name, // Use the real category name for display
                   db: newDb,
                 } as Product;
                 // If a published product exists, it should overwrite the placeholder/draft

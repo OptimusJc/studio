@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -42,7 +43,10 @@ interface EditCategoryDialogProps {
 }
 
 const categorySchema = z.object({
-  name: z.string().min(1, 'Category name is required.'),
+  name: z
+    .string()
+    .min(1, 'Category name is required.')
+    .regex(/^[a-zA-Z0-9- ]+$/, 'Name can only contain letters, numbers, spaces, and hyphens.'),
   description: z.string().optional(),
 });
 

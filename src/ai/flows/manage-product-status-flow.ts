@@ -36,6 +36,16 @@ export type ManageProductStatusOutput = z.infer<
   typeof ManageProductStatusOutputSchema
 >;
 
+function createSafeSlug(name: string) {
+    if (!name) return '';
+    return name
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
+}
+
 // Private function containing the core logic for publishing/unpublishing
 async function _manageProductStatusLogic(
   input: ManageProductStatusInput,
@@ -62,7 +72,7 @@ async function _manageProductStatusLogic(
         );
       }
       
-      const categorySlug = productData.category;
+      const categorySlug = createSafeSlug(productData.category);
       const liveCollectionPath = `${productData.db}/${categorySlug}/products`;
       const liveDocRef = firestore.doc(`${liveCollectionPath}/${productId}`);
       
@@ -85,7 +95,7 @@ async function _manageProductStatusLogic(
         throw new Error("Database and category are required for unpublishing.");
       }
 
-      const categorySlug = input.category.toLowerCase().replace(/\s+/g, '-');
+      const categorySlug = createSafeSlug(input.category);
       const liveCollectionPath = `${input.db}/${categorySlug}/products`;
       const liveDocRef = firestore.doc(`${liveCollectionPath}/${productId}`);
 

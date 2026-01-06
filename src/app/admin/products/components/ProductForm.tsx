@@ -54,6 +54,16 @@ interface ProductFormProps {
     initialCategory: string;
 }
 
+function createSafeSlug(name: string) {
+    if (!name) return '';
+    return name
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
+}
+
 export function ProductForm({ initialData, allAttributes, categories, initialDb, initialCategory }: ProductFormProps) {
   const router = useRouter();
   const firestore = useFirestore();
@@ -75,7 +85,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       price: initialData?.price,
       specifications: initialData?.specifications || '',
       attributes: initialData?.attributes || {},
-      category: initialData ? initialData.category.toLowerCase().replace(/\s+/g, '-') : (initialCategory || ''),
+      category: initialData?.category ? createSafeSlug(initialData.category) : (initialCategory || ''),
       productImages: initialData?.productImages || [],
       additionalImages: initialData?.additionalImages || [],
       db: initialData?.db || initialDb,
@@ -94,12 +104,14 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   
   const relevantAttributes = useMemo(() => {
     if (!selectedCategory) return [];
-    const categoryDetails = memoizedCategories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === selectedCategory);
+    const categoryDetails = memoizedCategories.find(c => createSafeSlug(c.name) === selectedCategory);
     if (!categoryDetails) return [];
     return memoizedAttributes.filter(attr => attr.category === categoryDetails.name);
   }, [selectedCategory, memoizedAttributes, memoizedCategories]);
 
   const getProductDataFromForm = (data: ProductFormValues) => {
+    const categoryName = categories.find(c => createSafeSlug(c.name) === data.category)?.name;
+  
     const productData = {
       productTitle: data.productTitle,
       productCode: data.productCode,
@@ -111,7 +123,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       attributes: data.attributes || {},
       status: data.status,
       stockStatus: data.stockStatus,
-      category: data.category,
+      category: categoryName || data.category, // Use original name if found, otherwise slug
       db: data.db,
       createdAt: (isEditMode && initialData?.createdAt) ? initialData.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -126,10 +138,11 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     
     try {
       const productData = getProductDataFromForm(data);
+      const categorySlug = createSafeSlug(productData.category);
 
       if (currentStatus === 'Published' && currentProductId) {
           // Update a published product
-          const collectionPath = `${data.db}/${data.category}/products`;
+          const collectionPath = `${data.db}/${categorySlug}/products`;
           const docRef = doc(firestore, collectionPath, currentProductId);
           await setDoc(docRef, productData, { merge: true });
           update({ id, variant: 'success', title: 'Product Updated!', description: `${data.productTitle} has been updated live.` });
@@ -138,13 +151,13 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
           // Save or update a draft
           if (currentProductId) {
               const docRef = doc(firestore, 'drafts', currentProductId);
-              await setDoc(docRef, productData, { merge: true });
+              await setDoc(docRef, { ...productData, category: categorySlug }, { merge: true });
               update({ id, variant: 'success', title: 'Draft Updated!', description: `${data.productTitle} has been updated.` });
           } else {
-              const newDocRef = await addDoc(collection(firestore, 'drafts'), { ...productData, status: 'Draft' });
+              const newDocRef = await addDoc(collection(firestore, 'drafts'), { ...productData, status: 'Draft', category: categorySlug });
               update({ id, variant: 'success', title: 'Draft Saved!', description: `${data.productTitle} has been saved.` });
               if (newDocRef) {
-                  const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
+                  const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${categorySlug}`;
                   router.replace(newPath, { scroll: false });
               }
           }
@@ -164,12 +177,19 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     setIsSubmitting(true);
     const { id, update } = toast({ variant: 'loading', title: 'Publishing...', description: 'Please wait while the product goes live.' });
     try {
+      // First, ensure the draft is up-to-date with the correct slug
+      const productData = getProductDataFromForm(data);
+      const categorySlug = createSafeSlug(productData.category);
+      const draftRef = doc(firestore, 'drafts', currentProductId);
+      await setDoc(draftRef, { ...productData, category: categorySlug }, { merge: true });
+      
+      // Then, publish
       await manageProductStatus({
         action: 'publish',
         productId: currentProductId,
       });
       update({ id, variant: 'success', title: 'Product Published!', description: `${data.productTitle} is now live.` });
-      router.push(`/admin/products?db=${data.db}&category=${data.category}`);
+      router.push(`/admin/products?db=${data.db}&category=${categorySlug}`);
       router.refresh();
     } catch (e) {
       console.error(e);
@@ -183,15 +203,16 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     setIsSubmitting(true);
     const { id, update } = toast({ variant: 'loading', title: 'Unpublishing...', description: 'Moving product to drafts.' });
     try {
+      const categorySlug = createSafeSlug(data.category);
       await manageProductStatus({
         action: 'unpublish',
         productId: currentProductId,
         db: data.db,
-        category: data.category,
+        category: categorySlug,
       });
       update({ id, variant: 'success', title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
       form.setValue('status', 'Draft');
-      router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${data.category}`);
+      router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${categorySlug}`);
       router.refresh();
 
     } catch (e) {
@@ -403,7 +424,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                           </FormControl>
                           <SelectContent>
                             {memoizedCategories.map(category => (
-                              <SelectItem key={category.id} value={category.name.toLowerCase().replace(/\s+/g, '-')}>{category.name}</SelectItem>
+                              <SelectItem key={category.id} value={createSafeSlug(category.name)}>{category.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
