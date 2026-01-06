@@ -52,7 +52,7 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
         { id: 'cat_02', name: 'Window Blinds' },
         { id: 'cat_05', name: 'Window Films' },
         { id: 'cat_04', name: 'Carpets' },
-        { id: 'cat_05', name: 'Fluted Panels & WPC Boards'}
+        { id: 'cat_05', name: 'Fluted Panels and WPC Boards'}
     ];
 
 
