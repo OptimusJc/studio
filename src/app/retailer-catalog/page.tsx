@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense, useEffect, useState, useMemo } from 'react';
@@ -12,7 +13,7 @@ import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Filter, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -34,12 +35,6 @@ function CatalogContent() {
     return collection(firestore, 'categories');
   }, [firestore]);
   const { data: categoriesData, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
-
-  const attributesCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'attributes');
-  }, [firestore]);
-  const { data: attributesData, isLoading: isLoadingAttributes } = useCollection<Attribute>(attributesCollection);
 
   // Fetch all products from all categories
   useEffect(() => {
@@ -84,6 +79,7 @@ function CatalogContent() {
               specifications: data.specifications,
               db: db,
               stock: data.stock || 0,
+              stockStatus: data.stockStatus,
               sku: data.sku || '',
               imageHint: data.imageHint || '',
               createdAt: data.createdAt || '',
@@ -157,39 +153,52 @@ function CatalogContent() {
   }, [filters, searchTerm, allProducts]);
 
   const memoizedCategories = useMemo(() => categoriesData || [], [categoriesData]);
-  
-  const consolidatedAttributes = useMemo(() => {
-    if (!attributesData) return [];
 
-    const allowedFilters = ['Color', 'Material', 'Texture', 'Pattern'];
-    const attributeMap = new Map<string, { id: string; values: Set<string> }>();
+  const availableFilters = useMemo(() => {
+    const attributeWhitelist = [
+      'color', 'material', 'texture', 'fabric type', 'carpet type', 'window blind type', 'wallpaper type', 'wall mural type', 'window film type', 'fluted panel type',
+    ];
 
-    attributesData.forEach(attr => {
-        if (allowedFilters.includes(attr.name)) {
-            const filterName = attr.name === 'Pattern' ? 'Style' : attr.name;
-            if (!attributeMap.has(filterName)) {
-                attributeMap.set(filterName, { id: attr.id, values: new Set() });
+    // Initialize the filter map with all whitelisted attributes to ensure they always appear.
+    const filterMap = new Map<string, Set<string>>();
+    attributeWhitelist.forEach(attr => filterMap.set(attr, new Set()));
+
+    // Populate the map with values from all products.
+    allProducts.forEach(product => {
+      if (product.attributes) {
+        Object.entries(product.attributes).forEach(([key, valueOrValues]) => {
+          const lowerKey = key.toLowerCase();
+          
+          if (filterMap.has(lowerKey)) {
+            const valueSet = filterMap.get(lowerKey)!;
+            if (Array.isArray(valueOrValues)) {
+              valueOrValues.forEach(v => v && valueSet.add(v));
+            } else if (valueOrValues && typeof valueOrValues === 'string') {
+              valueSet.add(valueOrValues);
             }
-            const attrGroup = attributeMap.get(filterName)!;
-            attr.values.forEach(val => attrGroup.values.add(val));
-        }
+          }
+        });
+      }
     });
-
-    return Array.from(attributeMap.entries()).map(([name, group]) => ({
-        id: group.id,
-        name: name,
-        category: 'All', 
-        values: Array.from(group.values).sort(),
-    }));
-  }, [attributesData]);
-
+    
+    // Format the map into the array structure required by the UI component.
+    return Array.from(filterMap.entries()).map(([key, valueSet]) => {
+        const name = key.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        return {
+            id: `filter-${key}`,
+            name: name,
+            category: 'All', // This field is not used for filtering logic here.
+            values: Array.from(valueSet).sort(),
+        };
+    });
+  }, [allProducts]);
 
   const facetedSearchComponent = (
-    isLoadingAttributes ? (
+    isLoading ? (
         <Skeleton className="h-[600px] w-full" />
     ) : (
         <FacetedSearch
-        attributes={consolidatedAttributes}
+        attributes={availableFilters}
         appliedFilters={filters}
         onFilterChange={setFilters}
         isMobile={isMobile}
