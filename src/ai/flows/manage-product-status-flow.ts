@@ -1,3 +1,4 @@
+
 "use server";
 /**
  * @fileOverview Manages the publishing and unpublishing of products.
@@ -40,7 +41,7 @@ function createSafeSlug(name: string) {
     return name
         .toLowerCase()
         .replace(/&/g, 'and')
-        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
         .replace(/\s+/g, '-') // Replace spaces with hyphens
         .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
 }

@@ -56,9 +56,11 @@ interface AdminSidebarProps {
 }
 
 function createSafeSlug(name: string) {
+    if (!name) return '';
     return name
         .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
         .replace(/\s+/g, '-') // Replace spaces with hyphens
         .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
 }

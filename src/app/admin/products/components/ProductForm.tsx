@@ -85,7 +85,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       price: initialData?.price,
       specifications: initialData?.specifications || '',
       attributes: initialData?.attributes || {},
-      category: initialData ? createSafeSlug(initialData.category) : (initialCategory || ''),
+      category: initialData?.category ? createSafeSlug(initialData.category) : (initialCategory || ''),
       productImages: initialData?.productImages || [],
       additionalImages: initialData?.additionalImages || [],
       db: initialData?.db || initialDb,
@@ -110,8 +110,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   }, [selectedCategory, memoizedAttributes, memoizedCategories]);
 
   const getProductDataFromForm = (data: ProductFormValues) => {
-    // The category is already a slug from the form's value, so we just use it directly.
-    const productCategorySlug = data.category;
+    const categoryName = categories.find(c => createSafeSlug(c.name) === data.category)?.name;
   
     const productData = {
       productTitle: data.productTitle,
@@ -124,7 +123,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       attributes: data.attributes || {},
       status: data.status,
       stockStatus: data.stockStatus,
-      category: productCategorySlug, // Use the sanitized slug
+      category: categoryName || data.category, // Use original name if found, otherwise slug
       db: data.db,
       createdAt: (isEditMode && initialData?.createdAt) ? initialData.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -139,10 +138,11 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     
     try {
       const productData = getProductDataFromForm(data);
+      const categorySlug = createSafeSlug(productData.category);
 
       if (currentStatus === 'Published' && currentProductId) {
           // Update a published product
-          const collectionPath = `${data.db}/${productData.category}/products`;
+          const collectionPath = `${data.db}/${categorySlug}/products`;
           const docRef = doc(firestore, collectionPath, currentProductId);
           await setDoc(docRef, productData, { merge: true });
           update({ id, variant: 'success', title: 'Product Updated!', description: `${data.productTitle} has been updated live.` });
@@ -151,13 +151,13 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
           // Save or update a draft
           if (currentProductId) {
               const docRef = doc(firestore, 'drafts', currentProductId);
-              await setDoc(docRef, productData, { merge: true });
+              await setDoc(docRef, { ...productData, category: categorySlug }, { merge: true });
               update({ id, variant: 'success', title: 'Draft Updated!', description: `${data.productTitle} has been updated.` });
           } else {
-              const newDocRef = await addDoc(collection(firestore, 'drafts'), { ...productData, status: 'Draft' });
+              const newDocRef = await addDoc(collection(firestore, 'drafts'), { ...productData, status: 'Draft', category: categorySlug });
               update({ id, variant: 'success', title: 'Draft Saved!', description: `${data.productTitle} has been saved.` });
               if (newDocRef) {
-                  const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${productData.category}`;
+                  const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${categorySlug}`;
                   router.replace(newPath, { scroll: false });
               }
           }
@@ -177,10 +177,11 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     setIsSubmitting(true);
     const { id, update } = toast({ variant: 'loading', title: 'Publishing...', description: 'Please wait while the product goes live.' });
     try {
-      // First, ensure the draft is up-to-date
+      // First, ensure the draft is up-to-date with the correct slug
       const productData = getProductDataFromForm(data);
+      const categorySlug = createSafeSlug(productData.category);
       const draftRef = doc(firestore, 'drafts', currentProductId);
-      await setDoc(draftRef, productData, { merge: true });
+      await setDoc(draftRef, { ...productData, category: categorySlug }, { merge: true });
       
       // Then, publish
       await manageProductStatus({
@@ -188,7 +189,6 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         productId: currentProductId,
       });
       update({ id, variant: 'success', title: 'Product Published!', description: `${data.productTitle} is now live.` });
-      const categorySlug = data.category;
       router.push(`/admin/products?db=${data.db}&category=${categorySlug}`);
       router.refresh();
     } catch (e) {
@@ -203,7 +203,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     setIsSubmitting(true);
     const { id, update } = toast({ variant: 'loading', title: 'Unpublishing...', description: 'Moving product to drafts.' });
     try {
-      const categorySlug = data.category;
+      const categorySlug = createSafeSlug(data.category);
       await manageProductStatus({
         action: 'unpublish',
         productId: currentProductId,

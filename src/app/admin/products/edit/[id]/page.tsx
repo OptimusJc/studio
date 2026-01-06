@@ -105,13 +105,13 @@ export default function EditProductPage() {
 
   const transformedProductData: Product | null = useMemo(() => {
     if (productData) {
-      // The category slug is now directly available in productData.
-      const categoryName = categories?.find(c => createSafeSlug(c.name) === productData.category)?.name || productData.category;
-      
+      // The category field in productData can be either a slug or a full name.
+      // We pass it directly to the form, which will then use createSafeSlug on it.
+      // This ensures consistency. The form's internal state will always be a slug.
       return {
         id: productData.id,
         name: productData.productTitle,
-        category: categoryName, // Use the "pretty" name for display if available, but the form uses the slug
+        category: productData.category, // Pass the raw category (slug or name)
         price: productData.price,
         stock: 100, // Placeholder
         stockStatus: productData.stockStatus || 'In Stock',
@@ -138,7 +138,7 @@ export default function EditProductPage() {
       };
     }
     return null;
-  }, [productData, categories, dbFromUrl]);
+  }, [productData, dbFromUrl]);
 
   const memoizedAttributes = useMemo(() => attributes || [], [attributes]);
   const memoizedCategories = useMemo(() => categories || [], [categories]);
