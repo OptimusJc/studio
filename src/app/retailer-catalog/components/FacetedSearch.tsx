@@ -100,7 +100,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
             Reset All
         </Button>
       </div>
-      <ScrollArea className="max-h-[calc(100vh-12rem)]">
+      <ScrollArea className="max-h-[calc(100vh-12rem)] overflow-y-scroll">
         <Accordion type="multiple" className="w-full pr-6">
           {attributes.map((attribute) => (
             <AccordionItem key={attribute.id} value={attribute.id}>
