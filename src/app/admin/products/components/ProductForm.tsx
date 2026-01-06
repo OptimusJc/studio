@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -58,7 +59,7 @@ function createSafeSlug(name: string) {
     return name
         .toLowerCase()
         .replace(/&/g, 'and')
-        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
         .replace(/\s+/g, '-') // Replace spaces with hyphens
         .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
 }
@@ -109,6 +110,9 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   }, [selectedCategory, memoizedAttributes, memoizedCategories]);
 
   const getProductDataFromForm = (data: ProductFormValues) => {
+    // The category is already a slug from the form's value, so we just use it directly.
+    const productCategorySlug = data.category;
+  
     const productData = {
       productTitle: data.productTitle,
       productCode: data.productCode,
@@ -120,7 +124,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       attributes: data.attributes || {},
       status: data.status,
       stockStatus: data.stockStatus,
-      category: createSafeSlug(data.category),
+      category: productCategorySlug, // Use the sanitized slug
       db: data.db,
       createdAt: (isEditMode && initialData?.createdAt) ? initialData.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -184,7 +188,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
         productId: currentProductId,
       });
       update({ id, variant: 'success', title: 'Product Published!', description: `${data.productTitle} is now live.` });
-      const categorySlug = createSafeSlug(data.category);
+      const categorySlug = data.category;
       router.push(`/admin/products?db=${data.db}&category=${categorySlug}`);
       router.refresh();
     } catch (e) {
@@ -199,7 +203,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     setIsSubmitting(true);
     const { id, update } = toast({ variant: 'loading', title: 'Unpublishing...', description: 'Moving product to drafts.' });
     try {
-      const categorySlug = createSafeSlug(data.category);
+      const categorySlug = data.category;
       await manageProductStatus({
         action: 'unpublish',
         productId: currentProductId,
