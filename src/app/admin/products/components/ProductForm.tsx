@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -55,8 +54,10 @@ interface ProductFormProps {
 }
 
 function createSafeSlug(name: string) {
+    if (!name) return '';
     return name
         .toLowerCase()
+        .replace(/&/g, 'and')
         .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
         .replace(/\s+/g, '-') // Replace spaces with hyphens
         .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
@@ -119,7 +120,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       attributes: data.attributes || {},
       status: data.status,
       stockStatus: data.stockStatus,
-      category: data.category,
+      category: createSafeSlug(data.category),
       db: data.db,
       createdAt: (isEditMode && initialData?.createdAt) ? initialData.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -137,7 +138,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
 
       if (currentStatus === 'Published' && currentProductId) {
           // Update a published product
-          const collectionPath = `${data.db}/${data.category}/products`;
+          const collectionPath = `${data.db}/${productData.category}/products`;
           const docRef = doc(firestore, collectionPath, currentProductId);
           await setDoc(docRef, productData, { merge: true });
           update({ id, variant: 'success', title: 'Product Updated!', description: `${data.productTitle} has been updated live.` });
@@ -152,7 +153,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
               const newDocRef = await addDoc(collection(firestore, 'drafts'), { ...productData, status: 'Draft' });
               update({ id, variant: 'success', title: 'Draft Saved!', description: `${data.productTitle} has been saved.` });
               if (newDocRef) {
-                  const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${data.category}`;
+                  const newPath = `/admin/products/edit/${newDocRef.id}?db=${data.db}&category=${productData.category}`;
                   router.replace(newPath, { scroll: false });
               }
           }
@@ -172,12 +173,19 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     setIsSubmitting(true);
     const { id, update } = toast({ variant: 'loading', title: 'Publishing...', description: 'Please wait while the product goes live.' });
     try {
+      // First, ensure the draft is up-to-date
+      const productData = getProductDataFromForm(data);
+      const draftRef = doc(firestore, 'drafts', currentProductId);
+      await setDoc(draftRef, productData, { merge: true });
+      
+      // Then, publish
       await manageProductStatus({
         action: 'publish',
         productId: currentProductId,
       });
       update({ id, variant: 'success', title: 'Product Published!', description: `${data.productTitle} is now live.` });
-      router.push(`/admin/products?db=${data.db}&category=${data.category}`);
+      const categorySlug = createSafeSlug(data.category);
+      router.push(`/admin/products?db=${data.db}&category=${categorySlug}`);
       router.refresh();
     } catch (e) {
       console.error(e);
@@ -191,15 +199,16 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     setIsSubmitting(true);
     const { id, update } = toast({ variant: 'loading', title: 'Unpublishing...', description: 'Moving product to drafts.' });
     try {
+      const categorySlug = createSafeSlug(data.category);
       await manageProductStatus({
         action: 'unpublish',
         productId: currentProductId,
         db: data.db,
-        category: data.category,
+        category: categorySlug,
       });
       update({ id, variant: 'success', title: 'Product Unpublished', description: `${data.productTitle} has been moved to drafts.` });
       form.setValue('status', 'Draft');
-      router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${data.category}`);
+      router.push(`/admin/products/edit/${currentProductId}?db=${data.db}&category=${categorySlug}`);
       router.refresh();
 
     } catch (e) {
