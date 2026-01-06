@@ -100,8 +100,8 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
             Reset All
         </Button>
       </div>
-      <ScrollArea className="h-full max-h-[65vh] pr-4 -mr-4">
-        <Accordion type="multiple" className="w-full">
+      <ScrollArea className="max-h-[calc(100vh-12rem)]">
+        <Accordion type="multiple" className="w-full pr-6">
           {attributes.map((attribute) => (
             <AccordionItem key={attribute.id} value={attribute.id}>
               <AccordionTrigger className="font-semibold text-base py-3">{attribute.name}</AccordionTrigger>
