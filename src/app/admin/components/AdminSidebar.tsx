@@ -1,3 +1,4 @@
+
 "use client";
 import { Dispatch, SetStateAction } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -52,6 +53,14 @@ interface AdminSidebarProps {
   selectedDb: DbType;
   setSelectedDb: Dispatch<SetStateAction<DbType>>;
   user: AppUser | null;
+}
+
+function createSafeSlug(name: string) {
+    return name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
 }
 
 export default function AdminSidebar({
@@ -182,7 +191,7 @@ export default function AdminSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
           {categories?.map((cat) => {
-            const categorySlug = cat.name.toLowerCase().replace(/\s+/g, "-");
+            const categorySlug = createSafeSlug(cat.name);
             return (
               <SidebarMenuItem key={cat.id}>
                 <SidebarMenuButton
@@ -299,4 +308,3 @@ export default function AdminSidebar({
     </Sidebar>
   );
 }
-

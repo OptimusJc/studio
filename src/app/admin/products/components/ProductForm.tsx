@@ -54,6 +54,14 @@ interface ProductFormProps {
     initialCategory: string;
 }
 
+function createSafeSlug(name: string) {
+    return name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
+}
+
 export function ProductForm({ initialData, allAttributes, categories, initialDb, initialCategory }: ProductFormProps) {
   const router = useRouter();
   const firestore = useFirestore();
@@ -75,7 +83,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
       price: initialData?.price,
       specifications: initialData?.specifications || '',
       attributes: initialData?.attributes || {},
-      category: initialData ? initialData.category.toLowerCase().replace(/\s+/g, '-') : (initialCategory || ''),
+      category: initialData ? createSafeSlug(initialData.category) : (initialCategory || ''),
       productImages: initialData?.productImages || [],
       additionalImages: initialData?.additionalImages || [],
       db: initialData?.db || initialDb,
@@ -94,7 +102,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
   
   const relevantAttributes = useMemo(() => {
     if (!selectedCategory) return [];
-    const categoryDetails = memoizedCategories.find(c => c.name.toLowerCase().replace(/\s+/g, '-') === selectedCategory);
+    const categoryDetails = memoizedCategories.find(c => createSafeSlug(c.name) === selectedCategory);
     if (!categoryDetails) return [];
     return memoizedAttributes.filter(attr => attr.category === categoryDetails.name);
   }, [selectedCategory, memoizedAttributes, memoizedCategories]);
@@ -403,7 +411,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
                           </FormControl>
                           <SelectContent>
                             {memoizedCategories.map(category => (
-                              <SelectItem key={category.id} value={category.name.toLowerCase().replace(/\s+/g, '-')}>{category.name}</SelectItem>
+                              <SelectItem key={category.id} value={createSafeSlug(category.name)}>{category.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

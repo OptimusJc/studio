@@ -20,6 +20,14 @@ import { doc } from 'firebase/firestore';
 import { ProductViewDialog } from './ProductViewDialog';
 import { cn } from '@/lib/utils';
 
+function createSafeSlug(name: string) {
+    return name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-'); // Replace multiple hyphens with a single one
+}
+
 function RowActions({ product }: { product: Product }) {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -55,7 +63,7 @@ function RowActions({ product }: { product: Product }) {
 
   const handleDelete = () => {
     if (!firestore) return;
-    const categorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
+    const categorySlug = createSafeSlug(product.category);
     const collectionPath = product.status === 'Published' 
         ? `${product.db}/${categorySlug}/products` 
         : 'drafts';
@@ -67,7 +75,7 @@ function RowActions({ product }: { product: Product }) {
     });
   };
   
-  const categorySlug = product.category?.toLowerCase().replace(/\s+/g, '-') || '';
+  const categorySlug = createSafeSlug(product.category || '');
   const editUrl = `/admin/products/edit/${product.id}?db=${product.db}&category=${encodeURIComponent(categorySlug)}`;
 
 
@@ -111,8 +119,8 @@ function RowActions({ product }: { product: Product }) {
             </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
        </AlertDialog>
@@ -194,5 +202,3 @@ export function ProductTableClient({ products }: { products: Product[] }) {
     </Table>
   );
 }
-
-    
