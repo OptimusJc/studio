@@ -158,22 +158,23 @@ function CatalogContent() {
     const attributeWhitelist = new Set([
       'color', 'material', 'texture', 'fabric type', 'carpet type', 'window blind type'
     ]);
-    // Use a Map to group values by the lowercase attribute name
+    
     const filterMap = new Map<string, { originalName: string; values: Set<string> }>();
+
+    // Initialize the map with whitelisted attributes to preserve order and ensure they appear
+    attributeWhitelist.forEach(attrKey => {
+      const originalName = attrKey.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      filterMap.set(attrKey, { originalName, values: new Set() });
+    });
 
     allProducts.forEach(product => {
       if (product.attributes) {
         Object.entries(product.attributes).forEach(([key, valueOrValues]) => {
           const lowerKey = key.toLowerCase();
+          
           if (attributeWhitelist.has(lowerKey)) {
-            // Initialize if not present
-            if (!filterMap.has(lowerKey)) {
-              filterMap.set(lowerKey, { originalName: key, values: new Set() });
-            }
-            
             const current = filterMap.get(lowerKey)!;
 
-            // Handle both string and array of strings
             if (Array.isArray(valueOrValues)) {
               valueOrValues.forEach(v => v && current.values.add(v));
             } else if (valueOrValues && typeof valueOrValues === 'string') {
@@ -184,13 +185,14 @@ function CatalogContent() {
       }
     });
     
-    // Convert the map to the array structure needed by the component
-    return Array.from(filterMap.entries()).map(([key, data]) => ({
-      id: `filter-${key}`,
-      name: data.originalName,
-      category: 'All', // This is fine, category isn't used for filtering here
-      values: Array.from(data.values).sort(),
-    }));
+    return Array.from(filterMap.entries())
+      .filter(([, data]) => data.values.size > 0) // Only show filters that have options
+      .map(([key, data]) => ({
+        id: `filter-${key}`,
+        name: data.originalName,
+        category: 'All', // Not used for filtering, just to satisfy the type
+        values: Array.from(data.values).sort(),
+      }));
   }, [allProducts]);
 
   const facetedSearchComponent = (
