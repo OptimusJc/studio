@@ -155,44 +155,42 @@ function CatalogContent() {
   const memoizedCategories = useMemo(() => categoriesData || [], [categoriesData]);
 
   const availableFilters = useMemo(() => {
-    const attributeWhitelist = new Set([
+    const attributeWhitelist = [
       'color', 'material', 'texture', 'fabric type', 'carpet type', 'window blind type'
-    ]);
-    
-    const filterMap = new Map<string, { originalName: string; values: Set<string> }>();
+    ];
 
-    // Initialize the map with whitelisted attributes to preserve order and ensure they appear
-    attributeWhitelist.forEach(attrKey => {
-      const originalName = attrKey.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-      filterMap.set(attrKey, { originalName, values: new Set() });
-    });
+    // Initialize the filter map with all whitelisted attributes to ensure they always appear.
+    const filterMap = new Map<string, Set<string>>();
+    attributeWhitelist.forEach(attr => filterMap.set(attr, new Set()));
 
+    // Populate the map with values from all products.
     allProducts.forEach(product => {
       if (product.attributes) {
         Object.entries(product.attributes).forEach(([key, valueOrValues]) => {
           const lowerKey = key.toLowerCase();
           
-          if (attributeWhitelist.has(lowerKey)) {
-            const current = filterMap.get(lowerKey)!;
-
+          if (filterMap.has(lowerKey)) {
+            const valueSet = filterMap.get(lowerKey)!;
             if (Array.isArray(valueOrValues)) {
-              valueOrValues.forEach(v => v && current.values.add(v));
+              valueOrValues.forEach(v => v && valueSet.add(v));
             } else if (valueOrValues && typeof valueOrValues === 'string') {
-              current.values.add(valueOrValues);
+              valueSet.add(valueOrValues);
             }
           }
         });
       }
     });
     
-    return Array.from(filterMap.entries())
-      .filter(([, data]) => data.values.size > 0) // Only show filters that have options
-      .map(([key, data]) => ({
-        id: `filter-${key}`,
-        name: data.originalName,
-        category: 'All', // Not used for filtering, just to satisfy the type
-        values: Array.from(data.values).sort(),
-      }));
+    // Format the map into the array structure required by the UI component.
+    return Array.from(filterMap.entries()).map(([key, valueSet]) => {
+        const name = key.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        return {
+            id: `filter-${key}`,
+            name: name,
+            category: 'All', // This field is not used for filtering logic here.
+            values: Array.from(valueSet).sort(),
+        };
+    });
   }, [allProducts]);
 
   const facetedSearchComponent = (
