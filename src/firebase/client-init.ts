@@ -1,11 +1,11 @@
+"use client";
 
-'use client';
-
-import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { firebaseConfig } from "@/firebase/config";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
+import { getPerformance } from "firebase/performance";
 
 interface FirebaseServices {
   firebaseApp: FirebaseApp;
@@ -17,6 +17,7 @@ interface FirebaseServices {
 export function initializeFirebase(): FirebaseServices {
   if (!getApps().length) {
     const app = initializeApp(firebaseConfig);
+    const perf = getPerformance(app);
     return getSdks(app);
   } else {
     return getSdks(getApp());
