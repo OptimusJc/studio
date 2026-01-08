@@ -179,6 +179,7 @@ function ProductDetailPageContent() {
   useEffect(() => {
     if (product) {
       const generateWhatsAppMessage = () => {
+        const productUrl = window.location.href;
         let message = `*Product Inquiry*\n\n`;
         message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
         message += `*Product Details:*\n`;
@@ -194,10 +195,7 @@ function ProductDetailPageContent() {
           });
         }
         
-        const imageUrl = product.imageUrl
-        const proxiedImageUrl = `${window.location.origin}/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
-        
-        message += `\n${proxiedImageUrl}`;
+        message += `\nView Product: ${productUrl}`;
 
         return encodeURIComponent(message);
       };
@@ -468,5 +466,3 @@ export default function ProductDetailPage() {
     </div>
   );
 }
-
-    
