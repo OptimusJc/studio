@@ -40,23 +40,21 @@ export function ProductPreviewModal({
       setActiveImage(product.productImages?.[0] || "");
 
       const generateWhatsAppMessage = () => {
+        const productUrl = `${window.location.origin}${basePath}/${product.id}`;
         let message = `*Product Inquiry*\n\n`;
         message += `Hello, I'm interested in this product. Could you please confirm its availability and price?\n\n`;
         message += `*Product Details:*\n`;
         message += `Code: *${product.productCode}*\n`;
         message += `Title: ${product.productTitle}\n`;
         
-        const imageUrl = product.imageUrl;
-        const proxiedImageUrl = `${window.location.origin}/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
-        
-        message += `\n${proxiedImageUrl}`;
+        message += `\nView Product: ${productUrl}`;
 
         return encodeURIComponent(message);
       };
 
       setWhatsAppUrl(`https://wa.me/?text=${generateWhatsAppMessage()}`);
     }
-  }, [open, product]);
+  }, [open, product, basePath]);
 
   const allImages = React.useMemo(() => {
     if (!product) return [];
@@ -239,5 +237,3 @@ export function ProductPreviewModal({
     </Dialog>
   );
 }
-
-    
