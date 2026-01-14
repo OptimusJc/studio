@@ -50,7 +50,6 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
         { id: 'cat_03', name: 'Wall Murals' },
         { id: 'cat_02', name: 'Window Blinds' },
         { id: 'cat_05', name: 'Window Films' },
-        { id: 'cat_04', name: 'Carpets' },
         { id: 'cat_06', name: 'Fluted Panels and WPC Boards'}
     ];
 
@@ -100,8 +99,8 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
         <div className="lg:hidden flex items-center gap-1">
              <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="ghost" size="lg" className="p-0">
-                        <Search className='size-10' />
+                    <Button variant="ghost" size="lg" className="p-2">
+                        <Search className='h-10 w-10' />
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md top-[25%]">
@@ -123,21 +122,21 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                             className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
                             onClick={() => setSearchTerm('')}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-10 w-10" />
                           </Button>
                         )}
                     </div>
                 </DialogContent>
              </Dialog>
-             <Button variant="ghost" size="lg" className="p-0" onClick={openMobileFilters}>
-                <Filter className="size-10" />
+             <Button variant="ghost" size="lg" className="p-2" onClick={openMobileFilters}>
+                <Filter className="h-10 w-10" />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="lg" className="p-0">
-                            <Menu className="size-10" />
+                        <Button variant="ghost" size="lg" className="p-2">
+                            <Menu className="h-10 w-10" />
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="right" className="w-full max-w-xs">
