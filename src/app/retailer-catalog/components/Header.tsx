@@ -44,7 +44,6 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
         }
     }
     
-    // Manually define categories for now to match the design
     const displayCategories = [
         { id: 'all', name: 'All Categories' },
         { id: 'cat_01', name: 'Wallpapers' },
@@ -101,8 +100,8 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
         <div className="lg:hidden flex items-center gap-1">
              <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="p-0">
-                        <Search className='h-8 w-8' />
+                    <Button variant="ghost" size="lg" className="p-0">
+                        <Search className='size-10' />
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md top-[25%]">
@@ -130,16 +129,15 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                     </div>
                 </DialogContent>
              </Dialog>
-
-             <Button variant="ghost" size="icon" className="p-0" onClick={openMobileFilters}>
-                <Filter className="h-8 w-8" />
+             <Button variant="ghost" size="lg" className="p-0" onClick={openMobileFilters}>
+                <Filter className="size-10" />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="p-0">
-                            <Menu className="h-8 w-8" />
+                        <Button variant="ghost" size="lg" className="p-0">
+                            <Menu className="size-10" />
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="right" className="w-full max-w-xs">

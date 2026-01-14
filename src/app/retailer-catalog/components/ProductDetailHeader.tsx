@@ -69,8 +69,8 @@ export default function ProductDetailHeader({ basePath = '/' }: { basePath?: str
         <div className="lg:hidden flex items-center gap-1">
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost">
-                        <Menu className="h-8 w-8" />
+                    <Button variant="ghost" size="lg" className="p-0">
+                        <Menu className="size-10" />
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full max-w-xs">
