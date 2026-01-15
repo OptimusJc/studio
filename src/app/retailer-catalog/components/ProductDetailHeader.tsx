@@ -12,7 +12,7 @@ import { Logo } from '@/components/icons/Logo';
 function AppLogo({ basePath }: { basePath: string }) {
     return (
         <Link href={basePath || '/'} className="flex items-center space-x-2">
-            <Logo className="text-foreground" />
+            <Logo className="text-foreground h-auto w-32 md:w-40" />
         </Link>
     )
 }
@@ -68,8 +68,8 @@ export default function ProductDetailHeader({ basePath = '/' }: { basePath?: str
         <div className="lg:hidden flex items-center gap-1">
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="lg" className="p-2">
-                        <Menu className="h-6 w-6" />
+                    <Button variant="ghost" size="lg" className="p-2 h-10 w-10">
+                        <Menu />
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full max-w-xs">
