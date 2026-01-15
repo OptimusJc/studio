@@ -57,7 +57,7 @@ function CategoryNav({ className, basePath }: { className?: string, basePath: st
 
 export default function ProductDetailHeader({ basePath = '/' }: { basePath?: string }) {
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm">
+    <header className="sticky top-0 z-40 w-full border-b bg-background bg-white shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
         <AppLogo basePath={basePath} />
         
