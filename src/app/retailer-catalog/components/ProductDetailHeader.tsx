@@ -69,7 +69,7 @@ export default function ProductDetailHeader({ basePath = '/' }: { basePath?: str
             <Sheet>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="lg" className="p-2">
-                        <Menu className="h-10 w-10" />
+                        <Menu className="h-6 w-6" />
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full max-w-xs">

@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import { useStorage } from '@/firebase';
-import { ref, listAll, getDownloadURL, deleteObject, StorageReference, ListResult } from 'firebase/storage';
+import { ref, listAll, deleteObject, StorageReference, ListResult } from 'firebase/storage';
 import { AssetUploader } from './components/AssetUploader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,16 +60,16 @@ export default function AssetsPage() {
           ref: folderRef,
       }));
 
-      // Create an array of promises for getting download URLs
+      // Create an array of promises for constructing direct URLs
       const filePromises = res.items
         .filter(itemRef => itemRef.name !== '.gitkeep')
         .map(async (itemRef) => {
-          const url = await getDownloadURL(itemRef);
+          const directUrl = `https://firebasestorage.googleapis.com/v0/b/${itemRef.bucket}/o/${encodeURIComponent(itemRef.fullPath)}?alt=media`;
           return {
             name: itemRef.name,
             path: itemRef.fullPath,
             type: 'file',
-            url: url,
+            url: directUrl,
             ref: itemRef,
           };
         });
@@ -354,5 +354,3 @@ export default function AssetsPage() {
     </div>
   );
 }
-
-    

@@ -100,7 +100,7 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
              <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="lg" className="p-2">
-                        <Search className='h-10 w-10' />
+                        <Search className="h-6 w-6" />
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md top-[25%]">
@@ -122,21 +122,21 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                             className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
                             onClick={() => setSearchTerm('')}
                           >
-                            <X className="h-10 w-10" />
+                            <X className="h-4 w-4" />
                           </Button>
                         )}
                     </div>
                 </DialogContent>
              </Dialog>
              <Button variant="ghost" size="lg" className="p-2" onClick={openMobileFilters}>
-                <Filter className="h-10 w-10" />
+                <Filter className="h-6 w-6" />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="lg" className="p-2">
-                            <Menu className="h-10 w-10" />
+                            <Menu className="h-6 w-6" />
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="right" className="w-full max-w-xs">
