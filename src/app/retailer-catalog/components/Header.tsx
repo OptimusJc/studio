@@ -99,7 +99,7 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
             <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="lg" className="p-2">
-                        <Search className="h-10 w-10" />
+                        <Search className="h-14 w-14" />
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="top" className="p-4" showOverlay={false}>
@@ -129,17 +129,17 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                 </SheetContent>
             </Sheet>
              <Button variant="ghost" size="lg" className="p-2" onClick={openMobileFilters}>
-                <Filter className="h-10 w-10" />
+                <Filter className="h-14 w-14" />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="lg" className="p-2">
-                            <Menu className="h-10 w-10" />
+                            <Menu className="h-14 w-14" />
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" className="w-full max-w-xs">
+                    <SheetContent side="right" className="w-full max-w-xs bg-white">
                         <div className="p-4">
                             <div className="mb-8">
                                 <AppLogo basePath={basePath} />

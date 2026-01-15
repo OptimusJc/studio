@@ -249,7 +249,7 @@ function CatalogContent() {
                         </div>
                     </div>
                      <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-                         <SheetContent side="left" className="p-0 h-full w-full max-w-sm" showOverlay={false}>
+                         <SheetContent side="left" className="p-0 h-full w-full max-w-sm bg-gray-100" showOverlay={true}>
                             {facetedSearchComponent}
                          </SheetContent>
                     </Sheet>
