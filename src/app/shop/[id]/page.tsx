@@ -368,7 +368,13 @@ function ProductDetailPageContent() {
                     Details
                   </h2>
                   <div className="border rounded-lg overflow-hidden">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                     <div
+                      className={cn(
+                        "grid grid-cols-1 gap-0",
+                        Object.keys(product.attributes).length > 1 &&
+                          "lg:grid-cols-2",
+                      )}
+                    >
                       {Object.entries(product.attributes).map(
                         ([key, value], index) => (
                           <div
