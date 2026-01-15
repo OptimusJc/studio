@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -17,7 +18,7 @@ function AppLogo({ basePath }: { basePath: string }) {
     )
 }
 
-function CategoryNav({ className, basePath }: { className?: string, basePath: string }) {
+function CategoryNav({ className, basePath, onLinkClick }: { className?: string, basePath: string, onLinkClick?: () => void }) {
     
     const getCategoryFilterUrl = (categoryName: string) => {
         const filters = { category: [categoryName] };
@@ -46,6 +47,7 @@ function CategoryNav({ className, basePath }: { className?: string, basePath: st
                         "rounded-full px-4 py-2 text-sm font-normal",
                         'text-gray-600 hover:bg-gray-200/50 hover:text-gray-900'
                     )}
+                    onClick={onLinkClick}
                 >
                     <Link href={cat.href}>{cat.name}</Link>
                 </Button>
@@ -56,6 +58,8 @@ function CategoryNav({ className, basePath }: { className?: string, basePath: st
 
 
 export default function ProductDetailHeader({ basePath = '/' }: { basePath?: string }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background bg-white shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
@@ -66,9 +70,9 @@ export default function ProductDetailHeader({ basePath = '/' }: { basePath?: str
         </div>
 
         <div className="lg:hidden flex items-center gap-1">
-            <Sheet>
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="lg" className="p-2 h-10 w-10">
+                    <Button variant="ghost" size="lg" className="h-10 w-10 p-2">
                         <Menu />
                     </Button>
                 </SheetTrigger>
@@ -80,6 +84,7 @@ export default function ProductDetailHeader({ basePath = '/' }: { basePath?: str
                         <CategoryNav 
                             className="flex-col items-start gap-4"
                             basePath={basePath}
+                            onLinkClick={() => setMobileMenuOpen(false)}
                         />
                     </div>
                 </SheetContent>

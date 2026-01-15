@@ -29,7 +29,7 @@ function AppLogo({ basePath }: { basePath: string }) {
     )
 }
 
-function CategoryNav({ categories, appliedFilters, onFilterChange, className }: Pick<HeaderProps, 'categories'|'appliedFilters'|'onFilterChange'> & { className?: string }) {
+function CategoryNav({ categories, appliedFilters, onFilterChange, className, onCategorySelect }: Pick<HeaderProps, 'categories'|'appliedFilters'|'onFilterChange'> & { className?: string, onCategorySelect?: () => void }) {
     const activeCategory = appliedFilters?.category?.[0] || 'All Categories';
 
     const handleCategoryClick = (categoryName: string) => {
@@ -40,6 +40,9 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
             onFilterChange(newFilters);
         } else {
             onFilterChange({ ...appliedFilters, category: [categoryName] });
+        }
+        if (onCategorySelect) {
+          onCategorySelect();
         }
     }
     
@@ -77,6 +80,7 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className }: 
 export default function Header({ basePath, categories, appliedFilters, onFilterChange, searchTerm, setSearchTerm, openMobileFilters }: HeaderProps) {
   const hasNav = !!(categories && appliedFilters && onFilterChange);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -98,8 +102,8 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
         <div className="lg:hidden flex items-center gap-1">
             <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="p-2">
-                        <Search className='h-10 w-10' />
+                    <Button variant="ghost" size="icon" className="h-10 w-10 p-2">
+                        <Search />
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="top" className="p-4" showOverlay={false}>
@@ -128,14 +132,14 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                     </div>
                 </SheetContent>
             </Sheet>
-             <Button variant="ghost" size="icon" className="p-2 h-10 w-10" onClick={openMobileFilters}>
+             <Button variant="ghost" size="icon" className="h-10 w-10 p-2" onClick={openMobileFilters}>
                 <Filter />
              </Button>
             
             {hasNav && (
-                 <Sheet>
+                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="p-2 h-10 w-10">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 p-2">
                             <Menu />
                         </Button>
                     </SheetTrigger>
@@ -149,6 +153,7 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                                 appliedFilters={appliedFilters} 
                                 onFilterChange={onFilterChange}
                                 className="flex-col items-start gap-4"
+                                onCategorySelect={() => setMobileMenuOpen(false)}
                             />
                         </div>
                     </SheetContent>
