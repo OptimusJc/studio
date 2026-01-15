@@ -82,7 +82,7 @@ export function ProductPreviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {children}
       <DialogContent
-        className="max-w-4xl h-[60vh] flex flex-col p-0"
+        className="max-w-4xl h-[60vh] flex flex-col p-0 bg-white"
         onPointerDownOutside={(e) => {
           e.preventDefault();
           e.stopPropagation();
