@@ -98,8 +98,8 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
         <div className="lg:hidden flex items-center gap-1">
             <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="lg" className="p-2 h-10 w-10">
-                        <Search />
+                    <Button variant="ghost" size="icon" className="p-2">
+                        <Search className='h-10 w-10' />
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="top" className="p-4" showOverlay={false}>
@@ -122,20 +122,20 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                             className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
                             onClick={() => setSearchTerm('')}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-6 w-6" />
                           </Button>
                         )}
                     </div>
                 </SheetContent>
             </Sheet>
-             <Button variant="ghost" size="lg" className="p-2 h-10 w-10" onClick={openMobileFilters}>
+             <Button variant="ghost" size="icon" className="p-2 h-10 w-10" onClick={openMobileFilters}>
                 <Filter />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="lg" className="p-2 h-10 w-10">
+                        <Button variant="ghost" size="icon" className="p-2 h-10 w-10">
                             <Menu />
                         </Button>
                     </SheetTrigger>

@@ -49,7 +49,7 @@ export default function FacetedSearch({ attributes, appliedFilters, onFilterChan
               <X className="h-10 w-10" />
           </Button>
           <h3 className="text-lg font-semibold">Filters</h3>
-          <Button variant="link" className="p-0 h-auto text-sm" onClick={handleResetFilters}>
+          <Button variant="link" className="p-0 h-auto text-base" onClick={handleResetFilters}>
               Reset All
           </Button>
         </div>
