@@ -85,7 +85,7 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
   };
   
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm">
+    <header className="sticky top-0 z-40 w-full border-b bg-background bg-white shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
         <AppLogo basePath={basePath} />
         
@@ -103,7 +103,7 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="top" className="p-4" showOverlay={false}>
-                     <div className="relative w-full mt-4">
+                     <div className="relative w-full mt-4 bg-white rounded-md shadow-sm">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                           type="search"

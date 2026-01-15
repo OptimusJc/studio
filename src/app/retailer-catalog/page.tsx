@@ -12,7 +12,7 @@ import FacetedSearch from './components/FacetedSearch';
 import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -248,11 +248,11 @@ function CatalogContent() {
                             )}
                         </div>
                     </div>
-                     <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-                         <DialogContent className="p-0 h-[100dvh] w-full max-w-full sm:max-w-full overflow-y-auto block !rounded-none !border-0">
+                     <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+                         <SheetContent side="left" className="p-0 h-full w-full max-w-sm" showOverlay={false}>
                             {facetedSearchComponent}
-                         </DialogContent>
-                    </Dialog>
+                         </SheetContent>
+                    </Sheet>
 
                      {isLoading ? (
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
