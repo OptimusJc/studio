@@ -2,9 +2,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types';
 import { Menu, Search, Filter, X } from 'lucide-react';
@@ -97,22 +96,23 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
         )}
 
         <div className="lg:hidden flex items-center gap-1">
-             <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
-                <DialogTrigger asChild>
+            <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
+                <SheetTrigger asChild>
                     <Button variant="ghost" size="lg" className="p-2">
-                        <Search className="h-6 w-6" />
+                        <Search className="h-10 w-10" />
                     </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md top-[25%]">
-                     <div className="relative w-full">
+                </SheetTrigger>
+                <SheetContent side="top" className="p-4" showOverlay={false}>
+                     <div className="relative w-full mt-4">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
-                        type="search"
-                        placeholder="Search by product name, code, or characteristics..."
-                        className="pl-12 pr-10 py-3 h-12 text-base rounded-md shadow-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyDown={handleSearchKeyDown}
+                          type="search"
+                          placeholder="Search products..."
+                          className="pl-12 pr-10 py-3 h-12 text-base rounded-md shadow-sm"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onKeyDown={handleSearchKeyDown}
+                          autoFocus
                         />
                          {searchTerm && (
                           <Button
@@ -126,17 +126,17 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                           </Button>
                         )}
                     </div>
-                </DialogContent>
-             </Dialog>
+                </SheetContent>
+            </Sheet>
              <Button variant="ghost" size="lg" className="p-2" onClick={openMobileFilters}>
-                <Filter className="h-6 w-6" />
+                <Filter className="h-10 w-10" />
              </Button>
             
             {hasNav && (
                  <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="lg" className="p-2">
-                            <Menu className="h-6 w-6" />
+                            <Menu className="h-10 w-10" />
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="right" className="w-full max-w-xs">
