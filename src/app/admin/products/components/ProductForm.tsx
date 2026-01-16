@@ -231,7 +231,7 @@ export function ProductForm({ initialData, allAttributes, categories, initialDb,
     <>
       <Form {...form}>
         <form className="space-y-8">
-           <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/95 py-4 backdrop-blur-sm px-4 md:px-8 -mx-4 md:-mx-8">
+           <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-card py-4 px-4 md:px-8 -mx-4 md:-mx-8">
               <Button type="button" variant="outline" onClick={handleDiscard} disabled={isSubmitting}>Discard</Button>
               <Button type="button" variant="secondary" onClick={form.handleSubmit(handleSave)} disabled={isSubmitting}>
                 <Save className="mr-2 h-4 w-4" /> 
