@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { WhatsAppIcon } from "@/components/icons/WhatsappIcon";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ProductPreviewModalProps {
   product: Product;
@@ -82,7 +83,7 @@ export function ProductPreviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {children}
       <DialogContent
-        className="max-w-4xl h-[60vh] flex flex-col p-0"
+        className="max-w-4xl h-[60vh] flex flex-col p-0 bg-white"
         onPointerDownOutside={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -166,25 +167,29 @@ export function ProductPreviewModal({
                       Details
                     </h2>
                     <div className="border rounded-lg overflow-hidden">
-                      <div className="grid grid-cols-2 text-sm">
+                      <div
+                        className={cn(
+                          "grid grid-cols-1 gap-0",
+                          Object.keys(product.attributes).length > 1 &&
+                            "md:grid-cols-2"
+                        )}
+                      >
                         {Object.entries(product.attributes).map(
-                          ([key, value], index) => (
+                          ([key, value]) => (
                             <div
                               key={key}
-                              className={`grid grid-cols-2 items-center ${index >= 2 ? "border-t" : ""}`}
+                              className="grid grid-cols-2 text-sm border-b last:border-b-0 md:border-b md:last:border-b-0 md:[&:nth-child(even)]:border-l"
                             >
-                              <div
-                                className={`font-medium capitalize p-3 bg-gray-200 dark:bg-gray-700 ${index % 2 === 0 ? "border-r" : ""}`}
-                              >
+                              <div className="font-medium capitalize p-3 bg-gray-100 dark:bg-gray-800">
                                 {key}
                               </div>
-                              <div className="text-muted-foreground p-3">
+                              <div className="text-muted-foreground p-3 bg-white dark:bg-gray-900">
                                 {Array.isArray(value)
                                   ? value.join(", ")
                                   : value}
                               </div>
                             </div>
-                          ),
+                          )
                         )}
                       </div>
                     </div>
