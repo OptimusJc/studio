@@ -160,7 +160,7 @@ export function EditAttributeDialog({ attribute }: EditAttributeDialogProps) {
             />
             <div>
               <FormLabel>Values</FormLabel>
-              <div className="space-y-2 mt-2">
+              <div className="space-y-2 mt-2 p-2 border border-gray-200 overflow-y-scroll h-60">
                 {fields.map((field, index) => (
                   <FormField
                     key={field.id}
