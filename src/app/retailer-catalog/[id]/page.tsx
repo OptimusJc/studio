@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Suspense, useEffect, useState, useMemo, useRef } from "react";
+import { Suspense, useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import {
@@ -24,10 +24,10 @@ import { WhatsAppIcon } from "@/components/icons/WhatsappIcon";
 import Link from "next/link";
 import ProductDetailHeader from "../components/ProductDetailHeader";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ScreenshotButton } from "../components/ScreenshotButton";
+import { useToast } from "@/hooks/use-toast";
 
 function ProductDetailSkeleton() {
   return (
@@ -78,7 +78,7 @@ function ProductDetailPageContent() {
   const params = useParams();
   const firestore = useFirestore();
   const router = useRouter();
-  const contentRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const productId = params.id as string;
 
@@ -227,6 +227,49 @@ function ProductDetailPageContent() {
       .filter((item) => item.key);
   }, [product]);
 
+  const handleDownload = async () => {
+    if (!product?.imageUrl) return;
+
+    const { id, update } = toast({ variant: 'loading', title: 'Preparing Download...' });
+
+    try {
+        const response = await fetch(product.imageUrl);
+        if (!response.ok) {
+            // If direct fetch fails (e.g., CORS), try proxy
+            const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`;
+            const proxyResponse = await fetch(proxyUrl);
+            if(!proxyResponse.ok) {
+              throw new Error('Image could not be fetched via proxy.');
+            }
+            const blob = await proxyResponse.blob();
+            triggerDownload(blob);
+
+        } else {
+           const blob = await response.blob();
+           triggerDownload(blob);
+        }
+        
+        update({ id, variant: 'success', title: 'Download Started!', description: `${product.productTitle} image is downloading.` });
+    } catch (error) {
+        console.error("Download failed:", error);
+        update({ id, variant: 'destructive', title: 'Download Failed', description: 'Could not download the image.' });
+    }
+  };
+
+  const triggerDownload = (blob: Blob) => {
+    if (!product) return;
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const fileExtension = product.imageUrl.split('.').pop()?.split('?')[0] || 'jpg';
+    link.setAttribute('download', `${product.productCode || 'product'}.${fileExtension}`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+
   if (isLoading || isLoadingCategories) {
     return <ProductDetailSkeleton />;
   }
@@ -250,14 +293,9 @@ function ProductDetailPageContent() {
     );
   }
 
-  const handleFilterChange = (filters: Record<string, any[]>) => {
-    const encodedFilters = btoa(JSON.stringify(filters));
-    router.push(`/retailer-catalog?filters=${encodedFilters}`);
-  };
-
   return (
     <>
-      <div ref={contentRef} className="bg-background">
+      <div className="bg-background">
         <ProductDetailHeader basePath="/retailer-catalog" />
         <main className="container mx-auto px-4 py-8">
           <div className="mb-6">
@@ -374,7 +412,7 @@ function ProductDetailPageContent() {
                       Details
                     </h2>
                     <div className="border rounded-lg overflow-hidden">
-                      <div
+                       <div
                         className={cn(
                           "grid grid-cols-1 gap-0",
                           Object.keys(product.attributes).length > 1 &&
@@ -446,7 +484,10 @@ function ProductDetailPageContent() {
                     Share on WhatsApp
                   </a>
                 </Button>
-                <ScreenshotButton elementRef={contentRef} fileName={`${product.productCode}.png`} />
+                <Button onClick={handleDownload} variant="outline" size="lg" className="w-full sm:w-auto rounded-full">
+                    <Download className="mr-2 h-5 w-5" />
+                    Download Image
+                </Button>
               </div>
             </div>
           </div>
