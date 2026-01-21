@@ -227,31 +227,39 @@ function ProductDetailPageContent() {
       .filter((item) => item.key);
   }, [product]);
   
+  const triggerDownload = (blob: Blob) => {
+    if (!product) return;
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const fileExtension = product.imageUrl.split('.').pop()?.split('?')[0] || 'jpg';
+    link.setAttribute('download', `${product.productCode || 'product'}.${fileExtension}`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
   const handleDownload = async () => {
     if (!product?.imageUrl) return;
 
     const { id, update } = toast({ variant: 'loading', title: 'Preparing Download...' });
 
     try {
-        const response = await fetch(product.imageUrl);
-        if (!response.ok) {
-            throw new Error('Network response was not ok.');
-        }
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        const fileExtension = product.imageUrl.split('.').pop()?.split('?')[0] || 'jpg';
-        link.setAttribute('download', `${product.productCode || 'product'}.${fileExtension}`);
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode?.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        update({ id, variant: 'success', title: 'Download Started!', description: `${product.productTitle} image is downloading.` });
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`;
+      const response = await fetch(proxyUrl);
 
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      triggerDownload(blob);
+      
+      update({ id, variant: 'success', title: 'Download Started!', description: `${product.productTitle} image is downloading.` });
     } catch (error) {
         console.error("Download failed:", error);
-        update({ id, variant: 'destructive', title: 'Download Failed', description: 'Could not download the image.' });
+        update({ id, variant: 'destructive', title: 'Download Failed', description: (error as Error).message });
     }
   };
 

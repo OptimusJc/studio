@@ -227,35 +227,6 @@ function ProductDetailPageContent() {
       .filter((item) => item.key);
   }, [product]);
 
-  const handleDownload = async () => {
-    if (!product?.imageUrl) return;
-
-    const { id, update } = toast({ variant: 'loading', title: 'Preparing Download...' });
-
-    try {
-        const response = await fetch(product.imageUrl);
-        if (!response.ok) {
-            // If direct fetch fails (e.g., CORS), try proxy
-            const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`;
-            const proxyResponse = await fetch(proxyUrl);
-            if(!proxyResponse.ok) {
-              throw new Error('Image could not be fetched via proxy.');
-            }
-            const blob = await proxyResponse.blob();
-            triggerDownload(blob);
-
-        } else {
-           const blob = await response.blob();
-           triggerDownload(blob);
-        }
-        
-        update({ id, variant: 'success', title: 'Download Started!', description: `${product.productTitle} image is downloading.` });
-    } catch (error) {
-        console.error("Download failed:", error);
-        update({ id, variant: 'destructive', title: 'Download Failed', description: 'Could not download the image.' });
-    }
-  };
-
   const triggerDownload = (blob: Blob) => {
     if (!product) return;
     const url = window.URL.createObjectURL(blob);
@@ -268,6 +239,29 @@ function ProductDetailPageContent() {
     link.parentNode?.removeChild(link);
     window.URL.revokeObjectURL(url);
   }
+
+  const handleDownload = async () => {
+    if (!product?.imageUrl) return;
+
+    const { id, update } = toast({ variant: 'loading', title: 'Preparing Download...' });
+
+    try {
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`;
+      const response = await fetch(proxyUrl);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      triggerDownload(blob);
+      
+      update({ id, variant: 'success', title: 'Download Started!', description: `${product.productTitle} image is downloading.` });
+    } catch (error) {
+        console.error("Download failed:", error);
+        update({ id, variant: 'destructive', title: 'Download Failed', description: (error as Error).message });
+    }
+  };
 
 
   if (isLoading || isLoadingCategories) {
