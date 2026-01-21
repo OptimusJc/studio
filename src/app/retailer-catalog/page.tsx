@@ -25,7 +25,7 @@ function CatalogContent() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[] | null>(null);
   const [filters, setFilters] = useState<Record<string, any[]>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -117,6 +117,8 @@ function CatalogContent() {
 
   // Apply filters and search term
   useEffect(() => {
+    if (isLoading || allProducts.length == 0) return;
+
     let newFilteredProducts = [...allProducts];
 
     if (searchTerm) {
@@ -254,7 +256,7 @@ function CatalogContent() {
                          </SheetContent>
                     </Sheet>
 
-                    {isLoading ? (
+                    {isLoading || filteredProducts === null ? (
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                         {[...Array(12)].map((_, i) => (
                           <Skeleton key={i} className="h-96 w-full rounded-lg" />
