@@ -256,7 +256,7 @@ function ProductDetailPageContent() {
       const blob = await response.blob();
       triggerDownload(blob);
       
-      update({ id, variant: 'success', title: 'Download Started!', description: `${product.productTitle} image is downloading.` });
+      update({ id, variant: 'success', title: 'Download Started!', description: `${product?.productTitle} image is downloading.` });
     } catch (error) {
         console.error("Download failed:", error);
         update({ id, variant: 'destructive', title: 'Download Failed', description: (error as Error).message });
