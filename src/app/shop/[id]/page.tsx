@@ -228,11 +228,11 @@ function ProductDetailPageContent() {
   }, [product]);
   
   const triggerDownload = (blob: Blob) => {
-    if (!product) return;
+    if (!product || !activeImage) return;
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const fileExtension = product.imageUrl.split('.').pop()?.split('?')[0] || 'jpg';
+    const fileExtension = activeImage.split('.').pop()?.split('?')[0] || 'jpg';
     link.setAttribute('download', `${product.productCode || 'product'}.${fileExtension}`);
     document.body.appendChild(link);
     link.click();
@@ -241,12 +241,12 @@ function ProductDetailPageContent() {
   }
 
   const handleDownload = async () => {
-    if (!product?.imageUrl) return;
+    if (!activeImage) return;
 
     const { id, update } = toast({ variant: 'loading', title: 'Preparing Download...' });
 
     try {
-      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`;
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(activeImage)}`;
       const response = await fetch(proxyUrl);
 
       if (!response.ok) {
