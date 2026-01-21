@@ -281,29 +281,26 @@ function CatalogContent() {
                   <Skeleton key={i} className="h-96 w-full rounded-lg" />
                 ))}
               </div>
+            ) : filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {filteredProducts.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    priority={index < 4}
+                    basePath="/shop"
+                  />
+                ))}
+              </div>
             ) : (
-              <>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {filteredProducts.map((product, index) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      priority={index < 4}
-                      basePath="/shop"
-                    />
-                  ))}
-                </div>
-                {filteredProducts.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center justify-center h-96 bg-background rounded-lg border border-dashed">
-                    <h2 className="text-2xl font-semibold text-muted-foreground">
-                      No Products Found
-                    </h2>
-                    <p className="text-muted-foreground mt-2">
-                      Try adjusting your filters or search term.
-                    </p>
-                  </div>
-                )}
-              </>
+              <div className="col-span-full flex flex-col items-center justify-center h-96 bg-background rounded-lg border border-dashed">
+                <h2 className="text-2xl font-semibold text-muted-foreground">
+                  No Products Found
+                </h2>
+                <p className="text-muted-foreground mt-2">
+                  Try adjusting your filters or search term.
+                </p>
+              </div>
             )}
           </section>
         </div>
