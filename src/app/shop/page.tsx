@@ -30,7 +30,7 @@ function CatalogContent() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[] | null>(null);
   const [filters, setFilters] = useState<Record<string, any[]>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -124,6 +124,8 @@ function CatalogContent() {
 
   // Apply filters and search term
   useEffect(() => {
+    if (isLoading || allProducts.length == 0) return;
+
     let newFilteredProducts = [...allProducts];
 
     if (searchTerm) {
@@ -275,35 +277,32 @@ function CatalogContent() {
               </SheetContent>
             </Sheet>
 
-            {isLoading ? (
+            {isLoading || filteredProducts === null ? (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[...Array(12)].map((_, i) => (
                   <Skeleton key={i} className="h-96 w-full rounded-lg" />
                 ))}
               </div>
+            ) : filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {filteredProducts.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    priority={index < 4}
+                    basePath="/shop"
+                  />
+                ))}
+              </div>
             ) : (
-              <>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {filteredProducts.map((product, index) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      priority={index < 4}
-                      basePath="/shop"
-                    />
-                  ))}
-                </div>
-                {filteredProducts.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center justify-center h-96 bg-background rounded-lg border border-dashed">
-                    <h2 className="text-2xl font-semibold text-muted-foreground">
-                      No Products Found
-                    </h2>
-                    <p className="text-muted-foreground mt-2">
-                      Try adjusting your filters or search term.
-                    </p>
-                  </div>
-                )}
-              </>
+              <div className="col-span-full flex flex-col items-center justify-center h-96 bg-background rounded-lg border border-dashed">
+                <h2 className="text-2xl font-semibold text-muted-foreground">
+                  No Products Found
+                </h2>
+                <p className="text-muted-foreground mt-2">
+                  Try adjusting your filters or search term.
+                </p>
+              </div>
             )}
           </section>
         </div>
