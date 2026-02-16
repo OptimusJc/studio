@@ -6,7 +6,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Inter, Source_Code_Pro, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,23 +41,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${sourceCodePro.variable} ${playfairDisplay.variable}`}
     >
-      <head>
-        <Script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=AW-10846874269"
-          strategy="afterInteractive"
-        ></Script>
-        <Script id="googletagmanager" strategy="afterInteractive">
-          {`
-
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-
-              gtag('config', 'AW-10846874269');
-          `}
-        </Script>
-      </head>
+      <head></head>
 
       <body className="font-body antialiased">
         <ThemeProvider
