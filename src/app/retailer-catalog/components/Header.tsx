@@ -1,15 +1,29 @@
 
 'use client';
+import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types';
-import { Menu, Search, Filter, X } from 'lucide-react';
+import { Menu, Search, Filter, X, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Logo } from '@/components/icons/Logo';
+import { CATEGORY_GROUPS } from '../lib/constants';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from '@/components/ui/accordion';
 
 type HeaderProps = {
     basePath: string;
@@ -46,33 +60,97 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className, on
         }
     }
 
-    const displayCategories = [
-        { id: 'all', name: 'All Categories' },
-        { id: 'cat_01', name: 'Wallpapers' },
-        { id: 'cat_03', name: 'Wall Murals' },
-        { id: 'cat_07', name: 'Contact Paper' },
-        { id: 'cat_02', name: 'Window Blinds' },
-        { id: 'cat_05', name: 'Window Films' },
-        { id: 'cat_06', name: 'Fluted Panels & WPC Boards' },
-        { id: 'cat_08', name: 'Carpets' }
-    ];
+    const isMobile = className?.includes('flex-col');
 
-
-    return (
-        <nav className={cn("flex items-center gap-2", className)}>
-            {displayCategories.map((cat) => (
+    if (isMobile) {
+        return (
+            <div className={cn("w-full space-y-4", className)}>
                 <Button
-                    key={cat.id}
                     variant="ghost"
                     size="sm"
                     className={cn(
-                        "rounded-full px-4 py-2 text-sm font-normal",
-                        activeCategory === cat.name ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-200/50 hover:text-gray-900'
+                        "w-full justify-start px-2 py-6 text-lg font-medium rounded-md transition-colors",
+                        activeCategory === 'All Categories' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
                     )}
-                    onClick={() => handleCategoryClick(cat.name)}
+                    onClick={() => handleCategoryClick('All Categories')}
                 >
-                    {cat.name}
+                    All Products
                 </Button>
+                <Accordion type="multiple" className="w-full">
+                    {CATEGORY_GROUPS.map((group) => (
+                        <AccordionItem key={group.label} value={group.label} className="border-none">
+                            <AccordionTrigger className="px-2 py-4 text-lg font-medium hover:no-underline hover:bg-gray-50 rounded-md">
+                                {group.label}
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <div className="pl-4 space-y-1 mt-1">
+                                    {group.items.map((cat) => (
+                                        <Button
+                                            key={cat.id}
+                                            variant="ghost"
+                                            size="sm"
+                                            className={cn(
+                                                "w-full justify-start px-4 py-2 text-base font-normal rounded-md",
+                                                activeCategory === cat.name ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'
+                                            )}
+                                            onClick={() => handleCategoryClick(cat.name)}
+                                        >
+                                            {cat.name}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            </div>
+        )
+    }
+
+    return (
+        <nav className={cn("flex items-center gap-2", className)}>
+            <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                    "rounded-full px-4 py-2 text-sm font-medium transition-colors shrink-0",
+                    activeCategory === 'All Categories' ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-200/50 hover:text-gray-900'
+                )}
+                onClick={() => handleCategoryClick('All Categories')}
+            >
+                All Products
+            </Button>
+
+            {CATEGORY_GROUPS.map((group) => (
+                <DropdownMenu key={group.label}>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className={cn(
+                                "rounded-full px-4 py-2 text-sm font-medium transition-colors shrink-0 flex items-center gap-1",
+                                group.items.some(cat => cat.name === activeCategory) ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-200/50 hover:text-gray-900'
+                            )}
+                        >
+                            {group.label}
+                            <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56 p-2 bg-white shadow-xl border-gray-100 animate-in fade-in zoom-in duration-200">
+                        {group.items.map((cat) => (
+                            <DropdownMenuItem
+                                key={cat.id}
+                                className={cn(
+                                    "cursor-pointer px-4 py-2 rounded-md transition-colors",
+                                    activeCategory === cat.name ? 'bg-gray-100 font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                )}
+                                onClick={() => handleCategoryClick(cat.name)}
+                            >
+                                {cat.name}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             ))}
         </nav>
     )
