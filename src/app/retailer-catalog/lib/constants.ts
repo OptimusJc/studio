@@ -11,7 +11,7 @@ export type CategoryGroup = {
 
 export const CATEGORY_GROUPS: CategoryGroup[] = [
     {
-        label: 'Walls',
+        label: 'Wall Coverings',
         items: [
             { id: 'cat_01', name: 'Wallpapers' },
             { id: 'cat_03', name: 'Wall Murals' },
@@ -20,7 +20,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
         ]
     },
     {
-        label: 'Windows',
+        label: 'Window Treatments',
         items: [
             { id: 'cat_02', name: 'Window Blinds' },
             { id: 'cat_05', name: 'Window Films' },
