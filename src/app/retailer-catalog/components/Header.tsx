@@ -12,13 +12,13 @@ import { useState } from 'react';
 import { Logo } from '@/components/icons/Logo';
 
 type HeaderProps = {
-  basePath: string;
-  categories?: Category[];
-  appliedFilters?: Record<string, any[]>;
-  onFilterChange?: (filters: Record<string, any[]>) => void;
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  openMobileFilters: () => void;
+    basePath: string;
+    categories?: Category[];
+    appliedFilters?: Record<string, any[]>;
+    onFilterChange?: (filters: Record<string, any[]>) => void;
+    searchTerm: string;
+    setSearchTerm: (term: string) => void;
+    openMobileFilters: () => void;
 };
 
 function AppLogo({ basePath }: { basePath: string }) {
@@ -29,7 +29,7 @@ function AppLogo({ basePath }: { basePath: string }) {
     )
 }
 
-function CategoryNav({ categories, appliedFilters, onFilterChange, className, onCategorySelect }: Pick<HeaderProps, 'categories'|'appliedFilters'|'onFilterChange'> & { className?: string, onCategorySelect?: () => void }) {
+function CategoryNav({ categories, appliedFilters, onFilterChange, className, onCategorySelect }: Pick<HeaderProps, 'categories' | 'appliedFilters' | 'onFilterChange'> & { className?: string, onCategorySelect?: () => void }) {
     const activeCategory = appliedFilters?.category?.[0] || 'All Categories';
 
     const handleCategoryClick = (categoryName: string) => {
@@ -42,27 +42,28 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className, on
             onFilterChange({ ...appliedFilters, category: [categoryName] });
         }
         if (onCategorySelect) {
-          onCategorySelect();
+            onCategorySelect();
         }
     }
-    
+
     const displayCategories = [
         { id: 'all', name: 'All Categories' },
         { id: 'cat_01', name: 'Wallpapers' },
         { id: 'cat_03', name: 'Wall Murals' },
-        { id: 'cat_07', name: 'Contact Paper'},
+        { id: 'cat_07', name: 'Contact Paper' },
         { id: 'cat_02', name: 'Window Blinds' },
         { id: 'cat_05', name: 'Window Films' },
-        { id: 'cat_06', name: 'Fluted Panels and WPC Boards'}
+        { id: 'cat_06', name: 'Fluted Panels & WPC Boards' },
+        { id: 'cat_08', name: 'Carpets' }
     ];
 
 
     return (
         <nav className={cn("flex items-center gap-2", className)}>
             {displayCategories.map((cat) => (
-                <Button 
-                    key={cat.id} 
-                    variant="ghost" 
+                <Button
+                    key={cat.id}
+                    variant="ghost"
                     size="sm"
                     className={cn(
                         "rounded-full px-4 py-2 text-sm font-normal",
@@ -79,89 +80,89 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className, on
 
 
 export default function Header({ basePath, categories, appliedFilters, onFilterChange, searchTerm, setSearchTerm, openMobileFilters }: HeaderProps) {
-  const hasNav = !!(categories && appliedFilters && onFilterChange);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const hasNav = !!(categories && appliedFilters && onFilterChange);
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      setMobileSearchOpen(false);
-    }
-  };
-  
-  return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background bg-white shadow-sm">
-      <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <AppLogo basePath={basePath} />
-        
-        {hasNav && (
-            <div className="hidden lg:flex flex-1 justify-end">
-                <CategoryNav categories={categories} appliedFilters={appliedFilters} onFilterChange={onFilterChange} />
-            </div>
-        )}
+    const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            setMobileSearchOpen(false);
+        }
+    };
 
-        <div className="lg:hidden flex items-center gap-1">
-            <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-10 w-10 p-2">
-                        <Search />
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="top" className="p-4" showOverlay={false}>
-                     <div className="relative w-full mt-4 bg-white rounded-md shadow-sm">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          type="search"
-                          placeholder="Search products..."
-                          className="pl-12 pr-10 py-3 h-12 text-base rounded-md shadow-sm"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          onKeyDown={handleSearchKeyDown}
-                          autoFocus
-                        />
-                         {searchTerm && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
-                            onClick={() => setSearchTerm('')}
-                          >
-                            <X className="h-6 w-6" />
-                          </Button>
-                        )}
+    return (
+        <header className="sticky top-0 z-40 w-full border-b bg-background bg-white shadow-sm">
+            <div className="container mx-auto flex h-20 items-center justify-between px-4">
+                <AppLogo basePath={basePath} />
+
+                {hasNav && (
+                    <div className="hidden lg:flex flex-1 justify-end">
+                        <CategoryNav categories={categories} appliedFilters={appliedFilters} onFilterChange={onFilterChange} />
                     </div>
-                </SheetContent>
-            </Sheet>
-             <Button variant="ghost" size="icon" className="h-10 w-10 p-2" onClick={openMobileFilters}>
-                <Filter />
-             </Button>
-            
-            {hasNav && (
-                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 p-2">
-                            <Menu />
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right" className="w-full max-w-xs bg-white">
-                        <div className="p-4">
-                            <div className="mb-8">
-                                <AppLogo basePath={basePath} />
+                )}
+
+                <div className="lg:hidden flex items-center gap-1">
+                    <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-10 w-10 p-2">
+                                <Search />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="top" className="p-4" showOverlay={false}>
+                            <div className="relative w-full mt-4 bg-white rounded-md shadow-sm">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    type="search"
+                                    placeholder="Search products..."
+                                    className="pl-12 pr-10 py-3 h-12 text-base rounded-md shadow-sm"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={handleSearchKeyDown}
+                                    autoFocus
+                                />
+                                {searchTerm && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
+                                        onClick={() => setSearchTerm('')}
+                                    >
+                                        <X className="h-6 w-6" />
+                                    </Button>
+                                )}
                             </div>
-                            <CategoryNav 
-                                categories={categories} 
-                                appliedFilters={appliedFilters} 
-                                onFilterChange={onFilterChange}
-                                className="flex-col items-start gap-4"
-                                onCategorySelect={() => setMobileMenuOpen(false)}
-                            />
-                        </div>
-                    </SheetContent>
-                </Sheet>
-            )}
-        </div>
-      </div>
-    </header>
-  );
+                        </SheetContent>
+                    </Sheet>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 p-2" onClick={openMobileFilters}>
+                        <Filter />
+                    </Button>
+
+                    {hasNav && (
+                        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-10 w-10 p-2">
+                                    <Menu />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="w-full max-w-xs bg-white">
+                                <div className="p-4">
+                                    <div className="mb-8">
+                                        <AppLogo basePath={basePath} />
+                                    </div>
+                                    <CategoryNav
+                                        categories={categories}
+                                        appliedFilters={appliedFilters}
+                                        onFilterChange={onFilterChange}
+                                        className="flex-col items-start gap-4"
+                                        onCategorySelect={() => setMobileMenuOpen(false)}
+                                    />
+                                </div>
+                            </SheetContent>
+                        </Sheet>
+                    )}
+                </div>
+            </div>
+        </header>
+    );
 }
