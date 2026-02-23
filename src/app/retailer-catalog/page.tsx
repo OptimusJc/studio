@@ -43,10 +43,10 @@ function CatalogContent() {
       setIsLoading(true);
 
       const productList: Product[] = [];
-      
+
       const productCategories = categoriesData.map(c => ({
-          slug: c.name.toLowerCase().replace(/\s+/g, '-'),
-          name: c.name
+        slug: c.name.toLowerCase().replace(/\s+/g, '-'),
+        name: c.name
       }));
 
       // We only care about published products in the retailer's database for the catalog
@@ -56,11 +56,11 @@ function CatalogContent() {
         const collectionPath = `${db}/${cat.slug}/products`;
         try {
           const q = query(
-            collection(firestore, collectionPath), 
+            collection(firestore, collectionPath),
             where("status", "==", "Published")
           );
           const querySnapshot = await getDocs(q);
-          
+
           querySnapshot.forEach(doc => {
             const data = doc.data() as DocumentData;
             const product: Product = {
@@ -90,15 +90,15 @@ function CatalogContent() {
           // console.warn(`Could not fetch from ${collectionPath}:`, e);
         }
       }
-      
+
       setAllProducts(productList);
       setIsLoading(false);
     };
 
     if (!isLoadingCategories && categoriesData) {
-        fetchAllProducts();
+      fetchAllProducts();
     } else if (!isLoadingCategories) {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }, [firestore, categoriesData, isLoadingCategories]);
 
@@ -122,29 +122,29 @@ function CatalogContent() {
     let newFilteredProducts = [...allProducts];
 
     if (searchTerm) {
-        const lowercasedTerm = searchTerm.toLowerCase();
-        newFilteredProducts = newFilteredProducts.filter(p =>
-            (p.productTitle && p.productTitle.toLowerCase().includes(lowercasedTerm)) ||
-            (p.productCode && p.productCode.toLowerCase().includes(lowercasedTerm)) ||
-            (p.productDescription && p.productDescription.toLowerCase().includes(lowercasedTerm)) ||
-            (p.specifications && p.specifications.toLowerCase().includes(lowercasedTerm))
+      const lowercasedTerm = searchTerm.toLowerCase();
+      newFilteredProducts = newFilteredProducts.filter(p =>
+        (p.productTitle && p.productTitle.toLowerCase().includes(lowercasedTerm)) ||
+        (p.productCode && p.productCode.toLowerCase().includes(lowercasedTerm)) ||
+        (p.productDescription && p.productDescription.toLowerCase().includes(lowercasedTerm)) ||
+        (p.specifications && p.specifications.toLowerCase().includes(lowercasedTerm))
       );
     }
-    
+
     Object.entries(filters).forEach(([key, values]) => {
       if (values.length > 0) {
         if (key === 'price') {
-            const [min, max] = values;
-            newFilteredProducts = newFilteredProducts.filter(p => (p.price ?? 0) >= min && (p.price ?? 0) <= max);
+          const [min, max] = values;
+          newFilteredProducts = newFilteredProducts.filter(p => (p.price ?? 0) >= min && (p.price ?? 0) <= max);
         } else if (key === 'category') {
-            newFilteredProducts = newFilteredProducts.filter(p => values.includes(p.category));
+          newFilteredProducts = newFilteredProducts.filter(p => values.includes(p.category));
         } else {
           newFilteredProducts = newFilteredProducts.filter(p => {
-             const productAttribute = p.attributes[key];
-             if(Array.isArray(productAttribute)) {
-                return productAttribute.some(attr => values.includes(attr as string));
-             }
-             return values.includes(productAttribute as string);
+            const productAttribute = p.attributes[key];
+            if (Array.isArray(productAttribute)) {
+              return productAttribute.some(attr => values.includes(attr as string));
+            }
+            return values.includes(productAttribute as string);
           });
         }
       }
@@ -170,7 +170,7 @@ function CatalogContent() {
       if (product.attributes) {
         Object.entries(product.attributes).forEach(([key, valueOrValues]) => {
           const lowerKey = key.toLowerCase();
-          
+
           if (filterMap.has(lowerKey)) {
             const valueSet = filterMap.get(lowerKey)!;
             if (Array.isArray(valueOrValues)) {
@@ -182,154 +182,154 @@ function CatalogContent() {
         });
       }
     });
-    
+
     // Format the map into the array structure required by the UI component.
     return Array.from(filterMap.entries()).map(([key, valueSet]) => {
-        const name = key.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        return {
-            id: `filter-${key}`,
-            name: name,
-            category: 'All', // This field is not used for filtering logic here.
-            values: Array.from(valueSet).sort(),
-        };
+      const name = key.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      return {
+        id: `filter-${key}`,
+        name: name,
+        category: 'All', // This field is not used for filtering logic here.
+        values: Array.from(valueSet).sort(),
+      };
     });
   }, [allProducts]);
 
   const facetedSearchComponent = (
     isLoading ? (
-        <Skeleton className="h-[600px] w-full" />
+      <Skeleton className="h-[600px] w-full" />
     ) : (
-        <FacetedSearch
+      <FacetedSearch
         attributes={availableFilters}
         appliedFilters={filters}
         onFilterChange={setFilters}
         isMobile={isMobile}
         onClose={() => setMobileFiltersOpen(false)}
-        />
+      />
     )
   );
 
   return (
     <div className="bg-muted/40 min-h-screen">
-      <Header 
+      <Header
         basePath="/retailer-catalog"
-        categories={memoizedCategories} 
+        categories={memoizedCategories}
         appliedFilters={filters}
         onFilterChange={setFilters}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         openMobileFilters={() => setMobileFiltersOpen(true)}
       />
-       <main className="container mx-auto px-4 py-6">
-            <div className="grid lg:grid-cols-4 gap-8 items-start">
-                <aside className="hidden lg:block lg:col-span-1 sticky top-24">
-                  {facetedSearchComponent}
-                </aside>
-                
-                <section className="lg:col-span-3">
-                    <div className="hidden lg:flex items-center gap-4 mb-6">
-                        <div className="relative w-full">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input
-                              type="search"
-                              placeholder="Search by product name, code, or characteristics..."
-                              className="pl-12 pr-10 py-3 h-12 text-base rounded-md shadow-sm"
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                            {searchTerm && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
-                                onClick={() => setSearchTerm('')}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                        </div>
-                    </div>
-                     <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-                         <SheetContent side="left" className="p-0 h-full w-full max-w-sm bg-gray-100" showOverlay={true}>
-                            {facetedSearchComponent}
-                         </SheetContent>
-                    </Sheet>
+      <main className="container mx-auto px-4 py-6">
+        <div className="grid lg:grid-cols-4 gap-8 items-start">
+          <aside className="hidden lg:block lg:col-span-1 sticky top-24 h-[calc(100vh-120px)] flex flex-col overflow-hidden">
+            {facetedSearchComponent}
+          </aside>
 
-                    {isLoading || filteredProducts === null ? (
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                        {[...Array(12)].map((_, i) => (
-                          <Skeleton key={i} className="h-96 w-full rounded-lg" />
-                        ))}
-                      </div>
-                    ) : filteredProducts.length > 0 ? (
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                        {filteredProducts.map((product, index) => (
-                          <ProductCard
-                            key={product.id}
-                            product={product}
-                            priority={index < 4}
-                            basePath="/retailer-catalog"
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="col-span-full flex flex-col items-center justify-center h-96 bg-background rounded-lg border border-dashed">
-                        <h2 className="text-2xl font-semibold text-muted-foreground">
-                          No Products Found
-                        </h2>
-                        <p className="text-muted-foreground mt-2">
-                          Try adjusting your filters or search term.
-                        </p>
-                      </div>
-                    )}
-                </section>
+          <section className="lg:col-span-3">
+            <div className="hidden lg:flex items-center gap-4 mb-6">
+              <div className="relative w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by product name, code, or characteristics..."
+                  className="pl-12 pr-10 py-3 h-12 text-base rounded-md shadow-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
+                    onClick={() => setSearchTerm('')}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
+            <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+              <SheetContent side="left" className="p-0 h-full w-full max-w-sm bg-gray-100" showOverlay={true}>
+                {facetedSearchComponent}
+              </SheetContent>
+            </Sheet>
+
+            {isLoading || filteredProducts === null ? (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                {[...Array(12)].map((_, i) => (
+                  <Skeleton key={i} className="h-96 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                {filteredProducts.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    priority={index < 4}
+                    basePath="/retailer-catalog"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="col-span-full flex flex-col items-center justify-center h-96 bg-background rounded-lg border border-dashed">
+                <h2 className="text-2xl font-semibold text-muted-foreground">
+                  No Products Found
+                </h2>
+                <p className="text-muted-foreground mt-2">
+                  Try adjusting your filters or search term.
+                </p>
+              </div>
+            )}
+          </section>
+        </div>
       </main>
     </div>
   );
 }
 
 function ShopPageSkeleton() {
-    return (
-        <div className="bg-muted/40 min-h-screen">
-             <header className="sticky top-0 z-40 w-full border-b bg-background">
-                <div className="container mx-auto flex h-20 items-center justify-between px-4">
-                    <Skeleton className="h-8 w-48" />
-                    <div className="hidden lg:flex justify-end flex-1 gap-2">
-                        <Skeleton className="h-9 w-24" />
-                        <Skeleton className="h-9 w-24" />
-                        <Skeleton className="h-9 w-24" />
-                    </div>
-                    <Skeleton className="h-8 w-8 lg:hidden" />
-                </div>
-             </header>
-            <main className="container mx-auto px-4 py-8">
-                 <div className="grid lg:grid-cols-4 gap-8 items-start">
-                    <aside className="hidden lg:block lg:col-span-1">
-                        <Skeleton className="h-[600px] w-full" />
-                    </aside>
-                    <div className="lg:col-span-3 space-y-6">
-                        <div className="flex items-center gap-4">
-                            <Skeleton className="h-12 w-28 lg:hidden" />
-                            <Skeleton className="h-12 flex-1" />
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                            {[...Array(12)].map((_, i) => (
-                                <Skeleton key={i} className="h-80 w-full" />
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </main>
+  return (
+    <div className="bg-muted/40 min-h-screen">
+      <header className="sticky top-0 z-40 w-full border-b bg-background">
+        <div className="container mx-auto flex h-20 items-center justify-between px-4">
+          <Skeleton className="h-8 w-48" />
+          <div className="hidden lg:flex justify-end flex-1 gap-2">
+            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-9 w-24" />
+          </div>
+          <Skeleton className="h-8 w-8 lg:hidden" />
         </div>
-    )
+      </header>
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-4 gap-8 items-start">
+          <aside className="hidden lg:block lg:col-span-1">
+            <Skeleton className="h-[600px] w-full" />
+          </aside>
+          <div className="lg:col-span-3 space-y-6">
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-12 w-28 lg:hidden" />
+              <Skeleton className="h-12 flex-1" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              {[...Array(12)].map((_, i) => (
+                <Skeleton key={i} className="h-80 w-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
 }
 
 export default function RetailerCatalogPage() {
-    return (
-        <Suspense fallback={<ShopPageSkeleton />}>
-            <CatalogContent />
-        </Suspense>
-    )
+  return (
+    <Suspense fallback={<ShopPageSkeleton />}>
+      <CatalogContent />
+    </Suspense>
+  )
 }
