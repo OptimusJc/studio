@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Inter, Source_Code_Pro, Playfair_Display } from "next/font/google";
+import { Inter, Source_Code_Pro, Playfair_Display, Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -25,6 +25,12 @@ const playfairDisplay = Playfair_Display({
   variable: "--font-playfair-display",
 });
 
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
+});
+
 export const metadata: Metadata = {
   title: "Ruby Catalogue",
   description: "Manage and share your product catalogs with ease.",
@@ -39,7 +45,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${sourceCodePro.variable} ${playfairDisplay.variable}`}
+      className={`${inter.variable} ${sourceCodePro.variable} ${playfairDisplay.variable} ${poppins.variable}`}
     >
       <head></head>
 
