@@ -1,5 +1,5 @@
 
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
@@ -11,12 +11,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['var(--font-inter)', 'sans-serif'],
-        headline: ['var(--font-inter)', 'sans-serif'],
+        body: ['var(--font-poppins)', 'var(--font-inter)', 'sans-serif'],
+        headline: ['var(--font-poppins)', 'var(--font-inter)', 'sans-serif'],
         code: ['var(--font-source-code-pro)', 'monospace'],
         serif: ['var(--font-playfair-display)', 'serif'],
         logo: ['"Brush Script MT"', 'cursive'],
-        sans: ['var(--font-inter)', 'sans-serif'],
+        sans: ['var(--font-poppins)', 'var(--font-inter)', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
