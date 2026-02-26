@@ -47,7 +47,7 @@ export function ProductPreviewModal({
         message += `*Product Details:*\n`;
         message += `Code: *${product.productCode}*\n`;
         message += `Title: ${product.productTitle}\n`;
-        
+
         message += `\nView Product: ${productUrl}`;
 
         return encodeURIComponent(message);
@@ -83,7 +83,7 @@ export function ProductPreviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {children}
       <DialogContent
-        className="max-w-4xl h-[60vh] flex flex-col p-0 bg-white"
+        className="max-w-4xl h-[60vh] lg:h-[80vh] flex flex-col p-0 bg-white"
         onPointerDownOutside={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -171,7 +171,7 @@ export function ProductPreviewModal({
                         className={cn(
                           "grid grid-cols-1 gap-0",
                           Object.keys(product.attributes).length > 1 &&
-                            "md:grid-cols-2"
+                          "md:grid-cols-2"
                         )}
                       >
                         {Object.entries(product.attributes).map(
