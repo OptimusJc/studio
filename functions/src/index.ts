@@ -22,8 +22,14 @@ export const serveImage = functions.https.onRequest(async (req, res) => {
       return;
     }
 
+    const [metadata] = await file.getMetadata();
+
     // set aggresive cache headers
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader(
+      "Content-Type",
+      metadata.contentType || "application/octet-stream",
+    );
 
     // steam file to response
     file.createReadStream().pipe(res);
