@@ -1,0 +1,34 @@
+import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+
+admin.initializeApp();
+
+const bucket = admin.storage().bucket();
+
+export const serveImage = functions.https.onRequest(async (req, res) => {
+  try {
+    const filepath = req.path.replace(/^\/product-images\//, "");
+
+    if (!filepath) {
+      res.status(400).send("Invalid image path");
+      return;
+    }
+
+    const file = bucket.file(`product-images/${filepath}`);
+    const [exists] = await file.exists();
+
+    if (!exists) {
+      res.status(400).send("Image not found");
+      return;
+    }
+
+    // set aggresive cache headers
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+
+    // steam file to response
+    file.createReadStream().pipe(res);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Internal Server Error");
+  }
+});
