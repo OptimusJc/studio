@@ -7,14 +7,19 @@ const bucket = admin.storage().bucket();
 
 export const serveImage = functions.https.onRequest(async (req, res) => {
   try {
-    const filepath = req.path.replace(/^\/product-images\//, "");
+    const originalPath = req.path || req.url.split("?")[0];
+    let filePath = originalPath
+      .replace(/^\/product-images\//, "")
+      .replace(/^\//, "");
 
-    if (!filepath) {
+    filePath = decodeURIComponent(filePath.trim());
+
+    if (!filePath) {
       res.status(400).send("Invalid image path");
       return;
     }
 
-    const file = bucket.file(`product-images/${filepath}`);
+    const file = bucket.file(`product-images/${filePath}`);
     const [exists] = await file.exists();
 
     if (!exists) {
