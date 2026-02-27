@@ -16,5 +16,14 @@
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
     }
-  ]
+  ],
+  "hosting": {
+    "public": "public",
+    "rewrites": [
+      {
+        "source": "/product-images/**",
+        "function": "serveImage"
+      }
+    ]
+  }
 }
