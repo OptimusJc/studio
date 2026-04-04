@@ -7,23 +7,41 @@ const bucket = admin.storage().bucket();
 
 export const serveImage = functions.https.onRequest(async (req, res) => {
   try {
-    const originalPath = req.path || req.url.split("?")[0];
-    let filePath = originalPath
-      .replace(/^\/product-images\//, "")
-      .replace(/^\//, "");
+    // Log the incoming path for debugging (check Cloud Functions logs)
+    console.log("Incoming req.path:", req.path);
+    console.log("Incoming req.url:", req.url);
+    console.log(
+      "Full req:",
+      JSON.stringify({
+        method: req.method,
+        headers: req.headers,
+        path: req.path,
+      }),
+    );
 
-    filePath = decodeURIComponent(filePath.trim());
+    // Normalize: remove leading /product-images/
+    // (with or without trailing slash variations)
+    let filepath = (req.path || "")
+      // handles /product-images/abc.jpg or /product-images/abc.jpg/
+      .replace(/^\/product-images\/?/, "")
+      .replace(/^\//, "") // in case extra leading slash somehow appears
+      .trim();
 
-    if (!filePath) {
-      res.status(400).send("Invalid image path");
+    // handle any %2F or encoded chars if needed
+    filepath = decodeURIComponent(filepath);
+    console.log("Extracted filepath:", filepath);
+
+    if (!filepath) {
+      res.status(400).type("text/plain").send("Invalid image path");
       return;
     }
 
-    const file = bucket.file(`product-images/${filePath}`);
-    const [exists] = await file.exists();
+    const file = bucket.file(`product-images/${filepath}`);
 
+    const [exists] = await file.exists();
     if (!exists) {
-      res.status(400).send("Image not found");
+      console.log(`File not found: product-images/${filepath}`);
+      res.status(404).type("text/plain").send("Image not found");
       return;
     }
 
@@ -39,7 +57,7 @@ export const serveImage = functions.https.onRequest(async (req, res) => {
     // steam file to response
     file.createReadStream().pipe(res);
   } catch (err) {
-    console.log(err);
-    res.status(500).send("Internal Server Error");
+    console.log("Error serving image", err);
+    res.status(500).type("text/plain").send("Internal Server Error");
   }
 });

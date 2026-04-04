@@ -19,6 +19,7 @@ import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { ProductViewDialog } from './ProductViewDialog';
 import { cn } from '@/lib/utils';
+import { resolveImageUrl } from '@/lib/image-url';
 
 function createSafeSlug(name: string) {
     return name
@@ -170,7 +171,7 @@ export function ProductTableClient({ products }: { products: Product[] }) {
             </TableCell>
             <TableCell>
               <Image
-                src={product.imageUrl}
+                src={resolveImageUrl(product.imageUrl)}
                 alt={product.name}
                 width={48}
                 height={48}

@@ -16,6 +16,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import type { Product, Category } from "@/types";
+import { resolveImageUrl } from "@/lib/image-url";
 import ProductCard from "../components/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -117,8 +118,9 @@ function ProductDetailPageContent() {
                 id: productSnap.id,
                 ...data,
                 name: data.productTitle,
-                imageUrl:
-                  data.productImages?.[0] || "https://placehold.co/600x600",
+                imageUrl: resolveImageUrl(data.productImages?.[0]),
+                productImages: (data.productImages as string[] | undefined)?.map(resolveImageUrl),
+                additionalImages: (data.additionalImages as string[] | undefined)?.map(resolveImageUrl),
                 category: cat.name,
                 db: "retailers",
               } as Product;
@@ -156,8 +158,9 @@ function ProductDetailPageContent() {
                 id: doc.id,
                 ...data,
                 name: data.productTitle,
-                imageUrl:
-                  data.productImages?.[0] || "https://placehold.co/600x600",
+                imageUrl: resolveImageUrl(data.productImages?.[0]),
+                productImages: (data.productImages as string[] | undefined)?.map(resolveImageUrl),
+                additionalImages: (data.additionalImages as string[] | undefined)?.map(resolveImageUrl),
                 category: productCategoryName,
                 db: "retailers",
               } as Product);

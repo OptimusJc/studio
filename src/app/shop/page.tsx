@@ -13,6 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import type { Product, Category, Attribute } from "@/types";
+import { resolveImageUrl } from "@/lib/image-url";
 import Header from "@/app/retailer-catalog/components/Header";
 import FacetedSearch from "@/app/retailer-catalog/components/FacetedSearch";
 import ProductCard from "@/app/retailer-catalog/components/ProductCard";
@@ -79,10 +80,9 @@ function CatalogContent() {
               price: data.price,
               status: "Published",
               attributes: data.attributes,
-              imageUrl:
-                data.productImages?.[0] || "https://placehold.co/600x600",
-              productImages: data.productImages,
-              additionalImages: data.additionalImages,
+              imageUrl: resolveImageUrl(data.productImages?.[0]),
+              productImages: (data.productImages as string[] | undefined)?.map(resolveImageUrl),
+              additionalImages: (data.additionalImages as string[] | undefined)?.map(resolveImageUrl),
               specifications: data.specifications,
               db: db,
               stock: data.stock || 0,

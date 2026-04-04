@@ -14,6 +14,7 @@ import { useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { resolveImageUrl } from '@/lib/image-url';
 
 function ProductTableSkeleton() {
     return (
@@ -84,7 +85,7 @@ export default function ProductsPage() {
                 id: doc.id,
                 ...data,
                 name: data.productTitle,
-                imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                imageUrl: resolveImageUrl(data.productImages?.[0]),
               } as Product;
               productMap.set(product.id, product);
            }
@@ -106,7 +107,7 @@ export default function ProductsPage() {
                   id: doc.id,
                   ...data,
                   name: data.productTitle,
-                  imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                  imageUrl: resolveImageUrl(data.productImages?.[0]),
                   category: cat.name, // Use the real category name for display
                   db: newDb,
                 } as Product;

@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import { useStorage } from '@/firebase';
 import { ref, listAll, deleteObject, StorageReference, ListResult } from 'firebase/storage';
+import { resolveImageUrl } from '@/lib/image-url';
 import { AssetUploader } from './components/AssetUploader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,16 +61,15 @@ export default function AssetsPage() {
           ref: folderRef,
       }));
 
-      // Create an array of promises for constructing direct URLs
       const filePromises = res.items
         .filter(itemRef => itemRef.name !== '.gitkeep')
         .map(async (itemRef) => {
-          const directUrl = `https://firebasestorage.googleapis.com/v0/b/${itemRef.bucket}/o/${encodeURIComponent(itemRef.fullPath)}?alt=media`;
+          const displayUrl = resolveImageUrl(itemRef.name);
           return {
             name: itemRef.name,
             path: itemRef.fullPath,
-            type: 'file',
-            url: directUrl,
+            type: 'file' as const,
+            url: displayUrl,
             ref: itemRef,
           };
         });
@@ -119,9 +119,10 @@ export default function AssetsPage() {
     setCurrentPath(path);
   };
 
-  const copyUrl = (url: string, name: string) => {
-    navigator.clipboard.writeText(url).then(() => {
-        toast({ title: "URL Copied!", description: `The URL for ${name} has been copied.` });
+  const copyUrl = (item: StorageItem) => {
+    const cdnUrl = resolveImageUrl(item.name);
+    navigator.clipboard.writeText(cdnUrl).then(() => {
+        toast({ title: "URL Copied!", description: `The CDN URL for ${item.name} has been copied.` });
     }).catch(() => {
         toast({ variant: "destructive", title: "Failed to copy URL." });
     });
@@ -310,7 +311,7 @@ export default function AssetsPage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         {item.type === 'file' && (
-                                            <DropdownMenuItem onSelect={() => copyUrl(item.url!, item.name)}>
+                                            <DropdownMenuItem onSelect={() => copyUrl(item)}>
                                                 <Copy className="mr-2 h-4 w-4" />
                                                 Copy URL
                                             </DropdownMenuItem>

@@ -37,6 +37,12 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
+        protocol: 'https',
+        hostname: 'cdn.rubycatalogue.co.ke',
+        port: '',
+        pathname: '/**',
+      },
+      {
         protocol: "https",
         hostname: "storage.googleapis.com",
         port: "",

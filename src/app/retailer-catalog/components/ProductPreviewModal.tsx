@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { WhatsAppIcon } from "@/components/icons/WhatsappIcon";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { resolveImageUrl } from "@/lib/image-url";
 
 interface ProductPreviewModalProps {
   product: Product;

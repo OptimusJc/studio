@@ -16,6 +16,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Product, Category, User } from '@/types';
 import { useSearchParams } from 'next/navigation';
+import { resolveImageUrl } from '@/lib/image-url';
 
 
 const databases = ['retailers', 'buyers'];
@@ -79,7 +80,7 @@ function DashboardContent() {
               ...data,
               name: data.productTitle,
               price: data.price ?? 0,
-              imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+              imageUrl: resolveImageUrl(data.productImages?.[0]),
                createdAt: (() => {
                   if (!data.createdAt) return new Date().toISOString();
                   if (typeof data.createdAt === 'string') return data.createdAt;
@@ -106,7 +107,7 @@ function DashboardContent() {
                       ...data,
                       name: data.productTitle,
                       price: data.price ?? 0,
-                      imageUrl: data.productImages?.[0] || 'https://placehold.co/600x600',
+                      imageUrl: resolveImageUrl(data.productImages?.[0]),
                       category: cat,
                       db: db,
                       createdAt: (() => {

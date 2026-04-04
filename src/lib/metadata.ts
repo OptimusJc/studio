@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { initializeFirebase } from '@/firebase/server-init';
 import { getDocs, query, collection, where, limit, DocumentData, doc, getDoc } from 'firebase/firestore';
 import type { Product, Category } from '@/types';
+import { resolveImageUrl } from '@/lib/image-url';
 
 type GenerateMetadataProps = {
   params: { id: string };
@@ -40,7 +41,7 @@ export async function generateProductMetadata({ params, searchParams, db }: Gene
             id: productSnap.id,
             ...data,
             name: data.productTitle,
-            imageUrl: data.productImages?.[0] || '',
+            imageUrl: resolveImageUrl(data.productImages?.[0]),
             category: cat.name,
             db: db
           } as Product;
@@ -56,7 +57,8 @@ export async function generateProductMetadata({ params, searchParams, db }: Gene
       };
     }
     
-    const proxiedImageUrl = `${baseUrl}/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}`;
+    // imageUrl is already a fully resolved URL (CDN or legacy Firebase)
+    const ogImageUrl = product.imageUrl;
 
     return {
       title: `${product.productTitle || product.name} | Ruby`,
@@ -66,7 +68,7 @@ export async function generateProductMetadata({ params, searchParams, db }: Gene
         description: product.productDescription || '',
         images: [
           {
-            url: proxiedImageUrl,
+            url: ogImageUrl,
             width: 1200,
             height: 630,
             alt: product.productTitle || product.name,
@@ -78,7 +80,7 @@ export async function generateProductMetadata({ params, searchParams, db }: Gene
         card: 'summary_large_image',
         title: product.productTitle || product.name,
         description: product.productDescription || '',
-        images: [proxiedImageUrl],
+        images: [ogImageUrl],
       },
     };
   } catch (error) {
