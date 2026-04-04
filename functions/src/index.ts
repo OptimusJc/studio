@@ -5,34 +5,71 @@ admin.initializeApp();
 
 const bucket = admin.storage().bucket();
 
-export const serveImage = functions.https.onRequest(async (req, res) => {
-  try {
-    // Log the incoming path for debugging (check Cloud Functions logs)
-    console.log("Incoming req.path:", req.path);
-    console.log("Incoming req.url:", req.url);
-    console.log(
-      "Full req:",
-      JSON.stringify({
-        method: req.method,
-        headers: req.headers,
-        path: req.path,
-      }),
-    );
+// Domains allowed to request images.
+// Add your production domain, CDN origin, and any other trusted consumers.
+const ALLOWED_ORIGINS = [
+  "https://rubycatalogue.co.ke",
+  "https://www.rubycatalogue.co.ke",
+  "https://cdn.rubycatalogue.co.ke",
+];
 
+function isAllowedOrigin(req: functions.https.Request): boolean {
+  const origin = req.headers["origin"] as string | undefined;
+  const referer = req.headers["referer"] as string | undefined;
+
+  // Allow requests with no origin/referer (direct CDN fetches, server-side rendering)
+  if (!origin && !referer) return true;
+
+  const source = origin || referer || "";
+
+  // Allow localhost during development
+  if (source.includes("localhost") || source.includes("127.0.0.1")) {
+    return true;
+  }
+
+  return ALLOWED_ORIGINS.some((allowed) => source.startsWith(allowed));
+}
+
+export const serveImage = functions.https.onRequest(async (req, res) => {
+  // 1. GET only
+  if (req.method !== "GET") {
+    res.status(405).set("Allow", "GET").type("text/plain").send("Method Not Allowed");
+    return;
+  }
+
+  // 2. Origin / Referer allowlist — stops hotlinking from unknown domains
+  if (!isAllowedOrigin(req)) {
+    res.status(403).type("text/plain").send("Forbidden");
+    return;
+  }
+
+  // Set CORS header for allowed browser origins
+  const origin = req.headers["origin"] as string | undefined;
+  if (origin && ALLOWED_ORIGINS.some((a) => origin.startsWith(a))) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  try {
     // Normalize: remove leading /product-images/
-    // (with or without trailing slash variations)
     let filepath = (req.path || "")
-      // handles /product-images/abc.jpg or /product-images/abc.jpg/
       .replace(/^\/product-images\/?/, "")
-      .replace(/^\//, "") // in case extra leading slash somehow appears
+      .replace(/^\//, "")
       .trim();
 
-    // handle any %2F or encoded chars if needed
     filepath = decodeURIComponent(filepath);
-    console.log("Extracted filepath:", filepath);
 
-    if (!filepath) {
+    // 3. Path traversal guard — reject paths trying to escape the folder
+    if (!filepath || filepath.includes("..") || filepath.startsWith("/")) {
       res.status(400).type("text/plain").send("Invalid image path");
+      return;
+    }
+
+    // 4. File extension guard — only allow known image types
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    const fileExtension = filepath.slice(filepath.lastIndexOf(".")).toLowerCase();
+
+    if (!filepath.includes(".") || !allowedExtensions.includes(fileExtension)) {
+      res.status(403).type("text/plain").send("Forbidden file type");
       return;
     }
 
@@ -47,17 +84,16 @@ export const serveImage = functions.https.onRequest(async (req, res) => {
 
     const [metadata] = await file.getMetadata();
 
-    // set aggresive cache headers
+    // Aggressive cache headers — images are immutable by filename convention
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     res.setHeader(
       "Content-Type",
       metadata.contentType || "application/octet-stream",
     );
 
-    // steam file to response
     file.createReadStream().pipe(res);
   } catch (err) {
-    console.log("Error serving image", err);
+    console.error("Error serving image:", err);
     res.status(500).type("text/plain").send("Internal Server Error");
   }
 });
