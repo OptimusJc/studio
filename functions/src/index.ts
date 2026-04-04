@@ -1,5 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import sharp from "sharp";
 
 admin.initializeApp();
 
@@ -30,7 +31,9 @@ function isAllowedOrigin(req: functions.https.Request): boolean {
   return ALLOWED_ORIGINS.some((allowed) => source.startsWith(allowed));
 }
 
-export const serveImage = functions.https.onRequest(async (req, res) => {
+export const serveImage = functions.https.onRequest(
+  { memory: "1GiB" },
+  async (req: functions.https.Request, res: any) => {
   // 1. GET only
   if (req.method !== "GET") {
     res.status(405).set("Allow", "GET").type("text/plain").send("Method Not Allowed");
@@ -84,14 +87,55 @@ export const serveImage = functions.https.onRequest(async (req, res) => {
 
     const [metadata] = await file.getMetadata();
 
+    // Parse query params for resizing
+    const width = req.query.w ? parseInt(req.query.w as string, 10) : undefined;
+    const height = req.query.h ? parseInt(req.query.h as string, 10) : undefined;
+    const quality = req.query.q ? parseInt(req.query.q as string, 10) : 80;
+    
+    // Determine target format (respect explicit query, fallback to Accept headers)
+    const acceptHeader = req.headers.accept || "";
+    let format = (req.query.fm as string) || "";
+    
+    if (!format) {
+      if (acceptHeader.includes("image/avif")) format = "avif";
+      else if (acceptHeader.includes("image/webp")) format = "webp";
+      else format = "jpeg"; // standard fallback
+    }
+
+    let transform = sharp();
+
+    // Prevent malicious huge resize requests by capping max sizes
+    if (width || height) {
+      const safeWidth = width ? Math.min(width, 2000) : undefined;
+      const safeHeight = height ? Math.min(height, 2000) : undefined;
+      transform = transform.resize(safeWidth, safeHeight, {
+        fit: "inside",
+        withoutEnlargement: true,
+      });
+    }
+
+    let contentType = metadata.contentType || "application/octet-stream";
+    if (format === "avif") {
+      // effort 4 is a good balance of encoding speed and compression size
+      transform = transform.avif({ quality, effort: 4 });
+      contentType = "image/avif";
+    } else if (format === "webp") {
+      transform = transform.webp({ quality });
+      contentType = "image/webp";
+    } else if (format === "jpeg" || format === "jpg") {
+      transform = transform.jpeg({ quality, progressive: true });
+      contentType = "image/jpeg";
+    } else if (format === "png") {
+      transform = transform.png({ quality });
+      contentType = "image/png";
+    }
+
     // Aggressive cache headers — images are immutable by filename convention
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-    res.setHeader(
-      "Content-Type",
-      metadata.contentType || "application/octet-stream",
-    );
+    res.setHeader("Content-Type", contentType);
 
-    file.createReadStream().pipe(res);
+    // Pipe storage stream -> sharp -> response
+    file.createReadStream().pipe(transform).pipe(res);
   } catch (err) {
     console.error("Error serving image:", err);
     res.status(500).type("text/plain").send("Internal Server Error");
