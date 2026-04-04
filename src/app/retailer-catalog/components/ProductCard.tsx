@@ -11,6 +11,7 @@ import { ProductPreviewModal } from "./ProductPreviewModal";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Ban } from "lucide-react";
+import { resolveImageUrl } from "@/lib/image-url";
 
 type ProductCardProps = {
   product: Product;
@@ -60,7 +61,7 @@ export default function ProductCard({
       <Card className="flex flex-col overflow-hidden h-full bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-3xl border border-gray-200 relative">
         <div className="aspect-[5/4] relative rounded-t-lg overflow-hidden">
           <Image
-            src={product.imageUrl}
+            src={resolveImageUrl(product.imageUrl)}
             alt={product.name}
             fill
             unoptimized

@@ -10,7 +10,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useStorage } from '@/firebase';
-import { ref, listAll, getDownloadURL, ListResult } from 'firebase/storage';
+import { ref, listAll, ListResult } from 'firebase/storage';
+import { resolveImageUrl } from '@/lib/image-url';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Folder, File } from 'lucide-react';
 import Image from 'next/image';
@@ -36,7 +37,7 @@ function AssetGridSkeleton() {
 
 interface AssetPickerDialogProps {
     children: React.ReactNode;
-    onAssetSelect: (url: string) => void;
+    onAssetSelect: (filename: string) => void;
 }
 
 export function AssetPickerDialog({ children, onAssetSelect }: AssetPickerDialogProps) {
@@ -63,11 +64,12 @@ export function AssetPickerDialog({ children, onAssetSelect }: AssetPickerDialog
       const filePromises = res.items
         .filter(itemRef => itemRef.name !== '.gitkeep')
         .map(async (itemRef) => {
-          const url = await getDownloadURL(itemRef);
+          // Use CDN URL for display; store only filename on selection
+          const url = resolveImageUrl(itemRef.name);
           return {
             name: itemRef.name,
             path: itemRef.fullPath,
-            type: 'file',
+            type: 'file' as const,
             url: url,
           };
       });
@@ -97,8 +99,9 @@ export function AssetPickerDialog({ children, onAssetSelect }: AssetPickerDialog
     setCurrentPath(path);
   };
   
-  const handleFileClick = (url: string) => {
-    onAssetSelect(url);
+  const handleFileClick = (item: StorageItem) => {
+    // Pass only the filename so it's stored cleanly in Firestore
+    onAssetSelect(item.name);
     setIsOpen(false);
   }
 
@@ -138,7 +141,7 @@ export function AssetPickerDialog({ children, onAssetSelect }: AssetPickerDialog
                         ) : (
                              <div 
                                 className="aspect-square w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden border cursor-pointer"
-                                onClick={() => handleFileClick(item.url!)}
+                                onClick={() => handleFileClick(item)}
                             >
                                 {item.url && (item.url.includes('.jpg') || item.url.includes('.jpeg') || item.url.includes('.png') || item.url.includes('.gif') || item.url.includes('.webp')) ? (
                                     <Image 

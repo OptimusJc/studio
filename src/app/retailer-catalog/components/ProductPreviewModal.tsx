@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { WhatsAppIcon } from "@/components/icons/WhatsappIcon";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { resolveImageUrl } from "@/lib/image-url";
 
 interface ProductPreviewModalProps {
   product: Product;
@@ -83,7 +84,7 @@ export function ProductPreviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {children}
       <DialogContent
-        className="max-w-4xl h-[60vh] lg:h-[80vh] flex flex-col p-0 bg-white"
+        className="max-w-4xl h-[75vh] lg:h-[80vh] flex flex-col p-0 bg-white"
         onPointerDownOutside={(e) => {
           e.preventDefault();
           e.stopPropagation();

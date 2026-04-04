@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytesResumable } from 'firebase/storage';
 import { useFirebase } from '@/firebase';
+import { resolveImageUrl } from '@/lib/image-url';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
@@ -30,10 +31,12 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
 
   const imageUrl = index !== undefined ? watch(`${field}.${index}`) : watch(field)?.[0];
-  const [previewUrl, setPreviewUrl] = useState<string | null>(imageUrl || null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    imageUrl ? resolveImageUrl(imageUrl) : null
+  );
   
   useEffect(() => {
-    setPreviewUrl(imageUrl || null);
+    setPreviewUrl(imageUrl ? resolveImageUrl(imageUrl) : null);
   }, [imageUrl]);
 
   const updateFormValue = (url: string) => {
@@ -107,14 +110,14 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
         });
       },
       () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          setIsUploading(false);
-          setUploadProgress(null);
-          updateFormValue(downloadURL);
-          toast({
-            title: 'Upload Successful',
-            description: 'Image has been uploaded and linked.',
-          });
+        // Store only the filename, not the full download URL
+        const filename = uploadTask.snapshot.ref.name;
+        setIsUploading(false);
+        setUploadProgress(null);
+        updateFormValue(filename);
+        toast({
+          title: 'Upload Successful',
+          description: 'Image has been uploaded and linked.',
         });
       }
     );
@@ -130,8 +133,9 @@ export function ImageUploader({ field, index }: ImageUploaderProps) {
     }
   };
 
-  const handleAssetSelect = (url: string) => {
-    updateFormValue(url);
+  // Receives a filename (new) or full URL (legacy) from the asset picker
+  const handleAssetSelect = (filename: string) => {
+    updateFormValue(filename);
     toast({
         title: 'Image Selected',
         description: 'Image from library has been linked.',
