@@ -6,7 +6,7 @@ import { useMemoFirebase, useCollection, useFirestore, deleteDocumentNonBlocking
 import { collection, doc } from 'firebase/firestore';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, SlidersHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -57,7 +57,7 @@ export default function AttributesPage() {
         <AddAttributeDialog />
       </PageHeader>
 
-      <Card>
+      <Card className="border-none shadow-2xl bg-background/60 backdrop-blur-xl dark:bg-background/40 ring-1 ring-black/5 dark:ring-white/10 rounded-2xl overflow-hidden">
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle>Attribute List</CardTitle>
@@ -65,7 +65,7 @@ export default function AttributesPage() {
           </div>
           <div className="w-full md:w-48 pt-4 md:pt-0">
              <Select value={categoryFilter} onValueChange={setCategoryFilter} disabled={isLoadingCategories}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full bg-background/50 hover:bg-background/80 transition-colors rounded-xl border-border/50 shadow-sm focus:ring-primary/20">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -80,10 +80,10 @@ export default function AttributesPage() {
         <CardContent className="max-h-[60vh] overflow-y-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Attribute Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Values</TableHead>
+              <TableRow className="border-b border-border/40 hover:bg-transparent">
+                <TableHead className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Attribute Name</TableHead>
+                <TableHead className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Category</TableHead>
+                <TableHead className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Values</TableHead>
                 <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -94,15 +94,19 @@ export default function AttributesPage() {
                 </TableRow>
               )}
               {!isLoading && filteredAttributes.map((attribute) => (
-                <TableRow key={attribute.id}>
-                  <TableCell className="font-medium">{attribute.name}</TableCell>
+                <TableRow key={attribute.id} className="group hover:bg-muted/30 transition-colors duration-200 border-b border-border/40 last:border-0">
+                  <TableCell className="font-semibold text-foreground/90">{attribute.name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{attribute.category}</Badge>
+                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-medium px-3 py-1 rounded-full tracking-wide">
+                      {attribute.category}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-2">
-                      {attribute.values.map((value) => (
-                        <Badge key={value} variant="secondary">{value}</Badge>
+                      {attribute.values.map((value, i) => (
+                        <Badge key={`${value}-${i}`} variant="secondary" className="bg-muted/50 text-foreground hover:bg-muted transition-colors rounded-lg px-2.5 py-0.5 border border-border/50 shadow-sm">
+                          {value}
+                        </Badge>
                       ))}
                     </div>
                   </TableCell>
@@ -129,8 +133,16 @@ export default function AttributesPage() {
               ))}
                {!isLoading && filteredAttributes.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={4} className="text-center h-24">
-                        No attributes found for this category.
+                    <TableCell colSpan={4} className="h-64">
+                        <div className="flex flex-col items-center justify-center space-y-3 text-muted-foreground">
+                            <div className="p-4 rounded-full bg-muted/30 ring-1 ring-border/50 shadow-sm">
+                                <SlidersHorizontal className="h-8 w-8 text-muted-foreground/60" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-lg font-medium text-foreground/80">No attributes found</p>
+                                <p className="text-sm">Try adjusting your filters or add a new attribute.</p>
+                            </div>
+                        </div>
                     </TableCell>
                 </TableRow>
               )}

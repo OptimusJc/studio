@@ -16,16 +16,16 @@ import {
 import { Logo } from "@/components/icons/Logo";
 import {
   LayoutDashboard,
-  ShoppingBasket,
-  BookCopy,
+  Package,
+  Library,
   Users,
   Settings,
   LogOut,
-  Building,
-  Home,
-  Tags,
-  List,
-  Folder,
+  Store,
+  ShoppingBag,
+  SlidersHorizontal,
+  Grid,
+  Image,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -131,13 +131,13 @@ export default function AdminSidebar({
   };
 
   return (
-    <Sidebar className="group/sidebar">
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-2">
+    <Sidebar className="group/sidebar border-r-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.1)] [&>div[data-sidebar=sidebar]]:bg-sidebar/80 [&>div[data-sidebar=sidebar]]:backdrop-blur-xl [&>div[data-sidebar=sidebar]]:border-r [&>div[data-sidebar=sidebar]]:border-r-white/10 dark:[&>div[data-sidebar=sidebar]]:border-r-white/5">
+      <SidebarHeader className="pt-6 pb-4 px-6 border-b border-border/40">
+        <div className="flex items-center gap-2 transition-transform hover:scale-105 duration-300 origin-left">
           <Logo />
         </div>
       </SidebarHeader>
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-3 space-y-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -157,19 +157,19 @@ export default function AdminSidebar({
 
         <div className="px-2 py-1">
           <Select value={selectedDb} onValueChange={handleDbChange}>
-            <SelectTrigger className="w-full bg-sidebar-accent border-sidebar-border text-sidebar-foreground focus:ring-sidebar-ring">
+            <SelectTrigger className="w-full h-11 rounded-xl bg-sidebar/50 hover:bg-sidebar/80 transition-colors border-border/50 text-sidebar-foreground shadow-sm focus:ring-primary/20 focus:ring-offset-0">
               <SelectValue placeholder="Select database" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="retailers">
                 <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4" />
+                  <Store className="h-4 w-4" />
                   <span>Retailers</span>
                 </div>
               </SelectItem>
               <SelectItem value="buyers">
                 <div className="flex items-center gap-2">
-                  <Home className="h-4 w-4" />
+                  <ShoppingBag className="h-4 w-4" />
                   <span>Buyers</span>
                 </div>
               </SelectItem>
@@ -187,7 +187,7 @@ export default function AdminSidebar({
               tooltip="All Products"
             >
               <Link href={`/admin/products?db=${selectedDb}`}>
-                <ShoppingBasket />
+                <Package />
                 <span>All Products</span>
               </Link>
             </SidebarMenuButton>
@@ -204,7 +204,7 @@ export default function AdminSidebar({
                   <Link
                     href={`/admin/products?db=${selectedDb}&category=${categorySlug}`}
                   >
-                    <BookCopy />
+                    <Library />
                     <span>{cat.name}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -223,7 +223,7 @@ export default function AdminSidebar({
               tooltip="Categories"
             >
               <Link href={`/admin/categories?db=${selectedDb}`}>
-                <List />
+                <Grid />
                 <span>Categories</span>
               </Link>
             </SidebarMenuButton>
@@ -235,7 +235,7 @@ export default function AdminSidebar({
               tooltip="Attributes"
             >
               <Link href={`/admin/attributes?db=${selectedDb}`}>
-                <Tags />
+                <SlidersHorizontal />
                 <span>Attributes</span>
               </Link>
             </SidebarMenuButton>
@@ -247,7 +247,7 @@ export default function AdminSidebar({
               tooltip="Assets"
             >
               <Link href={`/admin/assets?db=${selectedDb}`}>
-                <Folder />
+                <Image />
                 <span>Assets</span>
               </Link>
             </SidebarMenuButton>
@@ -281,29 +281,29 @@ export default function AdminSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
-        <div className="flex items-center gap-3 p-2">
-          <Avatar>
+      <SidebarFooter className="p-4 border-t border-border/40 bg-muted/20">
+        <div className="flex items-center gap-3">
+          <Avatar className="ring-2 ring-background shadow-sm transition-transform hover:scale-110 duration-300">
             <AvatarImage
               src={`https://picsum.photos/seed/${user?.id || "admin"}/40/40`}
               alt={user?.name}
             />
             <AvatarFallback>{user?.name?.charAt(0) || "A"}</AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="font-semibold text-sm">{user?.name}</span>
-            <span className="text-xs text-muted-foreground w-32 truncate">
+          <div className="flex flex-col overflow-hidden">
+            <span className="font-semibold text-sm truncate">{user?.name}</span>
+            <span className="text-xs text-muted-foreground w-full truncate">
               {user?.email}
             </span>
           </div>
           <SidebarMenuButton
             variant="ghost"
-            className="ml-auto"
+            className="ml-auto flex-shrink-0 h-9 w-9 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors duration-300"
             size="sm"
             tooltip="Log Out"
             onClick={handleLogout}
           >
-            <LogOut />
+            <LogOut className="h-4 w-4" />
           </SidebarMenuButton>
         </div>
       </SidebarFooter>

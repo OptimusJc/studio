@@ -13,7 +13,7 @@ import FacetedSearch from './components/FacetedSearch';
 import ProductCard from './components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -142,10 +142,11 @@ function CatalogContent() {
         } else {
           newFilteredProducts = newFilteredProducts.filter(p => {
             const productAttribute = p.attributes[key];
+            const lowerValues = values.map((v: string) => String(v).toLowerCase());
             if (Array.isArray(productAttribute)) {
-              return productAttribute.some(attr => values.includes(attr as string));
+              return productAttribute.some(attr => lowerValues.includes(String(attr).toLowerCase()));
             }
-            return values.includes(productAttribute as string);
+            return lowerValues.includes(String(productAttribute).toLowerCase());
           });
         }
       }
@@ -162,6 +163,10 @@ function CatalogContent() {
       'color', 'material', 'texture', 'fabric type', 'carpet type', 'window blind type', 'wallpaper type', 'wall mural type', 'window film type', 'fluted panel type',
     ];
 
+    // Normalize a value to Title Case for consistent deduplication and display.
+    const toTitleCase = (str: string) =>
+      str.trim().replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
     // Initialize the filter map with all whitelisted attributes to ensure they always appear.
     const filterMap = new Map<string, Set<string>>();
     attributeWhitelist.forEach(attr => filterMap.set(attr, new Set()));
@@ -175,9 +180,9 @@ function CatalogContent() {
           if (filterMap.has(lowerKey)) {
             const valueSet = filterMap.get(lowerKey)!;
             if (Array.isArray(valueOrValues)) {
-              valueOrValues.forEach(v => v && valueSet.add(v));
+              valueOrValues.forEach(v => v && valueSet.add(toTitleCase(String(v))));
             } else if (valueOrValues && typeof valueOrValues === 'string') {
-              valueSet.add(valueOrValues);
+              valueSet.add(toTitleCase(valueOrValues));
             }
           }
         });
@@ -253,6 +258,7 @@ function CatalogContent() {
             </div>
             <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
               <SheetContent side="left" className="p-0 h-full w-full max-w-sm bg-gray-100" showOverlay={true}>
+                <SheetTitle className="sr-only">Filters</SheetTitle>
                 {facetedSearchComponent}
               </SheetContent>
             </Sheet>

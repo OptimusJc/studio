@@ -3,7 +3,7 @@
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types';
@@ -122,7 +122,7 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className, on
             >
                 <span className="relative z-10">All Products</span>
                 {activeCategory !== 'All Categories' && (
-                    <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-1/2 group-hover:left-1/4" />
+                    <span className="nav-underline bg-primary" />
                 )}
             </Button>
 
@@ -144,7 +144,7 @@ function CategoryNav({ categories, appliedFilters, onFilterChange, className, on
                                 <span className="relative z-10">{group.label}</span>
                                 <ChevronDown className={cn("h-4 w-4 transition-transform duration-300 group-data-[state=open]:rotate-180", isGroupActive ? 'opacity-100' : 'opacity-40')} />
                                 {!isGroupActive && (
-                                    <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-primary/40 transition-all duration-300 group-hover:w-1/2 group-hover:left-1/4" />
+                                    <span className="nav-underline bg-primary/40" />
                                 )}
                             </Button>
                         </DropdownMenuTrigger>
@@ -258,6 +258,7 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
 
                         <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                             <SheetContent side="top" className="p-6 pt-16 rounded-b-[2rem] bg-background/95 backdrop-blur-xl border-none" showOverlay={true}>
+                                <SheetTitle className="sr-only">Search</SheetTitle>
                                 <div className="relative w-full max-w-2xl mx-auto">
                                     <div className="flex items-center bg-muted rounded-2xl p-2 border-2 border-transparent focus-within:border-primary/50 transition-all">
                                         <Search className="h-5 w-5 ml-2 text-muted-foreground" />
@@ -308,6 +309,7 @@ export default function Header({ basePath, categories, appliedFilters, onFilterC
                                     </Button>
                                 </SheetTrigger>
                                 <SheetContent side="right" className="w-full max-w-sm p-0 bg-background border-none flex flex-col">
+                                    <SheetTitle className="sr-only">Menu</SheetTitle>
                                     <div className="p-8 border-b bg-muted/30">
                                         <AppLogo basePath={basePath} />
                                         <p className="mt-4 text-sm text-muted-foreground">Discover the Ruby Catalogue collection of premium interior solutions.</p>
