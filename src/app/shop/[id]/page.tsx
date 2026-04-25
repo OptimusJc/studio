@@ -473,21 +473,25 @@ function ProductDetailPageContent() {
               )}
 
               {/* Action Buttons */}
-              <div className="pt-4 flex flex-col sm:flex-row gap-4">
+              <div className="pt-6 flex flex-col sm:flex-row gap-3">
                 <Button
                   asChild
                   size="lg"
-                  className="w-full sm:w-auto bg-green-500 hover:bg-green-600 rounded-full text-white"
+                  className="w-full sm:w-auto relative overflow-hidden rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold tracking-wide shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/50 hover:scale-[1.03] active:scale-[0.97] transition-all duration-300 ease-out disabled:opacity-50 disabled:shadow-none disabled:scale-100"
                   disabled={product.stockStatus === "Out of Stock"}
                 >
-                  <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
-                    <WhatsAppIcon className="mr-2 h-5 w-5" />
+                  <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" className="flex items-center">
+                    <WhatsAppIcon className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
                     Share on WhatsApp
                   </a>
                 </Button>
-                <Button onClick={handleDownload} variant="outline" size="lg" className="w-full sm:w-auto rounded-full">
-                    <Download className="mr-2 h-5 w-5" />
-                    Download Image
+                <Button
+                  onClick={handleDownload}
+                  size="lg"
+                  className="w-full sm:w-auto rounded-full border-2 border-foreground/20 bg-transparent hover:bg-transparent text-foreground font-semibold tracking-wide hover:border-foreground hover:ring-2 hover:ring-foreground/15 hover:ring-offset-2 hover:scale-[1.03] active:scale-[0.97] transition-all duration-300 ease-out"
+                >
+                  <Download className="mr-2 h-5 w-5" />
+                  Download Image
                 </Button>
               </div>
             </div>
