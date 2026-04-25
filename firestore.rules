@@ -101,7 +101,7 @@ service cloud.firestore {
      * @description Rules for the 'settings' collection.
      */
     match /settings/{settingId} {
-        allow get: if isSignedIn();
+        allow get: if true;
         allow write: if isAdmin();
     }
     
