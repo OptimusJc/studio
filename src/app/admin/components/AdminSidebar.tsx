@@ -16,16 +16,16 @@ import {
 import { Logo } from "@/components/icons/Logo";
 import {
   LayoutDashboard,
-  ShoppingBasket,
-  BookCopy,
+  Package,
+  Library,
   Users,
   Settings,
   LogOut,
-  Building,
-  Home,
-  Tags,
-  List,
-  Folder,
+  Store,
+  ShoppingBag,
+  SlidersHorizontal,
+  Grid,
+  Image,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -163,13 +163,13 @@ export default function AdminSidebar({
             <SelectContent>
               <SelectItem value="retailers">
                 <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4" />
+                  <Store className="h-4 w-4" />
                   <span>Retailers</span>
                 </div>
               </SelectItem>
               <SelectItem value="buyers">
                 <div className="flex items-center gap-2">
-                  <Home className="h-4 w-4" />
+                  <ShoppingBag className="h-4 w-4" />
                   <span>Buyers</span>
                 </div>
               </SelectItem>
@@ -187,7 +187,7 @@ export default function AdminSidebar({
               tooltip="All Products"
             >
               <Link href={`/admin/products?db=${selectedDb}`}>
-                <ShoppingBasket />
+                <Package />
                 <span>All Products</span>
               </Link>
             </SidebarMenuButton>
@@ -204,7 +204,7 @@ export default function AdminSidebar({
                   <Link
                     href={`/admin/products?db=${selectedDb}&category=${categorySlug}`}
                   >
-                    <BookCopy />
+                    <Library />
                     <span>{cat.name}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -223,7 +223,7 @@ export default function AdminSidebar({
               tooltip="Categories"
             >
               <Link href={`/admin/categories?db=${selectedDb}`}>
-                <List />
+                <Grid />
                 <span>Categories</span>
               </Link>
             </SidebarMenuButton>
@@ -235,7 +235,7 @@ export default function AdminSidebar({
               tooltip="Attributes"
             >
               <Link href={`/admin/attributes?db=${selectedDb}`}>
-                <Tags />
+                <SlidersHorizontal />
                 <span>Attributes</span>
               </Link>
             </SidebarMenuButton>
@@ -247,7 +247,7 @@ export default function AdminSidebar({
               tooltip="Assets"
             >
               <Link href={`/admin/assets?db=${selectedDb}`}>
-                <Folder />
+                <Image />
                 <span>Assets</span>
               </Link>
             </SidebarMenuButton>
