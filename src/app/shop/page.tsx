@@ -157,12 +157,13 @@ function CatalogContent() {
         } else {
           newFilteredProducts = newFilteredProducts.filter((p) => {
             const productAttribute = p.attributes[key];
+            const lowerValues = values.map((v: string) => String(v).toLowerCase());
             if (Array.isArray(productAttribute)) {
               return productAttribute.some((attr) =>
-                values.includes(attr as string),
+                lowerValues.includes(String(attr).toLowerCase()),
               );
             }
-            return values.includes(productAttribute as string);
+            return lowerValues.includes(String(productAttribute).toLowerCase());
           });
         }
       }
@@ -181,6 +182,10 @@ function CatalogContent() {
       'color', 'material', 'texture', 'fabric type', 'carpet type', 'window blind type'
     ];
 
+    // Normalize a value to Title Case for consistent deduplication and display.
+    const toTitleCase = (str: string) =>
+      str.trim().replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
     // Initialize the filter map with all whitelisted attributes to ensure they always appear.
     const filterMap = new Map<string, Set<string>>();
     attributeWhitelist.forEach(attr => filterMap.set(attr, new Set()));
@@ -194,9 +199,9 @@ function CatalogContent() {
           if (filterMap.has(lowerKey)) {
             const valueSet = filterMap.get(lowerKey)!;
             if (Array.isArray(valueOrValues)) {
-              valueOrValues.forEach(v => v && valueSet.add(v));
+              valueOrValues.forEach(v => v && valueSet.add(toTitleCase(String(v))));
             } else if (valueOrValues && typeof valueOrValues === 'string') {
-              valueSet.add(valueOrValues);
+              valueSet.add(toTitleCase(valueOrValues));
             }
           }
         });
