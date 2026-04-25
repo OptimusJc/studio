@@ -35,13 +35,10 @@ function RowActions({ product }: { product: Product }) {
   const [isShareOpen, setShareOpen] = useState(false);
 
   const createShareLink = () => {
-    if (typeof window === 'undefined' || !product.category) return '';
-    const filters = {
-      category: [product.category],
-    };
-    const encodedFilters = btoa(JSON.stringify(filters));
-    const basePath = product.db === 'retailers' ? '/retailer-catalog' : '/shop';
-    return `${window.location.origin}${basePath}?filters=${encodedFilters}`;
+    if (typeof window === 'undefined' || !product.id) return '';
+    // Only use /shop if db is explicitly 'buyers'; default to /retailer-catalog for everything else
+    const basePath = product.db === 'buyers' ? '/shop' : '/retailer-catalog';
+    return `${window.location.origin}${basePath}/${product.id}`;
   };
 
   const shareLink = createShareLink();
@@ -127,9 +124,9 @@ function RowActions({ product }: { product: Product }) {
        </AlertDialog>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Share Filtered View</DialogTitle>
+          <DialogTitle>Share Product</DialogTitle>
           <DialogDescription>
-            This link will take users to the catalog with a filter for '{product.category}' applied.
+            This link will take users directly to &quot;{product.name}&quot;.
           </DialogDescription>
         </DialogHeader>
         <div className="flex items-center space-x-2">

@@ -75,6 +75,16 @@ function ProductDetailSkeleton() {
   );
 }
 
+function createSafeSlug(name: string) {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
 function ProductDetailPageContent() {
   const params = useParams();
   const firestore = useFirestore();
@@ -105,7 +115,7 @@ function ProductDetailPageContent() {
       let productCategoryName: string | null = null;
 
       for (const cat of categoriesData) {
-        const categorySlug = cat.name.toLowerCase().replace(/\s+/g, "-");
+        const categorySlug = createSafeSlug(cat.name);
         const liveCollectionPath = `buyers/${categorySlug}/products`;
         try {
           const productRef = doc(firestore, liveCollectionPath, productId);
@@ -139,9 +149,7 @@ function ProductDetailPageContent() {
 
         // Fetch related products
         if (productCategoryName) {
-          const categorySlug = productCategoryName
-            .toLowerCase()
-            .replace(/\s+/g, "-");
+          const categorySlug = createSafeSlug(productCategoryName);
           const relatedCollectionPath = `buyers/${categorySlug}/products`;
           const q = query(
             collection(firestore, relatedCollectionPath),
