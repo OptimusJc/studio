@@ -101,8 +101,8 @@ export default function AttributesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-2">
-                      {attribute.values.map((value) => (
-                        <Badge key={value} variant="secondary">{value}</Badge>
+                      {attribute.values.map((value, i) => (
+                        <Badge key={`${value}-${i}`} variant="secondary">{value}</Badge>
                       ))}
                     </div>
                   </TableCell>
