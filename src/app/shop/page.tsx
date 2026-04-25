@@ -18,7 +18,7 @@ import Header from "@/app/retailer-catalog/components/Header";
 import FacetedSearch from "@/app/retailer-catalog/components/FacetedSearch";
 import ProductCard from "@/app/retailer-catalog/components/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -255,6 +255,7 @@ function CatalogContent() {
               onOpenChange={setMobileFiltersOpen}
             >
               <SheetContent side="left" className="p-0 h-full w-full max-w-sm" showOverlay={false}>
+                <SheetTitle className="sr-only">Filters</SheetTitle>
                 {facetedSearchComponent}
               </SheetContent>
             </Sheet>

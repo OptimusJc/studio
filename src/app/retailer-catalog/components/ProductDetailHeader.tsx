@@ -2,7 +2,7 @@
 'use client';
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Menu, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
@@ -145,6 +145,7 @@ export default function ProductDetailHeader({ basePath = '/' }: { basePath?: str
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="right" className="w-full max-w-xs">
+                            <SheetTitle className="sr-only">Menu</SheetTitle>
                             <div className="p-4">
                                 <div className="mb-8">
                                     <AppLogo basePath={basePath} />

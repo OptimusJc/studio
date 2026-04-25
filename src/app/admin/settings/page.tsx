@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useEffect } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Laptop, Building2, Palette, Save, CheckCircle2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -76,18 +76,18 @@ function CompanyProfileSettings() {
     
     if (isLoadingProfile) {
         return (
-             <Card>
-                <CardHeader>
+             <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm">
+                <CardHeader className="border-b border-border/50 bg-muted/20 pb-6">
                     <Skeleton className="h-6 w-1/2" />
-                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-3/4 mt-2" />
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 pt-6">
                     <div className="space-y-2">
                         <Skeleton className="h-4 w-1/4" />
-                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full md:max-w-md rounded-lg" />
                     </div>
-                    <div className="flex justify-end">
-                        <Skeleton className="h-10 w-24" />
+                    <div className="flex justify-end pt-4 border-t border-border/50 mt-6 pt-6">
+                        <Skeleton className="h-10 w-32 rounded-full" />
                     </div>
                 </CardContent>
             </Card>
@@ -95,29 +95,40 @@ function CompanyProfileSettings() {
     }
 
     return (
-         <Card>
-            <CardHeader>
-                <CardTitle>Company Profile</CardTitle>
-                <CardDescription>Manage your company's details.</CardDescription>
+         <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="border-b border-border/50 bg-muted/20 pb-6">
+                <CardTitle className="text-xl font-semibold">Company Profile</CardTitle>
+                <CardDescription>Manage your company's details and public presence.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <FormField
                             control={form.control}
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Company Name</FormLabel>
+                                    <FormLabel className="text-foreground/80 text-sm">Company Name</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Ruby Inc." {...field} />
+                                        <Input 
+                                            placeholder="e.g. Ruby Inc." 
+                                            {...field} 
+                                            className="max-w-md bg-background/50 focus-visible:ring-primary/20 transition-all shadow-sm"
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-                        <div className="flex justify-end pt-4">
-                            <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isDirty}>Save Changes</Button>
+                        <div className="flex justify-end pt-4 border-t border-border/50 mt-6">
+                            <Button 
+                                type="submit" 
+                                disabled={form.formState.isSubmitting || !form.formState.isDirty}
+                                className="relative overflow-hidden rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:scale-100"
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
+                            </Button>
                         </div>
                     </form>
                 </Form>
@@ -132,38 +143,48 @@ function ThemeSelector({ form }: { form: any }) {
       control={form.control}
       name="theme"
       render={({ field }) => (
-        <FormItem className="space-y-3">
-          <FormLabel>Select a Theme</FormLabel>
+        <FormItem className="space-y-4">
+          <FormLabel className="text-base text-foreground/80">Select a Theme</FormLabel>
           <FormControl>
             <RadioGroup
               onValueChange={field.onChange}
               value={field.value}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
             >
-              {Object.entries(themes).map(([name, theme]) => (
-                <FormItem key={name} className="flex items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <RadioGroupItem value={name} id={name} className="sr-only" />
-                  </FormControl>
-                  <FormLabel
-                    htmlFor={name}
-                    className={cn(
-                      "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer w-full",
-                      field.value === name && "border-primary"
-                    )}
-                  >
-                    <div className="mb-2 text-center">
-                      <p className="font-semibold">{theme.label}</p>
-                      <p className="text-xs text-muted-foreground">{theme.description}</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: `hsl(${theme.light.primary.h}, ${theme.light.primary.s}%, ${theme.light.primary.l}%)` }} />
-                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: `hsl(${theme.light.accent.h}, ${theme.light.accent.s}%, ${theme.light.accent.l}%)` }} />
-                        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: `hsl(${theme.light.background.h}, ${theme.light.background.s}%, ${theme.light.background.l}%)` }} />
-                    </div>
-                  </FormLabel>
-                </FormItem>
-              ))}
+              {Object.entries(themes).map(([name, theme]) => {
+                const isSelected = field.value === name;
+                return (
+                  <FormItem key={name} className="flex items-center space-x-0 space-y-0 relative">
+                    <FormControl>
+                      <RadioGroupItem value={name} id={name} className="sr-only" />
+                    </FormControl>
+                    <FormLabel
+                      htmlFor={name}
+                      className={cn(
+                        "group relative flex flex-col items-start justify-between rounded-2xl border-2 p-5 cursor-pointer w-full overflow-hidden transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg",
+                        isSelected 
+                            ? "border-primary bg-primary/5 shadow-md shadow-primary/10" 
+                            : "border-border/50 bg-background hover:border-border hover:bg-muted/30"
+                      )}
+                    >
+                      {isSelected && (
+                         <div className="absolute top-4 right-4 text-primary animate-in zoom-in duration-300">
+                             <CheckCircle2 className="h-5 w-5" />
+                         </div>
+                      )}
+                      <div className="mb-4 text-left pr-8">
+                        <p className={cn("font-semibold text-lg transition-colors", isSelected ? "text-primary" : "text-foreground")}>{theme.label}</p>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{theme.description}</p>
+                      </div>
+                      <div className="flex items-center gap-3 mt-auto pt-4 w-full border-t border-border/50 border-dashed">
+                          <div className="w-8 h-8 rounded-full border shadow-sm transition-transform group-hover:scale-110" style={{ backgroundColor: `hsl(${theme.light.primary.h}, ${theme.light.primary.s}%, ${theme.light.primary.l}%)` }} title="Primary Color" />
+                          <div className="w-6 h-6 rounded-full border shadow-sm transition-transform group-hover:scale-110 delay-75" style={{ backgroundColor: `hsl(${theme.light.accent.h}, ${theme.light.accent.s}%, ${theme.light.accent.l}%)` }} title="Accent Color" />
+                          <div className="w-6 h-6 rounded-full border shadow-sm transition-transform group-hover:scale-110 delay-150" style={{ backgroundColor: `hsl(${theme.light.background.h}, ${theme.light.background.s}%, ${theme.light.background.l}%)` }} title="Background Color" />
+                      </div>
+                    </FormLabel>
+                  </FormItem>
+                )
+              })}
             </RadioGroup>
           </FormControl>
           <FormMessage />
@@ -194,31 +215,6 @@ function AppearanceSettings() {
         }
     }, [activeTheme, form]);
 
-    const applyTheme = (themeName: ThemeName, mode: 'light' | 'dark') => {
-        const selectedTheme = themes[themeName];
-        if (!selectedTheme) return;
-
-        const root = document.documentElement;
-        const themeConfig = mode === 'dark' ? selectedTheme.dark : selectedTheme.light;
-        const sidebarConfig = mode === 'dark' ? selectedTheme.sidebar.dark : selectedTheme.sidebar.light;
-
-        Object.entries(themeConfig).forEach(([key, color]) => {
-            root.style.setProperty(`--${key}`, `${color.h} ${color.s}% ${color.l}%`);
-        });
-
-        Object.entries(sidebarConfig).forEach(([key, color]) => {
-            root.style.setProperty(`--sidebar-${key}`, `${color.h} ${color.s}% ${color.l}%`);
-        });
-    }
-    
-    useEffect(() => {
-        if (activeTheme?.name) {
-            applyTheme(activeTheme.name, activeMode as 'light' | 'dark' || 'light');
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTheme, activeMode]);
-
-
     const onSubmit = async (data: ThemeFormValues) => {
         if (!firestore) {
             toast({
@@ -230,8 +226,6 @@ function AppearanceSettings() {
         }
 
         try {
-            applyTheme(data.theme, activeMode as 'light' | 'dark' || 'light');
-
             // Save theme name to Firestore
             const themeDocRef = doc(firestore, 'settings', 'activeTheme');
             await setDoc(themeDocRef, { name: data.theme });
@@ -252,54 +246,91 @@ function AppearanceSettings() {
 
     if (isLoadingTheme) {
         return (
-            <Card>
-                <CardHeader>
+            <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm">
+                <CardHeader className="border-b border-border/50 bg-muted/20 pb-6">
                     <Skeleton className="h-6 w-1/3" />
-                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-2/3 mt-2" />
                 </CardHeader>
-                <CardContent className="space-y-8">
-                     <Skeleton className="h-24 w-full" />
-                     <Skeleton className="h-48 w-full" />
+                <CardContent className="space-y-8 pt-6">
+                     <Skeleton className="h-24 w-full rounded-xl" />
+                     <Skeleton className="h-48 w-full rounded-xl" />
                 </CardContent>
             </Card>
         )
     }
 
     return (
-        <div className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Dark/Light Mode</CardTitle>
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm overflow-hidden">
+                <CardHeader className="border-b border-border/50 bg-muted/20 pb-6">
+                    <CardTitle className="text-xl font-semibold">Display Mode</CardTitle>
                     <CardDescription>
-                        Toggle between light and dark mode for the application.
+                        Toggle between light, dark, or system preference for the application.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="flex items-center space-x-2">
-                        <Sun className="h-5 w-5" />
-                        <Switch
-                            checked={activeMode === 'dark'}
-                            onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                        />
-                        <Moon className="h-5 w-5" />
+                <CardContent className="pt-6">
+                    <div className="inline-flex items-center p-1.5 bg-muted/80 backdrop-blur-md rounded-xl shadow-inner border border-border/50">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setTheme('light')}
+                            className={cn(
+                                "rounded-lg px-6 py-2 transition-all duration-300 font-medium",
+                                activeMode === 'light' ? "bg-background text-foreground shadow-sm hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                            )}
+                        >
+                            <Sun className="h-4 w-4 mr-2" /> Light
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setTheme('dark')}
+                            className={cn(
+                                "rounded-lg px-6 py-2 transition-all duration-300 font-medium",
+                                activeMode === 'dark' ? "bg-background text-foreground shadow-sm hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                            )}
+                        >
+                            <Moon className="h-4 w-4 mr-2" /> Dark
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setTheme('system')}
+                            className={cn(
+                                "rounded-lg px-6 py-2 transition-all duration-300 font-medium",
+                                activeMode === 'system' ? "bg-background text-foreground shadow-sm hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                            )}
+                        >
+                            <Laptop className="h-4 w-4 mr-2" /> System
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Application Theme</CardTitle>
+            <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm overflow-hidden">
+                <CardHeader className="border-b border-border/50 bg-muted/20 pb-6">
+                    <CardTitle className="text-xl font-semibold">Application Theme</CardTitle>
                     <CardDescription>
-                        Select a pre-designed theme for your application.
+                        Select a carefully crafted premium theme for your application.
                     </CardDescription>
                 </CardHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <CardContent>
+                        <CardContent className="pt-6">
                             <ThemeSelector form={form} />
                         </CardContent>
-                        <div className="flex justify-end p-6 pt-0">
-                            <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isDirty}>Save Appearance</Button>
+                        <div className="flex justify-end p-6 pt-4 border-t border-border/50 bg-muted/10">
+                            <Button 
+                                type="submit" 
+                                disabled={form.formState.isSubmitting || !form.formState.isDirty}
+                                className="relative overflow-hidden rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:scale-100"
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                {form.formState.isSubmitting ? 'Saving...' : 'Save Appearance'}
+                            </Button>
                         </div>
                     </form>
                 </Form>
@@ -310,23 +341,37 @@ function AppearanceSettings() {
 
 export default function SettingsPage() {
     return (
-        <div className="p-4 md:p-8 space-y-8">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
             <PageHeader
                 title="Settings"
-                description="Manage your company profile and customize the appearance of your catalog."
+                description="Manage your company profile and customize the premium appearance of your catalog."
             />
             
-            <Tabs defaultValue="company" className="w-full">
-                <TabsList className="grid w-full max-w-md grid-cols-2">
-                    <TabsTrigger value="company">Company</TabsTrigger>
-                    <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <Tabs defaultValue="company" className="flex flex-col md:flex-row gap-8 w-full mt-8">
+                <TabsList className="flex flex-row md:flex-col justify-start h-auto w-full md:w-64 bg-transparent p-0 space-x-2 md:space-x-0 md:space-y-2 shrink-0 overflow-x-auto no-scrollbar border-b md:border-b-0 pb-4 md:pb-0">
+                    <TabsTrigger 
+                        value="company" 
+                        className="w-full justify-start py-3 px-4 rounded-xl data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/60 transition-all duration-300 border border-transparent data-[state=active]:border-primary/20 text-base font-medium"
+                    >
+                        <Building2 className="w-5 h-5 mr-3 opacity-70" />
+                        Company
+                    </TabsTrigger>
+                    <TabsTrigger 
+                        value="appearance" 
+                        className="w-full justify-start py-3 px-4 rounded-xl data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/60 transition-all duration-300 border border-transparent data-[state=active]:border-primary/20 text-base font-medium"
+                    >
+                        <Palette className="w-5 h-5 mr-3 opacity-70" />
+                        Appearance
+                    </TabsTrigger>
                 </TabsList>
-                <TabsContent value="company" className="pt-6">
-                   <CompanyProfileSettings />
-                </TabsContent>
-                <TabsContent value="appearance" className="pt-6">
-                   <AppearanceSettings />
-                </TabsContent>
+                <div className="flex-1 min-w-0">
+                    <TabsContent value="company" className="mt-0 border-none p-0 outline-none animate-in fade-in slide-in-from-right-4 duration-500">
+                       <CompanyProfileSettings />
+                    </TabsContent>
+                    <TabsContent value="appearance" className="mt-0 border-none p-0 outline-none animate-in fade-in slide-in-from-right-4 duration-500">
+                       <AppearanceSettings />
+                    </TabsContent>
+                </div>
             </Tabs>
         </div>
     );
